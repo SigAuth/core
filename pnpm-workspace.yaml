@@ -1,8 +1,13 @@
 packages:
-    - apps/*
-    - packages/*
+  - apps/*
+  - packages/*
 
 onlyBuiltDependencies:
-    - '@prisma/client'
-    - '@prisma/engines'
-    - prisma
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@scarf/scarf'
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - prisma
