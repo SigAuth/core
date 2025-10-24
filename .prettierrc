@@ -5,5 +5,13 @@
     "semi": true,
     "printWidth": 140,
     "tabWidth": 4,
-    "arrowParens": "avoid"
+    "arrowParens": "avoid",
+    "overrides": [
+        {
+            "files": "*.y?(a)ml",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
 }

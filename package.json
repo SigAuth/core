@@ -2,7 +2,7 @@
     "name": "sigauth-core-monorepo",
     "version": "1.0",
     "type": "module",
-    "packageManager": "pnpm@10.17.1",
+    "packageManager": "pnpm@10.19.0",
     "engines": {
         "node": ">=22.14.0"
     },

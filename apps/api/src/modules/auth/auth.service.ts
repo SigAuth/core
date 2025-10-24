@@ -26,6 +26,8 @@ export class AuthService {
         const privatePath = './keys/private.pem';
         const publicPath = './keys/public.pub.pem';
 
+        fs.mkdirSync('./keys', { recursive: true });
+
         if (!fs.existsSync(privatePath) || !fs.existsSync(publicPath)) {
             this.logger.warn('No RSA keys found, generating new keys');
             const pair = generateKeyPairSync('rsa', {
