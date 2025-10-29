@@ -9,7 +9,7 @@ import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { AppPermission, AppWebFetch } from '@sigauth/prisma-wrapper/json-types';
-import type { App } from '@sigauth/prisma-wrapper/prisma-client';
+import type { App } from '@sigauth/prisma-wrapper/prisma-types';
 import { BadgePlus, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';

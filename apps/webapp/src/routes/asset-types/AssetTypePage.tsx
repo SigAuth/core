@@ -6,7 +6,7 @@ import { CreateAssetTypeDialog } from '@/routes/asset-types/CreateAssetTypeDialo
 import { DeleteAssetTypeDialog } from '@/routes/asset-types/DeleteAssetTypeDialog';
 import { EditAssetTypeDialog } from '@/routes/asset-types/EditAssetTypeDialog';
 import type { AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
-import type { AssetType } from '@sigauth/prisma-wrapper/prisma-client';
+import type { AssetType } from '@sigauth/prisma-wrapper/prisma-types';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
 import { Edit, Trash } from 'lucide-react';
 import { useState } from 'react';

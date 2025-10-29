@@ -8,7 +8,7 @@
         "build": "tsc"
     },
     "exports": {
-        "./prisma": {
+        "./prisma-extended": {
             "import": "./dist/extended-prisma.js",
             "types": "./dist/extended-prisma.d.ts",
             "default": "./dist/extended-prisma.js"
@@ -17,6 +17,10 @@
             "import": "./prisma/generated/client/index.js",
             "types": "./prisma/generated/client/index.d.ts",
             "default": "./prisma/generated/client/index.js"
+        },
+        "./prisma-types": {
+            "types": "./prisma/generated/client/index.d.ts",
+            "default": "./dist/empty.js"
         },
         "./json-types": {
             "import": "./dist/json-types.js",

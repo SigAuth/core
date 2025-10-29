@@ -2,7 +2,7 @@ import { PrismaService } from '@/common/prisma/prisma.service';
 import { Utils } from '@/common/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma';
+import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { Account, App, Asset, AssetType, Container, Session } from '@sigauth/prisma-wrapper/prisma-client';
 import { SigAuthRootPermissions } from '@sigauth/prisma-wrapper/protected';
 import * as bycrypt from 'bcryptjs';

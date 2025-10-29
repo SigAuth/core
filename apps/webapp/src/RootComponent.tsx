@@ -7,16 +7,16 @@ import { AccountsPage } from '@/routes/accounts/AccountsPage';
 import { AppsPage } from '@/routes/apps/AppsPage';
 import { AssetTypePage } from '@/routes/asset-types/AssetTypePage';
 import { AssetPage } from '@/routes/assets/AssetPage';
+import { OIDCSignInPage } from '@/routes/auth/oidc/OIDCSignInPage';
 import { ContainerPage } from '@/routes/container/ContainerPage';
 import HomePage from '@/routes/home/HomePage';
 import { SettingsPage } from '@/routes/settings/SettingsPage';
 import SignInPage from '@/routes/SignIn';
-import type { Session } from '@sigauth/prisma-wrapper/prisma-client';
+import type { Session } from '@sigauth/prisma-wrapper/prisma-types';
 import dayjs from 'dayjs';
 import React, { StrictMode, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { toast, Toaster } from 'sonner';
-import { OIDCSignInPage } from './routes/auth/oidc/OIDCSignInPage';
 
 const RootComponent: React.FC = () => {
     const [session, setSession] = useState<SessionStorage | null>(null);

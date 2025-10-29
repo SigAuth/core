@@ -4,7 +4,7 @@ import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { Controller, Get, HttpCode, HttpStatus, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma';
+import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { type Request, type Response } from 'express';
 import * as process from 'node:process';
 

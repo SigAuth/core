@@ -19,7 +19,7 @@ import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { PopoverContent } from '@radix-ui/react-popover';
 import { AssetFieldType, type AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
-import { type AssetType, type Container } from '@sigauth/prisma-wrapper/prisma-client';
+import { type AssetType, type Container } from '@sigauth/prisma-wrapper/prisma-types';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
 import { CommandEmpty } from 'cmdk';
 import { BadgePlus, Check, ChevronsUpDown } from 'lucide-react';

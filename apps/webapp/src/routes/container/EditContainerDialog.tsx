@@ -11,7 +11,7 @@ import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Popover, PopoverContent } from '@radix-ui/react-popover';
-import type { Container } from '@sigauth/prisma-wrapper/prisma-client';
+import type { Container } from '@sigauth/prisma-wrapper/prisma-types';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
 import { BadgePlus, Check, ChevronsUpDown, XIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';

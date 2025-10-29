@@ -1,7 +1,7 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { Utils } from '@/common/utils';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma';
+import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { PROTECTED, SigAuthRootPermissions } from '@sigauth/prisma-wrapper/protected';
 import { Request } from 'express';
 

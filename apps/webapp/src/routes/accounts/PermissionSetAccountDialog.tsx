@@ -10,8 +10,8 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import type { AppPermission } from '@sigauth/prisma-wrapper/json-types';
-import type { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma';
-import type { App, PermissionInstance } from '@sigauth/prisma-wrapper/prisma-client';
+import type { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
+import type { App, PermissionInstance } from '@sigauth/prisma-wrapper/prisma-types';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';

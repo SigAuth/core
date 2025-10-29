@@ -45,7 +45,6 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.33.0",
-        "@sigauth/prisma-wrapper": "*",
         "@types/node": "^22.18.1",
         "@types/react": "^19.1.10",
         "@types/react-dom": "^19.1.7",

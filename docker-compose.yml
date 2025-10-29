@@ -45,7 +45,7 @@ services:
       OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET: 10
       OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET: 30
     ports:
-      - '3000:3000'
+      - '3010:3000'
     volumes:
       - sigauth-keys:/app/keys
 

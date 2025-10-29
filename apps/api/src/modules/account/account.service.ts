@@ -6,7 +6,7 @@ import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
 import { PermissionSetDto } from '@/modules/account/dto/permission-set.dto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AppPermission } from '@sigauth/prisma-wrapper/json-types';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma';
+import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { Account, PermissionInstance, Prisma, PrismaClient } from '@sigauth/prisma-wrapper/prisma-client';
 import bcrypt from 'bcryptjs';
 

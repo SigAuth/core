@@ -12,18 +12,18 @@ COPY packages/prisma-wrapper/package.json packages/prisma-wrapper/package.json
 RUN pnpm install --frozen-lockfile
 
 # build app
-FROM deps as build
+FROM deps AS build
 COPY . .
 # generate prisma client
-RUN pnpm -C packages/prisma-wrapper prisma generate
+RUN pnpm --dir packages/prisma-wrapper exec prisma generate
 # build api and webapp
-RUN pnpm -C apps/api build
-RUN pnpm -C apps/webapp build
-# pruned prod-workspace for api
-RUN pnpm deploy --filter ./apps/api --prod /app/standalone
+RUN pnpm --filter ./apps/api run build
+RUN pnpm --filter ./apps/webapp run build
+# pruned prod-workspace for api (pnpm v10 legacy deploy)
+RUN pnpm deploy --filter ./apps/api --prod --legacy /app/standalone
 
 # runtime
-FROM node:22-alpine as runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 # prunend workspace

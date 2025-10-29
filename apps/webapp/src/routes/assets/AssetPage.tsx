@@ -5,7 +5,7 @@ import { useSession } from '@/context/SessionContext';
 import { CreateAssetDialog } from '@/routes/assets/CreateAssetDialog';
 import { DeleteAssetDialog } from '@/routes/assets/DeleteAssetDialog';
 import { EditAssetDialog } from '@/routes/assets/EditAssetDialog';
-import type { Asset } from '@sigauth/prisma-wrapper/prisma-client';
+import type { Asset } from '@sigauth/prisma-wrapper/prisma-types';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
 import { Edit, Trash } from 'lucide-react';
 import { useState } from 'react';

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { AssetFieldType, type AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
-import type { AssetType } from '@sigauth/prisma-wrapper/prisma-client';
+import type { AssetType } from '@sigauth/prisma-wrapper/prisma-types';
 import { BadgePlus, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
