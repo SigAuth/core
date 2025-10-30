@@ -16,6 +16,7 @@ FROM deps AS build
 COPY . .
 # generate prisma client
 RUN pnpm --dir packages/prisma-wrapper exec prisma generate
+RUN pnpm --filter ./packages/prisma-wrapper run build
 # build api and webapp
 RUN pnpm --filter ./apps/api run build
 RUN pnpm --filter ./apps/webapp run build
