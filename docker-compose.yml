@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:16
+    container_name: sigauth-db
     environment:
       POSTGRES_DB: sigauth
       POSTGRES_USER: sigauthuser
@@ -14,6 +15,7 @@ services:
       retries: 10
 
   migrate:
+    container_name: sigauth-migrate
     build:
       context: .
       target: build
@@ -28,6 +30,7 @@ services:
       "
 
   api:
+    container_name: sigauth-api
     build:
       context: .
       target: runtime

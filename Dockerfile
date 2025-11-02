@@ -18,8 +18,8 @@ COPY . .
 RUN pnpm --dir packages/prisma-wrapper exec prisma generate
 RUN pnpm --filter ./packages/prisma-wrapper run build
 # build api and webapp
-RUN pnpm --filter ./apps/api run build
 RUN pnpm --filter ./apps/webapp run build
+RUN pnpm --filter ./apps/api run build
 # pruned prod-workspace for api (pnpm v10 legacy deploy)
 RUN pnpm deploy --filter ./apps/api --prod --legacy /app/standalone
 
