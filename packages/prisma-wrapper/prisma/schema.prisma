@@ -45,10 +45,12 @@ model Session {
 model AuthorizationInstance {
   id        Int    @id @default(autoincrement())
   sessionId String
+  appId     Int
 
-  refreshToken String @unique
+  refreshToken       String @unique
   refreshTokenExpire Int
 
+  app     App     @relation(fields: [appId], references: [id])
   session Session @relation(fields: [sessionId], references: [id])
 }
 
@@ -126,4 +128,5 @@ model App {
 
   PermissionInstance     PermissionInstance[]
   AuthorizationChallenge AuthorizationChallenge[]
+  AuthorizationInstance  AuthorizationInstance[]
 }

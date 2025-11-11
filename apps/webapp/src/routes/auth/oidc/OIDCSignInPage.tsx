@@ -19,8 +19,7 @@ export const OIDCSignInPage = () => {
     if (session.account && appId) {
         request('GET', '/api/auth/oidc/authenticate?appId=' + appId).then(async res => {
             if (res.ok) {
-                // window.location.href = await res.text();
-                console.log('TODO redirect to', await res.text());
+                window.location.href = await res.text();
             } else {
                 toast.error('Failed to initiate OIDC flow. Please try again.');
             }

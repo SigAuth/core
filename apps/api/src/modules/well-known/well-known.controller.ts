@@ -1,6 +1,6 @@
 import { AuthService } from '@/modules/auth/auth.service';
 import { Controller, Get } from '@nestjs/common';
-import crypto from 'crypto';
+import { KeyObject } from 'crypto';
 
 @Controller('.well-known')
 export class WellKnownController {
@@ -23,8 +23,7 @@ export class WellKnownController {
 
     @Get('jwks.json')
     async getJWKS() {
-        const keyObject = crypto.createPublicKey(this.authService.publicKey);
-        const jwk = keyObject.export({ format: 'jwk' });
+        const jwk = (this.authService.publicKey! as KeyObject).export({ format: 'jwk' });
 
         jwk.use = 'sig';
         jwk.alg = 'RS256';

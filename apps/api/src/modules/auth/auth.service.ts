@@ -2,14 +2,14 @@ import { PrismaService } from '@/common/prisma/prisma.service';
 import { Utils } from '@/common/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { Account, App, Asset, AssetType, Container, Session } from '@sigauth/prisma-wrapper/prisma-client';
+import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { SigAuthRootPermissions } from '@sigauth/prisma-wrapper/protected';
 import * as bycrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import fs from 'fs';
-import { sign } from 'jsonwebtoken';
-import { generateKeyPairSync } from 'node:crypto';
+import { SignJWT } from 'jose';
+import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'node:crypto';
 import * as process from 'node:process';
 import * as speakeasy from 'speakeasy';
 import { OIDCAuthenticateDto } from './dto/oidc-authenticate.dto';
@@ -18,8 +18,8 @@ import { OIDCAuthenticateDto } from './dto/oidc-authenticate.dto';
 export class AuthService {
     private readonly logger = new Logger(PrismaService.name);
 
-    public publicKey: string = '';
-    public privateKey: string = '';
+    public publicKey: KeyObject | null = null;
+    public privateKey: KeyObject | null = null;
 
     // load or generate RSA keys
     async onModuleInit() {
@@ -40,12 +40,12 @@ export class AuthService {
             fs.writeFileSync(privatePath, pair.privateKey);
             fs.writeFileSync(publicPath, pair.publicKey);
 
-            this.publicKey = pair.publicKey;
-            this.privateKey = pair.privateKey;
+            this.publicKey = createPublicKey(pair.publicKey);
+            this.privateKey = createPrivateKey(pair.privateKey);
         } else {
             this.logger.log('Using existing RSA keys');
-            this.publicKey = fs.readFileSync(publicPath, 'utf8');
-            this.privateKey = fs.readFileSync(privatePath, 'utf8');
+            this.publicKey = createPublicKey(fs.readFileSync(publicPath, 'utf8'));
+            this.privateKey = createPrivateKey(fs.readFileSync(privatePath, 'utf8'));
         }
     }
 
@@ -193,7 +193,8 @@ export class AuthService {
         }
 
         if (dayjs.unix(authChallenge.session.expire).isBefore(dayjs())) {
-            await this.prisma.authorizationChallenge.delete({ where: { id: authChallenge.id } });
+            await this.prisma.authorizationChallenge.deleteMany({ where: { sessionId: authChallenge.sessionId } });
+            await this.prisma.authorizationInstance.deleteMany({ where: { sessionId: authChallenge.sessionId } });
             await this.prisma.session.delete({ where: { id: authChallenge.sessionId } });
             throw new UnauthorizedException('Session expired');
         }
@@ -201,36 +202,81 @@ export class AuthService {
         const app = await this.prisma.app.findUnique({ where: { id: authChallenge.appId } });
         if (!app || app.token !== appToken) throw new UnauthorizedException("Couldn't resolve app or invalid app token");
 
-        const accessToken = sign(
-            {
-                exp: dayjs().unix() + 60 * 60 * +(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10),
-                sub: authChallenge.session.account.id,
-                iat: dayjs().unix(),
-                iss: process.env.FRONTEND_URL,
+        const payload = {
+            name: authChallenge.session.account.name,
+            email: authChallenge.session.account.email,
+            // more claims to come
+        };
 
-                name: authChallenge.session.account.name,
-                email: authChallenge.session.account.email,
-                // TODO discuss to which permissions are added to the jwt because of size limitations
-            },
-            this.privateKey,
-            {
-                algorithm: 'RS256',
-                keyid: 'sigauth',
-                issuer: process.env.FRONTEND_URL,
-                audience: app.name,
-                expiresIn: +(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10) * 60,
-            },
-        );
+        const accessToken = await new SignJWT(payload)
+            .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
+            .setIssuedAt()
+            .setSubject(String(authChallenge.session.account.id))
+            .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
+            .setAudience(app.name)
+            .setExpirationTime(
+                dayjs()
+                    .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
+                    .toDate(),
+            )
+            .sign(this.privateKey!);
 
         const instance = await this.prisma.authorizationInstance.create({
             data: {
                 sessionId: authChallenge.sessionId,
+                appId: authChallenge.appId,
                 refreshToken: Utils.generateToken(64),
                 refreshTokenExpire: dayjs().unix() + 60 * 60 * 24 * +(process.env.OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET ?? 30),
             },
         });
 
         await this.prisma.authorizationChallenge.delete({ where: { id: authChallenge.id } });
+        return {
+            accessToken,
+            refreshToken: instance.refreshToken,
+        };
+    }
+
+    async refreshOIDCToken(refreshToken: string, appToken: string) {
+        const instance = await this.prisma.authorizationInstance.findUnique({
+            where: { refreshToken },
+            include: { session: { include: { account: true } } },
+        });
+        if (!instance) throw new NotFoundException("Couldn't resolve authorization instance");
+
+        if (dayjs.unix(instance.refreshTokenExpire).isBefore(dayjs())) {
+            await this.prisma.authorizationInstance.deleteMany({ where: { sessionId: instance.sessionId } });
+            throw new UnauthorizedException('Refresh token expired');
+        }
+
+        if (dayjs.unix(instance.session.expire).isBefore(dayjs())) {
+            await this.prisma.authorizationInstance.deleteMany({ where: { sessionId: instance.sessionId } });
+            await this.prisma.session.delete({ where: { id: instance.sessionId } });
+            throw new UnauthorizedException('Session expired');
+        }
+
+        const app = await this.prisma.app.findUnique({ where: { id: instance.appId } });
+        if (!app || app.token !== appToken) throw new UnauthorizedException("Couldn't resolve app or invalid app token");
+
+        const payload = {
+            name: instance.session.account.name,
+            email: instance.session.account.email,
+            // more claims to come
+        };
+
+        const accessToken = await new SignJWT(payload)
+            .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
+            .setIssuedAt()
+            .setSubject(String(instance.session.account.id))
+            .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
+            .setAudience(app.name)
+            .setExpirationTime(
+                dayjs()
+                    .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
+                    .toDate(),
+            )
+            .sign(this.privateKey!);
+
         return {
             accessToken,
             refreshToken: instance.refreshToken,
