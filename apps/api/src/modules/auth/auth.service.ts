@@ -282,4 +282,6 @@ export class AuthService {
             refreshToken: instance.refreshToken,
         };
     }
+
+    async hasPermission(account: AccountWithPermissions, permission: string) {}
 }

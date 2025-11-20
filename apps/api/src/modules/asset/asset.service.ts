@@ -49,7 +49,9 @@ export class AssetService {
                       ? 'boolean'
                       : 'number';
             if (typeof field[1] != targetType)
-                throw new BadRequestException('Invalid field type ( field: ' + field[0].toString() + ' must be of type ' + targetType + ')');
+                throw new BadRequestException(
+                    'Invalid field type ( field: ' + field[0].toString() + ' must be of type ' + targetType + ')',
+                );
         }
 
         return this.prisma.asset.upsert({
