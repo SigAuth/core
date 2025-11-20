@@ -25,9 +25,7 @@ services:
     environment:
       DATABASE_URL: postgresql://sigauthuser:sigauthpass@db:5432/sigauth
     command: >
-      sh -lc "
-        pnpm -C packages/prisma-wrapper exec prisma migrate deploy
-      "
+      sh -lc "pnpm -C packages/prisma-wrapper exec prisma migrate deploy"
 
   api:
     container_name: sigauth-api
