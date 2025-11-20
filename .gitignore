@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-pnpm-lock.yaml
 yarn.lock
 package-lock.json
 
@@ -48,3 +47,4 @@ pnpm-debug.log*
 coverage/
 .tmp/
 **/generated/
+/packages/prisma-wrapper/src/prisma-generated

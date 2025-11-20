@@ -18,7 +18,7 @@ import { WellKnownModule } from './modules/well-known/well-known.module';
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '../..', 'webapp', 'dist'),
         }),
-        ConfigModule.forRoot({ isGlobal: true }),
+        ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env'] }),
         AccountModule,
         ThrottlerModule.forRoot([
             {

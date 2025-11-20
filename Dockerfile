@@ -14,8 +14,15 @@ RUN pnpm install --frozen-lockfile
 # build app
 FROM deps AS build
 COPY . .
+
+# make bash available for prisma patch script
+RUN apk add --no-cache bash
+RUN chmod +x packages/prisma-wrapper/prisma/patch-prisma-types.sh
+
 # generate prisma client
 RUN pnpm --dir packages/prisma-wrapper exec prisma generate
+RUN bash packages/prisma-wrapper/prisma/patch-prisma-types.sh
+
 RUN pnpm --filter ./packages/prisma-wrapper run build
 # build api and webapp
 RUN pnpm --filter ./apps/webapp run build

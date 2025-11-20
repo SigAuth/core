@@ -14,11 +14,11 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:3000', // local nest app
+                target: 'http://localhost:4000', // local nest app
                 changeOrigin: true,
             },
             '/.well-known': {
-                target: 'http://localhost:3000', // local nest app
+                target: 'http://localhost:4000', // local nest app
                 changeOrigin: true,
             },
         },
