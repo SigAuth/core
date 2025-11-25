@@ -31,6 +31,17 @@ export class AuthController {
         return await this.authService.exchangeOIDCToken(code, appToken);
     }
 
+    @Get('oidc/refresh')
+    @HttpCode(HttpStatus.OK)
+    @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
+    @ApiOkResponse({
+        description: 'Access and refresh tokens refreshed successfully.',
+        example: { accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi', refreshToken: 't5468gfd486wef486fsd846v864' },
+    })
+    async refreshOIDC(@Query('refreshToken') refreshToken: string, @Query('app-token') appToken: string) {
+        return await this.authService.refreshOIDCToken(refreshToken, appToken);
+    }
+
     /**
      * this route should only be called from the SigAuth frontend.
      *
