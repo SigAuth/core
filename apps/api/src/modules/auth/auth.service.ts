@@ -1,18 +1,19 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { Utils } from '@/common/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
-import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Account, App, Asset, AssetType, Container, Session } from '@sigauth/prisma-wrapper/prisma-client';
 import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { SigAuthRootPermissions } from '@sigauth/prisma-wrapper/protected';
 import * as bycrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import fs from 'fs';
-import { SignJWT } from 'jose';
+import { decodeJwt, jwtVerify, SignJWT } from 'jose';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'node:crypto';
 import * as process from 'node:process';
 import * as speakeasy from 'speakeasy';
 import { OIDCAuthenticateDto } from './dto/oidc-authenticate.dto';
+import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 
 @Injectable()
 export class AuthService {
@@ -283,5 +284,52 @@ export class AuthService {
         };
     }
 
-    async hasPermission(account: AccountWithPermissions, permission: string) {}
+    async hasPermission(dto: HasPermissionDto) {
+        const parts = dto.permission.split(':');
+        if (parts.length != 4) {
+            throw new BadRequestException('Invalid permission format');
+        }
+        const ident = parts[0] === '' ? null : parts[0];
+        const assetId = parts[1] === '' ? null : +parts[1];
+        const appId = parts[2] === '' ? null : +parts[2];
+        const containerId = parts[3] === '' ? null : +parts[3];
+
+        if (!ident || !appId || (!containerId && assetId)) {
+            throw new BadRequestException('Invalid permission format');
+        }
+
+        const app = await this.prisma.app.findUnique({ where: { id: +dto.appId } });
+        console.log(app?.id, dto.appId, appId);
+        if (!app || app.token !== dto.appToken) {
+            throw new NotFoundException("Couldn't resolve app");
+        }
+
+        if (appId != app.id) {
+            throw new ForbiddenException('Forbidden cross-app permission check');
+        }
+
+        const decoded = await jwtVerify(dto.accessToken, this.publicKey!, {
+            audience: app.name,
+            issuer: process.env.FRONTEND_URL || 'No issuer provided in env',
+        });
+
+        if (!decoded || decoded.payload.exp! < Date.now() / 1000) throw new UnauthorizedException('Invalid access token');
+        const tokenAccountId = +decoded.payload.sub!;
+
+        const permInstance = await this.prisma.permissionInstance.findFirst({
+            where: {
+                identifier: ident,
+                appId: appId,
+                assetId: assetId,
+                containerId: containerId,
+                accountId: tokenAccountId,
+            },
+        });
+
+        if (permInstance) {
+            return 'OK';
+        } else {
+            throw new ForbiddenException('Forbidden');
+        }
+    }
 }

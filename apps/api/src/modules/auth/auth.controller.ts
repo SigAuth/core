@@ -1,9 +1,17 @@
 import { AuthService } from '@/modules/auth/auth.service';
+import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
-import { Controller, Get, HttpCode, HttpStatus, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiAcceptedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { BadRequestException, Controller, Get, HttpCode, HttpStatus, Query, Req, Res, UseGuards } from '@nestjs/common';
+import {
+    ApiAcceptedResponse,
+    ApiBadRequestResponse,
+    ApiForbiddenResponse,
+    ApiNotFoundResponse,
+    ApiOkResponse,
+    ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { type Request, type Response } from 'express';
 import * as process from 'node:process';
@@ -65,16 +73,16 @@ export class AuthController {
         res.sendStatus(200);
     }
 
-    @Get('hasPermission')
-    @UseGuards(AuthGuard)
+    @Get('/oidc/has-permission')
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'Permission check result.',
         example: 'OK',
     })
     @ApiForbiddenResponse({ description: 'Account does not have the required permission or is signed out.', example: 'Forbidden' })
-    async hasPermission(@Req() req: Request, @Query('permission') permission: string) {
-        return await this.authService.hasPermission(req.account as AccountWithPermissions, permission);
+    @ApiBadRequestResponse({ description: 'Permission query parameter is missing.' })
+    async hasPermission(@Req() req: Request, @Query() permissionDto: HasPermissionDto) {
+        return await this.authService.hasPermission(permissionDto);
     }
 
     @Get('init')

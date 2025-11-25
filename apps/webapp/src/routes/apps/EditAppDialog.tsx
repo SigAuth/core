@@ -87,7 +87,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
     const permissions = form.watch(`permissions.${tab}`);
     const webFetch = form.watch('webFetchEnabled');
     const addItem = () => {
-        if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9 _-]*$/i.test(permissionField)) {
+        if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9_-]*$/i.test(permissionField)) {
             return;
         }
 
@@ -201,7 +201,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
                                                 <Input
                                                     id="permission-name"
                                                     placeholder="e.g Post Modify Permission"
-                                                    className={`pe-9 ${((permissionField.length > 0 && permissionField.length < 3) || !/^[A-Z0-9 _-]*$/i.test(permissionField)) && 'border-destructive !ring-destructive text-destructive placeholder:text-destructive'}`}
+                                                    className={`pe-9 ${((permissionField.length > 0 && permissionField.length < 3) || !/^[A-Z0-9_-]*$/i.test(permissionField)) && 'border-destructive !ring-destructive text-destructive placeholder:text-destructive'}`}
                                                     value={permissionField}
                                                     onChange={e => setPermissionField(e.target.value)}
                                                 />
@@ -218,7 +218,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
                                             </div>
 
                                             {((permissionField.length > 0 && permissionField.length < 3) ||
-                                                !/^[A-Z0-9 _-]*$/i.test(permissionField)) && (
+                                                !/^[A-Z0-9_-]*$/i.test(permissionField)) && (
                                                 <p data-slot="form-message" className="text-destructive text-sm mt-2">
                                                     Permission must be at least 3 characters long and alphanumeric.
                                                 </p>
