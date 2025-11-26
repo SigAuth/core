@@ -1,5 +1,6 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { Utils } from '@/common/utils';
+import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Account, App, Asset, AssetType, Container, Session } from '@sigauth/prisma-wrapper/prisma-client';
@@ -8,12 +9,11 @@ import { SigAuthRootPermissions } from '@sigauth/prisma-wrapper/protected';
 import * as bycrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import fs from 'fs';
-import { decodeJwt, jwtVerify, SignJWT } from 'jose';
+import { jwtVerify, SignJWT } from 'jose';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'node:crypto';
 import * as process from 'node:process';
 import * as speakeasy from 'speakeasy';
 import { OIDCAuthenticateDto } from './dto/oidc-authenticate.dto';
-import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 
 @Injectable()
 export class AuthService {
