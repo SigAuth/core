@@ -4,7 +4,7 @@ import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Account, App, Asset, AssetType, Container, Session } from '@sigauth/prisma-wrapper/prisma-client';
 import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
-import { SigAuthRootPermissions } from '@sigauth/prisma-wrapper/protected';
+import { PROTECTED, SigAuthRootPermissions } from '@sigauth/prisma-wrapper/protected';
 import * as bycrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import fs from 'fs';
@@ -326,7 +326,16 @@ export class AuthService {
             },
         });
 
-        if (permInstance) {
+        if (
+            permInstance ||
+            (await this.prisma.permissionInstance.findFirst({
+                where: {
+                    identifier: Utils.convertPermissionNameToIdent(SigAuthRootPermissions.ROOT),
+                    appId: PROTECTED.App.id,
+                    accountId: tokenAccountId,
+                },
+            }))
+        ) {
             return 'OK';
         } else {
             throw new ForbiddenException('Forbidden');
