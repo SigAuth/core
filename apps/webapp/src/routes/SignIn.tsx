@@ -12,7 +12,7 @@ const SignInPage = () => {
 
         // TODO add 2FA
         if (username.length < 3 || password.length < 3) return toast.warning('Please enter longer credentials.');
-        const res = await request('GET', `/api/auth/login?username=${username}&password=${password}`);
+        const res = await request('POST', `/api/auth/login`, { username, password });
 
         if (res.ok) {
             toast.success('Login successful!');

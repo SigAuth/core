@@ -3,7 +3,7 @@ import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
-import { BadRequestException, Controller, Get, HttpCode, HttpStatus, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
     ApiBadRequestResponse,
@@ -56,10 +56,10 @@ export class AuthController {
      * how can we verify this:
      * - we could use cloudflare turnstile or something similar
      */
-    @Get('login')
+    @Post('login')
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'Session created and cookie set. No content.' })
-    async login(@Query() loginRequestDto: LoginRequestDto, @Res() res: Response) {
+    async login(@Body() loginRequestDto: LoginRequestDto, @Res() res: Response) {
         // TODO allow authentcation via other methods as well (e.g. OAuth, SAML, Mail)
         const sessionId = await this.authService.login(loginRequestDto);
         res.cookie('sid', sessionId, {

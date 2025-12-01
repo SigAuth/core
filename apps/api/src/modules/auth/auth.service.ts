@@ -153,7 +153,6 @@ export class AuthService {
                 where: { id: { in: assetTypeIds } },
             });
 
-            console.log(apps, accounts, containers, assets, assetTypes);
             return { account, session, accounts: [], assets: [], assetTypes: [], apps: [], containers: [] }; // TODO test if this works
         }
     }
@@ -299,7 +298,6 @@ export class AuthService {
         }
 
         const app = await this.prisma.app.findUnique({ where: { id: +dto.appId } });
-        console.log(app?.id, dto.appId, appId);
         if (!app || app.token !== dto.appToken) {
             throw new NotFoundException("Couldn't resolve app");
         }
