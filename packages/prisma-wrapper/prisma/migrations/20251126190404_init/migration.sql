@@ -147,10 +147,10 @@ ALTER TABLE "Session" ADD CONSTRAINT "Session_subject_fkey" FOREIGN KEY ("subjec
 ALTER TABLE "AuthorizationInstance" ADD CONSTRAINT "AuthorizationInstance_appId_fkey" FOREIGN KEY ("appId") REFERENCES "App"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AuthorizationInstance" ADD CONSTRAINT "AuthorizationInstance_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "AuthorizationInstance" ADD CONSTRAINT "AuthorizationInstance_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AuthorizationChallenge" ADD CONSTRAINT "AuthorizationChallenge_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "AuthorizationChallenge" ADD CONSTRAINT "AuthorizationChallenge_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AuthorizationChallenge" ADD CONSTRAINT "AuthorizationChallenge_appId_fkey" FOREIGN KEY ("appId") REFERENCES "App"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

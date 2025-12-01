@@ -50,7 +50,7 @@ model AuthorizationInstance {
   refreshTokenExpire Int
 
   app     App     @relation(fields: [appId], references: [id])
-  session Session @relation(fields: [sessionId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 // pending authorization codes
@@ -63,7 +63,7 @@ model AuthorizationChallenge {
   challenge         String?  @unique
   created           DateTime @default(now())
 
-  session Session @relation(fields: [sessionId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   app     App     @relation(fields: [appId], references: [id])
 }
 
