@@ -106,7 +106,7 @@ export class AuthController {
             roots: ['app-administrator'],
         },
     })
-    async getUserInfo(@Req() req: Request, @Query('accessToken') accessToken: string, @Query('app-token') appToken: string) {
+    async getUserInfo(@Req() req: Request, @Query('accessToken') accessToken: string, @Query('appToken') appToken: string) {
         return await this.authService.getUserInfo(accessToken, appToken);
     }
 

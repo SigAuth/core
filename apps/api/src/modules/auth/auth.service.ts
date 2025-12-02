@@ -332,7 +332,7 @@ export class AuthService {
     }
 
     public async getUserInfo(accessToken: string, appToken: string) {
-        const app = await this.prisma.app.findUnique({ where: { token: appToken } });
+        const app = await this.prisma.app.findFirst({ where: { token: appToken } });
         if (!app || app.token !== appToken) {
             throw new NotFoundException("Couldn't resolve app");
         }
