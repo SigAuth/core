@@ -96,7 +96,7 @@ export class AuthController {
         return await this.authService.hasPermission(permissionDto);
     }
 
-    @Get('/oidc/userinfo')
+    @Get('/oidc/user-info')
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'Provides User general info and lists which containers and directly correlate to the user.',

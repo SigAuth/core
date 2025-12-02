@@ -171,9 +171,70 @@ export class AppsService {
     async sendAppNudge(url: string) {
         try {
             await firstValueFrom(this.httpService.get(url + APP_NUDGE_ROUTE, { withCredentials: true }));
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
+        } catch (_) {
             this.logger.error(url + " wasn't reachable couldn't send nudge");
         }
+    }
+
+    async getAppInfo(appToken: string) {
+        const app = await this.prisma.app.findFirst({ where: { token: appToken } });
+        if (!app) throw new NotFoundException("Couldn't resolve app");
+
+        const accounts = await this.prisma.account.findMany({
+            where: {
+                permissions: {
+                    some: {
+                        appId: app.id,
+                    },
+                },
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                accounts: true,
+            },
+        });
+
+        const assets = await this.prisma.asset.findMany({
+            where: {
+                PermissionInstance: {
+                    some: {
+                        appId: app.id,
+                    },
+                },
+            },
+        });
+
+        const containers = await this.prisma.container.findMany({
+            where: {
+                PermissionInstance: {
+                    some: {
+                        appId: app.id,
+                    },
+                },
+            },
+        });
+
+        const containerIds = containers.map(c => c.id);
+
+        const containerAssets = await this.prisma.asset.findMany({
+            where: {
+                typeId: PROTECTED.AssetType.id,
+            },
+        });
+
+        const filtered = containerAssets.filter(
+            a => Array.isArray(a.fields) && containerIds.includes((a.fields as string | number[])[0] as number),
+        );
+
+        return {
+            permissions: app.permissions,
+            webFetch: app.webFetch,
+            accounts,
+            assets,
+            containers,
+            containerAssets,
+        };
     }
 }

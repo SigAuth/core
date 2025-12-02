@@ -83,7 +83,13 @@ export class AssetController {
     })
     @ApiNotFoundResponse({ description: 'Container, asset or asset type not found' })
     async editAsset(@Body() editAssetDto: EditAssetDto): Promise<{ asset: Asset; updatedContainers: Container[] }> {
-        const asset = await this.assetsService.createOrUpdateAsset(editAssetDto.assetId, editAssetDto.name, undefined, editAssetDto.fields, false);
+        const asset = await this.assetsService.createOrUpdateAsset(
+            editAssetDto.assetId,
+            editAssetDto.name,
+            undefined,
+            editAssetDto.fields,
+            false,
+        );
 
         const updatedContainers: Container[] = await this.assetsService.applyUsedContainers(asset.id, editAssetDto.containerIds || []);
 
