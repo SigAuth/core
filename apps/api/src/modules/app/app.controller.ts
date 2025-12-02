@@ -109,6 +109,7 @@ export class AppsController {
                     {
                         id: 1,
                         name: 'test',
+                        typeId: 2,
                         fields: [
                             {
                                 id: 1,
@@ -119,10 +120,40 @@ export class AppsController {
                     {
                         id: 2,
                         name: 'Blog Post 2',
+                        typeId: 2,
                         fields: [
                             {
                                 id: 1,
                                 name: 'How I started my 1 million dollar company',
+                            },
+                        ],
+                    },
+                ],
+                assetTypes: [
+                    {
+                        id: 2,
+                        name: 'Blog Post',
+                        fields: [
+                            {
+                                type: 2,
+                                name: 'Text',
+                                required: true,
+                            },
+                        ],
+                    },
+                    {
+                        id: 4,
+                        name: 'test',
+                        fields: [
+                            {
+                                type: 1,
+                                name: 'ID',
+                                required: true,
+                            },
+                            {
+                                type: 2,
+                                name: 'Name',
+                                required: true,
                             },
                         ],
                     },

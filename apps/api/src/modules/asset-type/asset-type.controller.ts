@@ -31,8 +31,9 @@ export class AssetTypesController {
                 name: 'test',
                 fields: [
                     {
-                        id: 1,
-                        name: 'test',
+                        type: 2,
+                        name: 'Text',
+                        required: true,
                     },
                 ],
             },
@@ -52,8 +53,9 @@ export class AssetTypesController {
                 name: 'test',
                 fields: [
                     {
-                        id: 1,
-                        name: 'test',
+                        type: 2,
+                        name: 'Text',
+                        required: true,
                     },
                 ],
             },

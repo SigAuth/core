@@ -206,6 +206,12 @@ export class AppsService {
             },
         });
 
+        const assetTypes = await this.prisma.assetType.findMany({
+            where: {
+                id: { in: [PROTECTED.AssetType.id, ...new Set(assets.map(a => a.typeId))] },
+            },
+        });
+
         const containers = await this.prisma.container.findMany({
             where: {
                 PermissionInstance: {
@@ -233,8 +239,9 @@ export class AppsService {
             webFetch: app.webFetch,
             accounts,
             assets,
+            assetTypes,
             containers,
-            containerAssets,
+            filtered,
         };
     }
 }
