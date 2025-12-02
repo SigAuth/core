@@ -324,19 +324,44 @@ export class AuthService {
             },
         });
 
-        if (
-            permInstance ||
-            (await this.prisma.permissionInstance.findFirst({
-                where: {
-                    identifier: Utils.convertPermissionNameToIdent(SigAuthRootPermissions.ROOT),
-                    appId: PROTECTED.App.id,
-                    accountId: tokenAccountId,
-                },
-            }))
-        ) {
+        if (permInstance) {
             return 'OK';
         } else {
             throw new ForbiddenException('Forbidden');
         }
+    }
+
+    public async getUserInfo(accessToken: string, appToken: string) {
+        const app = await this.prisma.app.findUnique({ where: { token: appToken } });
+        if (!app || app.token !== appToken) {
+            throw new NotFoundException("Couldn't resolve app");
+        }
+
+        const decoded = await jwtVerify(accessToken, this.publicKey!, {
+            audience: app.name,
+            issuer: process.env.FRONTEND_URL || 'No issuer provided in env',
+        });
+
+        if (!decoded || decoded.payload.exp! < Date.now() / 1000) throw new UnauthorizedException('Invalid access token');
+        const tokenAccountId = +decoded.payload.sub!;
+
+        const permissions = await this.prisma.permissionInstance.findMany({
+            where: {
+                OR: [
+                    { accountId: tokenAccountId, appId: app.id },
+                    { accountId: tokenAccountId, appId: PROTECTED.App.id },
+                ],
+            },
+        });
+
+        const containers = permissions.filter(p => p.containerId !== null && p.assetId === null).map(p => p.containerId) as number[];
+        const assets = permissions.filter(p => p.assetId !== null).map(p => p.assetId) as number[];
+        const globals = permissions.filter(p => p.containerId === null && p.assetId === null).map(p => p.identifier);
+
+        return {
+            containers,
+            assets,
+            globals,
+        };
     }
 }

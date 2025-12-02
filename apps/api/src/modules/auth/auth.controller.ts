@@ -3,7 +3,7 @@ import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
     ApiBadRequestResponse,
@@ -94,6 +94,20 @@ export class AuthController {
     @ApiBadRequestResponse({ description: 'Permission query parameter is missing.' })
     async hasPermission(@Req() req: Request, @Query() permissionDto: HasPermissionDto) {
         return await this.authService.hasPermission(permissionDto);
+    }
+
+    @Get('/oidc/userinfo')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'Provides User general info and lists which containers and directly correlate to the user.',
+        example: {
+            assets: [1, 2, 3],
+            containers: [1, 2],
+            roots: ['app-administrator'],
+        },
+    })
+    async getUserInfo(@Req() req: Request, @Query('accessToken') accessToken: string, @Query('app-token') appToken: string) {
+        return await this.authService.getUserInfo(accessToken, appToken);
     }
 
     @Get('init')
