@@ -7,6 +7,8 @@ import { request } from '@/lib/utils';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
+let ranAuthenticate = false;
+
 export const OIDCSignInPage = () => {
     const { session } = useSession();
     const [searchParams] = useSearchParams();
@@ -16,7 +18,8 @@ export const OIDCSignInPage = () => {
 
     if (!appId) toast.error('No appId provided');
 
-    if (session.account && appId) {
+    if (session.account && appId && !ranAuthenticate) {
+        ranAuthenticate = true;
         request('GET', '/api/auth/oidc/authenticate?appId=' + appId).then(async res => {
             if (res.ok) {
                 window.location.href = await res.text();
