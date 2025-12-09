@@ -1,6 +1,6 @@
 {
     "name": "@sigauth/generics",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "type": "module",
     "description": "SigAuth Generic Types for the core integration",
     "keywords": [

@@ -101,8 +101,8 @@ export class AuthController {
     @ApiOkResponse({
         description: 'Provides User general info and lists which containers and directly correlate to the user.',
         example: {
-            assets: [1, 2, 3],
-            containers: [1, 2],
+            assets: [{ identifier: 'asset-read', assetId: 66, containerId: 12 }],
+            containers: [{ identifier: 'container-admin', containerId: 12 }],
             roots: ['app-administrator'],
         },
     })

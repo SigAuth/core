@@ -14,6 +14,7 @@ import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } fro
 import * as process from 'node:process';
 import * as speakeasy from 'speakeasy';
 import { OIDCAuthenticateDto } from './dto/oidc-authenticate.dto';
+import { UserInfo } from '@sigauth/generics/json-types';
 
 @Injectable()
 export class AuthService {
@@ -331,7 +332,7 @@ export class AuthService {
         }
     }
 
-    public async getUserInfo(accessToken: string, appToken: string) {
+    public async getUserInfo(accessToken: string, appToken: string): Promise<UserInfo> {
         const app = await this.prisma.app.findFirst({ where: { token: appToken } });
         if (!app || app.token !== appToken) {
             throw new NotFoundException("Couldn't resolve app");
@@ -354,14 +355,14 @@ export class AuthService {
             },
         });
 
-        const containers = permissions.filter(p => p.containerId !== null && p.assetId === null).map(p => p.containerId) as number[];
-        const assets = permissions.filter(p => p.assetId !== null).map(p => p.assetId) as number[];
-        const globals = permissions.filter(p => p.containerId === null && p.assetId === null).map(p => p.identifier);
+        const containers = permissions.filter(p => p.containerId !== null && p.assetId === null);
+        const assets = permissions.filter(p => p.assetId !== null);
+        const root = permissions.filter(p => p.containerId === null && p.assetId === null).map(p => p.identifier);
 
         return {
             containers,
             assets,
-            globals,
+            root,
         };
     }
 }

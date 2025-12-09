@@ -1,4 +1,5 @@
 import { Account, Asset, AssetType, Container } from 'src/prisma-generated/browser';
+import { PermissionInstance } from 'src/prisma-generated/client';
 
 export type JSONSerializable = string | number | boolean | null | { [key: string]: JSONSerializable } | JSONSerializable[];
 
@@ -39,4 +40,10 @@ export type AppInfo = {
     assetTypes: AssetType[];
     containers: Container[];
     containerAssets: Asset[];
+};
+
+export type UserInfo = {
+    containers: PermissionInstance[];
+    assets: PermissionInstance[];
+    root: string[];
 };
