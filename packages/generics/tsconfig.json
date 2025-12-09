@@ -4,8 +4,8 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src",
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
+        "module": "esnext",
+        "moduleResolution": "node",
         "declaration": true,
         "emitDeclarationOnly": false,
         "removeComments": true,
@@ -17,7 +17,7 @@
         "skipLibCheck": false,
         "skipDefaultLibCheck": false,
 
-        "target": "ES2023",
+        "target": "es2024",
         "sourceMap": true,
         "baseUrl": "./", // alias doesnt work for package that consumes this package as library
         "incremental": true,
