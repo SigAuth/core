@@ -153,7 +153,7 @@ export class AuthService {
                 where: { id: { in: assetTypeIds } },
             });
 
-            return { account, session, accounts: [], assets: [], assetTypes: [], apps: [], containers: [] }; // TODO test if this works
+            return { account, session, accounts, assets, assetTypes, apps, containers };
         }
     }
 

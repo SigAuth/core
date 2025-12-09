@@ -53,7 +53,7 @@ const RootComponent: React.FC = () => {
                         <SessionContextProvider init={session}>
                             <Routes>
                                 <Route path="/auth/oidc" element={<OIDCSignInPage />} />
-                                {session?.account && init ? (
+                                {session?.account ? (
                                     <>
                                         <Route element={<Layout />}>
                                             <Route path="/" element={<HomePage />} />

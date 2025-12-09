@@ -1,18 +1,16 @@
+import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
-import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default defineConfig([
     {
         ignores: ['coverage', '**/public', '**/dist', 'pnpm-lock.yaml', 'pnpm-workspace.yaml'],
     },
-
     js.configs.recommended,
-    ...tseslint.configs.recommended,
-    eslintPluginPrettierRecommended,
+    eslintPluginPrettierRecommended as any,
     {
         files: ['**/*.{ts,tsx}'],
         plugins: {
@@ -32,15 +30,10 @@ export default tseslint.config(
             globals: globals.browser,
         },
     },
-
     {
         files: ['apps/api/**/*.{ts,tsx,js}'],
-        ...tseslint.configs.recommendedTypeChecked[0],
         languageOptions: {
-            globals: {
-                ...globals.node,
-                ...globals.jest,
-            },
+            globals: { ...globals.node, ...globals.jest },
             sourceType: 'commonjs',
             parserOptions: {
                 projectService: true,
@@ -54,4 +47,4 @@ export default tseslint.config(
             '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
         },
     },
-);
+]);
