@@ -1,10 +1,6 @@
-export type JSONSerializable =
-    | string
-    | number
-    | boolean
-    | null
-    | { [key: string]: JSONSerializable }
-    | JSONSerializable[];
+import { Account, Asset, AssetType, Container } from 'src/prisma-generated/browser';
+
+export type JSONSerializable = string | number | boolean | null | { [key: string]: JSONSerializable } | JSONSerializable[];
 
 export type AppPermission = {
     asset: string[];
@@ -34,3 +30,13 @@ export enum AssetFieldType {
     // ASSET = 5,
     // ACCOUNT = 6,
 }
+
+export type AppInfo = {
+    permissions: AppPermission;
+    webFetch: AppWebFetch;
+    accounts: Account[];
+    assets: Asset[];
+    assetTypes: AssetType[];
+    containers: Container[];
+    containerAssets: Asset[];
+};

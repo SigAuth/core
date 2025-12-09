@@ -5,7 +5,7 @@
         "outDir": "./dist",
         "rootDir": "./src",
         "module": "esnext",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "declaration": true,
         "emitDeclarationOnly": false,
         "removeComments": true,

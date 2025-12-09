@@ -11,7 +11,7 @@ import {
     RequestTimeoutException,
     UnprocessableEntityException,
 } from '@nestjs/common';
-import { AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
+import { AppInfo, AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
 import { App } from '@sigauth/generics/prisma-client';
 import { PROTECTED } from '@sigauth/generics/protected';
 import dayjs from 'dayjs';
@@ -176,7 +176,7 @@ export class AppsService {
         }
     }
 
-    async getAppInfo(appToken: string) {
+    async getAppInfo(appToken: string): Promise<AppInfo> {
         const app = await this.prisma.app.findFirst({ where: { token: appToken } });
         if (!app) throw new NotFoundException("Couldn't resolve app");
 
@@ -235,13 +235,13 @@ export class AppsService {
         );
 
         return {
-            permissions: app.permissions,
-            webFetch: app.webFetch,
+            permissions: app.permissions as AppPermission,
+            webFetch: app.webFetch as AppWebFetch,
             accounts,
             assets,
             assetTypes,
             containers,
-            filtered,
+            containerAssets: filtered,
         };
     }
 }
