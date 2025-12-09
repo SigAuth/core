@@ -14,13 +14,15 @@ export const OIDCSignInPage = () => {
     const [searchParams] = useSearchParams();
 
     const appId = searchParams.get('appId');
+    const redirectUri = searchParams.get('redirectUri');
     // TODO const challenge = searchParams.get('challenge');
 
     if (!appId) toast.error('No appId provided');
+    if (!redirectUri) toast.error('No redirectUri provided');
 
-    if (session.account && appId && !ranAuthenticate) {
+    if (session.account && appId && redirectUri && !ranAuthenticate) {
         ranAuthenticate = true;
-        request('GET', '/api/auth/oidc/authenticate?appId=' + appId).then(async res => {
+        request('GET', '/api/auth/oidc/authenticate?appId=' + appId + '&redirectUri=' + redirectUri).then(async res => {
             if (res.ok) {
                 window.location.href = await res.text();
             } else {

@@ -4,8 +4,8 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src",
-        "module": "esnext",
-        "moduleResolution": "bundler",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
         "declaration": true,
         "emitDeclarationOnly": false,
         "removeComments": true,

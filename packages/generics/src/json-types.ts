@@ -1,5 +1,4 @@
-import { Account, Asset, AssetType, Container } from 'src/prisma-generated/browser';
-import { PermissionInstance } from 'src/prisma-generated/client';
+import { Account, Asset, AssetType, Container, PermissionInstance } from 'src/prisma-generated/browser.js';
 
 export type JSONSerializable = string | number | boolean | null | { [key: string]: JSONSerializable } | JSONSerializable[];
 

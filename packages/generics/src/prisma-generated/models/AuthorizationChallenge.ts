@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.js"
-import type * as Prisma from "../internal/prismaNamespace.js"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AuthorizationChallenge
@@ -42,6 +42,7 @@ export type AuthorizationChallengeMinAggregateOutputType = {
   appId: number | null
   authorizationCode: string | null
   challenge: string | null
+  redirectUri: string | null
   created: Date | null
 }
 
@@ -51,6 +52,7 @@ export type AuthorizationChallengeMaxAggregateOutputType = {
   appId: number | null
   authorizationCode: string | null
   challenge: string | null
+  redirectUri: string | null
   created: Date | null
 }
 
@@ -60,6 +62,7 @@ export type AuthorizationChallengeCountAggregateOutputType = {
   appId: number
   authorizationCode: number
   challenge: number
+  redirectUri: number
   created: number
   _all: number
 }
@@ -81,6 +84,7 @@ export type AuthorizationChallengeMinAggregateInputType = {
   appId?: true
   authorizationCode?: true
   challenge?: true
+  redirectUri?: true
   created?: true
 }
 
@@ -90,6 +94,7 @@ export type AuthorizationChallengeMaxAggregateInputType = {
   appId?: true
   authorizationCode?: true
   challenge?: true
+  redirectUri?: true
   created?: true
 }
 
@@ -99,6 +104,7 @@ export type AuthorizationChallengeCountAggregateInputType = {
   appId?: true
   authorizationCode?: true
   challenge?: true
+  redirectUri?: true
   created?: true
   _all?: true
 }
@@ -195,6 +201,7 @@ export type AuthorizationChallengeGroupByOutputType = {
   appId: number
   authorizationCode: string
   challenge: string | null
+  redirectUri: string
   created: Date
   _count: AuthorizationChallengeCountAggregateOutputType | null
   _avg: AuthorizationChallengeAvgAggregateOutputType | null
@@ -227,6 +234,7 @@ export type AuthorizationChallengeWhereInput = {
   appId?: Prisma.IntFilter<"AuthorizationChallenge"> | number
   authorizationCode?: Prisma.StringFilter<"AuthorizationChallenge"> | string
   challenge?: Prisma.StringNullableFilter<"AuthorizationChallenge"> | string | null
+  redirectUri?: Prisma.StringFilter<"AuthorizationChallenge"> | string
   created?: Prisma.DateTimeFilter<"AuthorizationChallenge"> | Date | string
   session?: Prisma.XOR<Prisma.SessionScalarRelationFilter, Prisma.SessionWhereInput>
   app?: Prisma.XOR<Prisma.AppScalarRelationFilter, Prisma.AppWhereInput>
@@ -238,6 +246,7 @@ export type AuthorizationChallengeOrderByWithRelationInput = {
   appId?: Prisma.SortOrder
   authorizationCode?: Prisma.SortOrder
   challenge?: Prisma.SortOrderInput | Prisma.SortOrder
+  redirectUri?: Prisma.SortOrder
   created?: Prisma.SortOrder
   session?: Prisma.SessionOrderByWithRelationInput
   app?: Prisma.AppOrderByWithRelationInput
@@ -252,6 +261,7 @@ export type AuthorizationChallengeWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.AuthorizationChallengeWhereInput | Prisma.AuthorizationChallengeWhereInput[]
   sessionId?: Prisma.StringFilter<"AuthorizationChallenge"> | string
   appId?: Prisma.IntFilter<"AuthorizationChallenge"> | number
+  redirectUri?: Prisma.StringFilter<"AuthorizationChallenge"> | string
   created?: Prisma.DateTimeFilter<"AuthorizationChallenge"> | Date | string
   session?: Prisma.XOR<Prisma.SessionScalarRelationFilter, Prisma.SessionWhereInput>
   app?: Prisma.XOR<Prisma.AppScalarRelationFilter, Prisma.AppWhereInput>
@@ -263,6 +273,7 @@ export type AuthorizationChallengeOrderByWithAggregationInput = {
   appId?: Prisma.SortOrder
   authorizationCode?: Prisma.SortOrder
   challenge?: Prisma.SortOrderInput | Prisma.SortOrder
+  redirectUri?: Prisma.SortOrder
   created?: Prisma.SortOrder
   _count?: Prisma.AuthorizationChallengeCountOrderByAggregateInput
   _avg?: Prisma.AuthorizationChallengeAvgOrderByAggregateInput
@@ -280,12 +291,14 @@ export type AuthorizationChallengeScalarWhereWithAggregatesInput = {
   appId?: Prisma.IntWithAggregatesFilter<"AuthorizationChallenge"> | number
   authorizationCode?: Prisma.StringWithAggregatesFilter<"AuthorizationChallenge"> | string
   challenge?: Prisma.StringNullableWithAggregatesFilter<"AuthorizationChallenge"> | string | null
+  redirectUri?: Prisma.StringWithAggregatesFilter<"AuthorizationChallenge"> | string
   created?: Prisma.DateTimeWithAggregatesFilter<"AuthorizationChallenge"> | Date | string
 }
 
 export type AuthorizationChallengeCreateInput = {
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
   session: Prisma.SessionCreateNestedOneWithoutChallengesInput
   app: Prisma.AppCreateNestedOneWithoutAuthorizationChallengeInput
@@ -297,12 +310,14 @@ export type AuthorizationChallengeUncheckedCreateInput = {
   appId: number
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
 }
 
 export type AuthorizationChallengeUpdateInput = {
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.SessionUpdateOneRequiredWithoutChallengesNestedInput
   app?: Prisma.AppUpdateOneRequiredWithoutAuthorizationChallengeNestedInput
@@ -314,6 +329,7 @@ export type AuthorizationChallengeUncheckedUpdateInput = {
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -323,12 +339,14 @@ export type AuthorizationChallengeCreateManyInput = {
   appId: number
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
 }
 
 export type AuthorizationChallengeUpdateManyMutationInput = {
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -338,6 +356,7 @@ export type AuthorizationChallengeUncheckedUpdateManyInput = {
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -357,6 +376,7 @@ export type AuthorizationChallengeCountOrderByAggregateInput = {
   appId?: Prisma.SortOrder
   authorizationCode?: Prisma.SortOrder
   challenge?: Prisma.SortOrder
+  redirectUri?: Prisma.SortOrder
   created?: Prisma.SortOrder
 }
 
@@ -371,6 +391,7 @@ export type AuthorizationChallengeMaxOrderByAggregateInput = {
   appId?: Prisma.SortOrder
   authorizationCode?: Prisma.SortOrder
   challenge?: Prisma.SortOrder
+  redirectUri?: Prisma.SortOrder
   created?: Prisma.SortOrder
 }
 
@@ -380,6 +401,7 @@ export type AuthorizationChallengeMinOrderByAggregateInput = {
   appId?: Prisma.SortOrder
   authorizationCode?: Prisma.SortOrder
   challenge?: Prisma.SortOrder
+  redirectUri?: Prisma.SortOrder
   created?: Prisma.SortOrder
 }
 
@@ -479,6 +501,7 @@ export type AuthorizationChallengeUncheckedUpdateManyWithoutAppNestedInput = {
 export type AuthorizationChallengeCreateWithoutSessionInput = {
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
   app: Prisma.AppCreateNestedOneWithoutAuthorizationChallengeInput
 }
@@ -488,6 +511,7 @@ export type AuthorizationChallengeUncheckedCreateWithoutSessionInput = {
   appId: number
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
 }
 
@@ -526,12 +550,14 @@ export type AuthorizationChallengeScalarWhereInput = {
   appId?: Prisma.IntFilter<"AuthorizationChallenge"> | number
   authorizationCode?: Prisma.StringFilter<"AuthorizationChallenge"> | string
   challenge?: Prisma.StringNullableFilter<"AuthorizationChallenge"> | string | null
+  redirectUri?: Prisma.StringFilter<"AuthorizationChallenge"> | string
   created?: Prisma.DateTimeFilter<"AuthorizationChallenge"> | Date | string
 }
 
 export type AuthorizationChallengeCreateWithoutAppInput = {
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
   session: Prisma.SessionCreateNestedOneWithoutChallengesInput
 }
@@ -541,6 +567,7 @@ export type AuthorizationChallengeUncheckedCreateWithoutAppInput = {
   sessionId: string
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
 }
 
@@ -575,12 +602,14 @@ export type AuthorizationChallengeCreateManySessionInput = {
   appId: number
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
 }
 
 export type AuthorizationChallengeUpdateWithoutSessionInput = {
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   app?: Prisma.AppUpdateOneRequiredWithoutAuthorizationChallengeNestedInput
 }
@@ -590,6 +619,7 @@ export type AuthorizationChallengeUncheckedUpdateWithoutSessionInput = {
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -598,6 +628,7 @@ export type AuthorizationChallengeUncheckedUpdateManyWithoutSessionInput = {
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -606,12 +637,14 @@ export type AuthorizationChallengeCreateManyAppInput = {
   sessionId: string
   authorizationCode: string
   challenge?: string | null
+  redirectUri: string
   created?: Date | string
 }
 
 export type AuthorizationChallengeUpdateWithoutAppInput = {
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.SessionUpdateOneRequiredWithoutChallengesNestedInput
 }
@@ -621,6 +654,7 @@ export type AuthorizationChallengeUncheckedUpdateWithoutAppInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -629,6 +663,7 @@ export type AuthorizationChallengeUncheckedUpdateManyWithoutAppInput = {
   sessionId?: Prisma.StringFieldUpdateOperationsInput | string
   authorizationCode?: Prisma.StringFieldUpdateOperationsInput | string
   challenge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  redirectUri?: Prisma.StringFieldUpdateOperationsInput | string
   created?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -640,6 +675,7 @@ export type AuthorizationChallengeSelect<ExtArgs extends runtime.Types.Extension
   appId?: boolean
   authorizationCode?: boolean
   challenge?: boolean
+  redirectUri?: boolean
   created?: boolean
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
@@ -651,6 +687,7 @@ export type AuthorizationChallengeSelectCreateManyAndReturn<ExtArgs extends runt
   appId?: boolean
   authorizationCode?: boolean
   challenge?: boolean
+  redirectUri?: boolean
   created?: boolean
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
@@ -662,6 +699,7 @@ export type AuthorizationChallengeSelectUpdateManyAndReturn<ExtArgs extends runt
   appId?: boolean
   authorizationCode?: boolean
   challenge?: boolean
+  redirectUri?: boolean
   created?: boolean
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
@@ -673,10 +711,11 @@ export type AuthorizationChallengeSelectScalar = {
   appId?: boolean
   authorizationCode?: boolean
   challenge?: boolean
+  redirectUri?: boolean
   created?: boolean
 }
 
-export type AuthorizationChallengeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "appId" | "authorizationCode" | "challenge" | "created", ExtArgs["result"]["authorizationChallenge"]>
+export type AuthorizationChallengeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "appId" | "authorizationCode" | "challenge" | "redirectUri" | "created", ExtArgs["result"]["authorizationChallenge"]>
 export type AuthorizationChallengeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.SessionDefaultArgs<ExtArgs>
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
@@ -702,6 +741,7 @@ export type $AuthorizationChallengePayload<ExtArgs extends runtime.Types.Extensi
     appId: number
     authorizationCode: string
     challenge: string | null
+    redirectUri: string
     created: Date
   }, ExtArgs["result"]["authorizationChallenge"]>
   composites: {}
@@ -1133,6 +1173,7 @@ export interface AuthorizationChallengeFieldRefs {
   readonly appId: Prisma.FieldRef<"AuthorizationChallenge", 'Int'>
   readonly authorizationCode: Prisma.FieldRef<"AuthorizationChallenge", 'String'>
   readonly challenge: Prisma.FieldRef<"AuthorizationChallenge", 'String'>
+  readonly redirectUri: Prisma.FieldRef<"AuthorizationChallenge", 'String'>
   readonly created: Prisma.FieldRef<"AuthorizationChallenge", 'DateTime'>
 }
     

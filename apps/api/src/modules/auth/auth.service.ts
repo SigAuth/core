@@ -171,15 +171,16 @@ export class AuthService {
                 appId: +data.appId,
                 sessionId,
                 authorizationCode,
+                redirectUri: data.redirectUri,
             },
         });
 
-        return `${app.oidcAuthCodeUrl}?code=${challenge.authorizationCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}`;
+        return `${app.oidcAuthCodeUrl}?code=${challenge.authorizationCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}&redirectUri=${data.redirectUri}`;
     }
 
-    async exchangeOIDCToken(code: string, appToken: string) {
+    async exchangeOIDCToken(code: string, appToken: string, redirectUri: string) {
         const authChallenge = await this.prisma.authorizationChallenge.findUnique({
-            where: { authorizationCode: code },
+            where: { authorizationCode: code, redirectUri },
             include: { session: { include: { account: true } } },
         });
         if (!authChallenge) throw new NotFoundException("Couldn't resolve authorization challenge");

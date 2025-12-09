@@ -33,10 +33,14 @@ export class AuthController {
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
         description: 'Access and refresh tokens issued successfully.',
-        example: { accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi', refreshToken: 't5468gfd486wef486fsd846v864' },
+        example: {
+            accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi',
+            refreshToken: 't5468gfd486wef486fsd846v864',
+            redirectUri: 'https://myapp.com/redirect',
+        },
     })
-    async exchangeOIDC(@Query('code') code: string, @Query('app-token') appToken: string) {
-        return await this.authService.exchangeOIDCToken(code, appToken);
+    async exchangeOIDC(@Query('code') code: string, @Query('app-token') appToken: string, @Query('redirect-uri') redirectUri: string) {
+        return await this.authService.exchangeOIDCToken(code, appToken, redirectUri);
     }
 
     @Get('oidc/refresh')

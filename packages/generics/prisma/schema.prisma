@@ -61,6 +61,7 @@ model AuthorizationChallenge {
 
   authorizationCode String   @unique
   challenge         String?  @unique
+  redirectUri       String
   created           DateTime @default(now())
 
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
