@@ -17,7 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
+import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
 import { BadgePlus, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';

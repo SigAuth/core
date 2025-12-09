@@ -6,7 +6,7 @@ import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
 import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
 import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
-import type { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
+import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { Axe, Edit, Trash } from 'lucide-react';
 import { useState } from 'react';
 

@@ -11,9 +11,9 @@ import {
     RequestTimeoutException,
     UnprocessableEntityException,
 } from '@nestjs/common';
-import { AppPermission, AppWebFetch } from '@sigauth/prisma-wrapper/json-types';
-import { App } from '@sigauth/prisma-wrapper/prisma-client';
-import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
+import { AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
+import { App } from '@sigauth/generics/prisma-client';
+import { PROTECTED } from '@sigauth/generics/protected';
 import dayjs from 'dayjs';
 import { firstValueFrom, retry, timeout } from 'rxjs';
 

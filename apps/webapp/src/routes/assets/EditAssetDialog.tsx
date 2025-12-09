@@ -8,9 +8,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
-import { type Asset, type Container } from '@sigauth/prisma-wrapper/prisma-types';
-import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
+import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
+import { type Asset, type Container } from '@sigauth/generics/prisma-types';
+import { PROTECTED } from '@sigauth/generics/protected';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';

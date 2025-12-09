@@ -1,4 +1,4 @@
-import type { JSONSerializable } from '@sigauth/prisma-wrapper/json-types';
+import type { JSONSerializable } from '@sigauth/generics/json-types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

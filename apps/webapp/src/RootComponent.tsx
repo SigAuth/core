@@ -12,7 +12,7 @@ import { ContainerPage } from '@/routes/container/ContainerPage';
 import HomePage from '@/routes/home/HomePage';
 import { SettingsPage } from '@/routes/settings/SettingsPage';
 import SignInPage from '@/routes/SignIn';
-import type { Session } from '@sigauth/prisma-wrapper/prisma-types';
+import type { Session } from '@sigauth/generics/prisma-types';
 import dayjs from 'dayjs';
 import React, { StrictMode, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';

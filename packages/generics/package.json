@@ -1,9 +1,7 @@
 {
-    "name": "@sigauth/prisma-wrapper",
-    "version": "0.0.1",
+    "name": "@sigauth/generics",
+    "version": "0.1.0",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc"
     },

@@ -12,7 +12,7 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
+import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { type Request, type Response } from 'express';
 import * as process from 'node:process';
 

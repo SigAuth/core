@@ -13,7 +13,7 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AssetType } from '@sigauth/prisma-wrapper/prisma-client';
+import { AssetType } from '@sigauth/generics/prisma-client';
 
 @Controller('asset-type')
 @UseGuards(AuthGuard, IsRoot)

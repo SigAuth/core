@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
+import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';

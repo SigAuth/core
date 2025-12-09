@@ -1,8 +1,8 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { AssetService } from '@/modules/asset/asset.service';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Asset, Container } from '@sigauth/prisma-wrapper/prisma-client';
-import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
+import { Asset, Container } from '@sigauth/generics/prisma-client';
+import { PROTECTED } from '@sigauth/generics/protected';
 
 @Injectable()
 export class ContainerService {

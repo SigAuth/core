@@ -6,9 +6,9 @@ import { useSession } from '@/context/SessionContext';
 import { CreateAppDialog } from '@/routes/apps/CreateAppDialog';
 import { DeleteAppDialog } from '@/routes/apps/DeleteAppDialog';
 import { EditAppDialog } from '@/routes/apps/EditAppDialog';
-import type { AppPermission } from '@sigauth/prisma-wrapper/json-types';
-import type { App } from '@sigauth/prisma-wrapper/prisma-types';
-import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
+import type { AppPermission } from '@sigauth/generics/json-types';
+import type { App } from '@sigauth/generics/prisma-types';
+import { PROTECTED } from '@sigauth/generics/protected';
 import { Copy, Edit, Trash } from 'lucide-react';
 import { useState } from 'react';
 

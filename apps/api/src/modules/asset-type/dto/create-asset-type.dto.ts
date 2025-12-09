@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
+import { AssetTypeField } from '@sigauth/generics/json-types';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Max, Min, MinLength, ValidateNested } from 'class-validator';
 

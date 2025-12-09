@@ -1,9 +1,9 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AssetFieldType, AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
-import { AssetType } from '@sigauth/prisma-wrapper/prisma-client';
-import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
+import { AssetFieldType, AssetTypeField } from '@sigauth/generics/json-types';
+import { AssetType } from '@sigauth/generics/prisma-client';
+import { PROTECTED } from '@sigauth/generics/protected';
 
 @Injectable()
 export class AssetTypesService {

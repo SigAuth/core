@@ -5,9 +5,9 @@ import { useSession } from '@/context/SessionContext';
 import { CreateAssetTypeDialog } from '@/routes/asset-types/CreateAssetTypeDialog';
 import { DeleteAssetTypeDialog } from '@/routes/asset-types/DeleteAssetTypeDialog';
 import { EditAssetTypeDialog } from '@/routes/asset-types/EditAssetTypeDialog';
-import type { AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
-import type { AssetType } from '@sigauth/prisma-wrapper/prisma-types';
-import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
+import type { AssetTypeField } from '@sigauth/generics/json-types';
+import type { AssetType } from '@sigauth/generics/prisma-types';
+import { PROTECTED } from '@sigauth/generics/protected';
 import { Edit, Trash } from 'lucide-react';
 import { useState } from 'react';
 
