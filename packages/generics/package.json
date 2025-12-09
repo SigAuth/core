@@ -1,6 +1,6 @@
 {
     "name": "@sigauth/generics",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "type": "module",
     "description": "SigAuth Generic Types for the core integration",
     "keywords": [
@@ -23,15 +23,22 @@
     "files": [
         "dist"
     ],
+    "main": "./dist/extended-prisma.js",
+    "types": "./dist/extended-prisma.d.ts",
     "exports": {
-        "./prisma-extended": {
-            "import": "./dist/extended-prisma.js",
+        ".": {
             "types": "./dist/extended-prisma.d.ts",
+            "import": "./dist/extended-prisma.js",
+            "default": "./dist/extended-prisma.js"
+        },
+        "./prisma-extended": {
+            "types": "./dist/extended-prisma.d.ts",
+            "import": "./dist/extended-prisma.js",
             "default": "./dist/extended-prisma.js"
         },
         "./prisma-client": {
-            "import": "./dist/prisma-generated/client.js",
             "types": "./dist/prisma-generated/client.d.ts",
+            "import": "./dist/prisma-generated/client.js",
             "default": "./dist/prisma-generated/client.js"
         },
         "./prisma-types": {
@@ -39,13 +46,13 @@
             "default": "./dist/empty.js"
         },
         "./json-types": {
-            "import": "./dist/json-types.js",
             "types": "./dist/json-types.d.ts",
+            "import": "./dist/json-types.js",
             "default": "./dist/json-types.js"
         },
         "./protected": {
-            "import": "./dist/protected.js",
             "types": "./dist/protected.d.ts",
+            "import": "./dist/protected.js",
             "default": "./dist/protected.js"
         }
     },
