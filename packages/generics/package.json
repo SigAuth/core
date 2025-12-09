@@ -1,7 +1,22 @@
 {
     "name": "@sigauth/generics",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "type": "module",
+    "description": "SigAuth Generic Types for the core integration",
+    "keywords": [
+        "sigauth",
+        "core",
+        "authentication",
+        "authorization",
+        "types"
+    ],
+    "bugs": {
+        "url": "https://github.com/SigAuth/core/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SigAuth/core.git"
+    },
     "scripts": {
         "build": "tsc"
     },
