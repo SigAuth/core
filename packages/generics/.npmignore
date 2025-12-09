@@ -1,0 +1,9 @@
+/src
+/prisma
+/node_modules
+
+prisma.config.ts
+tsconfig.json
+tsconfig.tsbuildinfo
+tsup.config.ts
+pnpm-lock.yaml

@@ -15,7 +15,7 @@ import {
     ApiUnauthorizedResponse,
     ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
-import { App } from '@sigauth/prisma-wrapper/prisma-client';
+import { App } from '@sigauth/generics/prisma-client';
 
 @Controller('app')
 export class AppsController {

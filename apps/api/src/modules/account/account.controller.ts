@@ -7,7 +7,7 @@ import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { Account } from '@sigauth/prisma-wrapper/prisma-client';
+import { Account } from '@sigauth/generics/prisma-client';
 
 @Controller('account')
 @UseGuards(AuthGuard)

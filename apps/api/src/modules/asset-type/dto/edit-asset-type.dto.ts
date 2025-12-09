@@ -1,6 +1,6 @@
 import { AssetTypeFieldDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
+import { AssetTypeField } from '@sigauth/generics/json-types';
 import { Type } from 'class-transformer';
 import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
 

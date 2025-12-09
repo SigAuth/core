@@ -11,7 +11,7 @@ import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Popover, PopoverContent } from '@radix-ui/react-popover';
-import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
+import { PROTECTED } from '@sigauth/generics/protected';
 import { BadgePlus, Check, ChevronsUpDown, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
