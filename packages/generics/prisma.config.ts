@@ -8,6 +8,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 export default {
     schema: 'prisma/schema.prisma',
+    
     migrations: {
         path: 'prisma/migrations',
         seed: 'tsx prisma/seed.ts',

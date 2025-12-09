@@ -2,9 +2,13 @@
     "extends": "../../tsconfig.json",
     "include": ["src/**/*.ts", "prisma/**/*.ts"],
     "compilerOptions": {
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
-        "resolvePackageJsonExports": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "esModuleInterop": true, // CommonJS-Module sauber importieren
+        "resolveJsonModule": true, // .json-Dateien importierbar
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+
         "declaration": true,
         "removeComments": true,
         "emitDecoratorMetadata": true,
