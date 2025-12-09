@@ -2,9 +2,9 @@ import { AppSidebar, sidebarItems, type SidebarItem } from '@/components/navigat
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { Outlet, useNavigate } from 'react-router';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout() {
     const pages = useMemo(() => {
         function findPath(items: SidebarItem[], targetUrl: string): SidebarItem[] | null {
             for (const item of items) {
@@ -44,7 +44,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
-                {children}
+                {/*  Childs of the route */}
+                <Outlet />
             </main>
         </SidebarProvider>
     );

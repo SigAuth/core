@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "module": "nodenext",
+        "target": "es2024",
+        "moduleResolution": "nodenext",
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "noFallthroughCasesInSwitch": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "isolatedModules": true,
+        "incremental": true,
+        "removeComments": true,
+        "baseUrl": ".",
+        "outDir": "./dist",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "paths": {
+            "@/*": ["src/*"]
+        }
+    }
+}

@@ -1,23 +1,18 @@
 {
+    "extends": "../../tsconfig.json",
+    "include": ["src/**/*.ts", "prisma/**/*.ts"],
     "compilerOptions": {
         "module": "nodenext",
         "moduleResolution": "nodenext",
+        "resolvePackageJsonExports": true,
         "declaration": true,
         "removeComments": true,
         "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
         "target": "ES2023",
-        "sourceMap": true,
+        "baseUrl": ".",
         "outDir": "./dist",
-        "baseUrl": "./",
-        "paths": {
-            "@/*": ["./src/*"]
-        },
-        "incremental": true,
-        "skipLibCheck": true,
+        "sourceMap": true,
         "strictNullChecks": true,
-        "forceConsistentCasingInFileNames": true,
         "noImplicitAny": false,
         "strictBindCallApply": false,
         "noFallthroughCasesInSwitch": false

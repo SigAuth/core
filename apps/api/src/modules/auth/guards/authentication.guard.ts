@@ -1,6 +1,6 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma';
+import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { Request } from 'express';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class AuthGuard implements CanActivate {
         }
 
         const session = await this.prisma.session.findUnique({
-            where: { sessionId: sid },
+            where: { id: sid },
             include: {
                 account: {
                     include: {

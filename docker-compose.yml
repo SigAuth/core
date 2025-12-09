@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16
+    container_name: sigauth-db
+    environment:
+      POSTGRES_DB: sigauth
+      POSTGRES_USER: sigauthuser
+      POSTGRES_PASSWORD: sigauthpass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    container_name: sigauth-migrate
+    build:
+      context: .
+      target: build
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://sigauthuser:sigauthpass@db:5432/sigauth
+    command: >
+      sh -lc "pnpm -C packages/prisma-wrapper exec prisma migrate deploy"
+
+  api:
+    container_name: sigauth-api
+    build:
+      context: .
+      target: runtime
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PORT: 3000
+      # is uses in PrismaService.init TODO check if really neccesaary
+      FRONTEND_URL: http://localhost:3000
+      # Replaces .env in packages/prisma-wrapper
+      DATABASE_URL: postgresql://sigauthuser:sigauthpass@db:5432/sigauth
+      SESSION_EXPIRATION_OFFSET: 5
+      AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET: 5
+      OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET: 10
+      OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET: 30
+    ports:
+      - '3010:3000'
+    volumes:
+      - sigauth-keys:/app/keys
+
+volumes:
+  pgdata:
+  sigauth-keys:

@@ -4,14 +4,16 @@ import { CreateAccountDto } from '@/modules/account/dto/create-account.dto';
 import { DeleteAccountDto } from '@/modules/account/dto/delete-account.dto';
 import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
 import { PermissionSetDto } from '@/modules/account/dto/permission-set.dto';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AppPermission } from '@sigauth/prisma-wrapper/json-types';
-import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma';
+import { AccountWithPermissions } from '@sigauth/prisma-wrapper/prisma-extended';
 import { Account, PermissionInstance, Prisma, PrismaClient } from '@sigauth/prisma-wrapper/prisma-client';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AccountService {
+    private logger: Logger = new Logger(AccountService.name);
+
     constructor(private readonly prisma: PrismaService) {}
 
     async createAccount(createAccountDto: CreateAccountDto): Promise<AccountWithPermissions> {
@@ -103,21 +105,23 @@ export class AccountService {
                     throw new BadRequestException(`Container with ID ${perm.containerId} is not related to App ${app!.name}`);
             }
 
+            this.logger.debug(`Checking permission ${perm.identifier} for app ${app.name} ${app.id} ${perm.appId}`);
             let found = false;
             const permissions = app.permissions as AppPermission;
-            if (permissions.asset.includes(perm.identifier)) {
+            const ident = Utils.convertPermissionNameToIdent(perm.identifier);
+            if (permissions.asset.map(p => Utils.convertPermissionNameToIdent(p)).includes(ident)) {
                 found = true;
                 if (!perm.assetId || !perm.containerId) {
                     throw new BadRequestException(`Asset ID and Container ID must be provided for asset permissions`);
                 }
                 await checkAppContainerRelation(this.prisma);
-            } else if (permissions.container.includes(perm.identifier)) {
+            } else if (permissions.container.map(p => Utils.convertPermissionNameToIdent(p)).includes(ident)) {
                 found = true;
                 if (!perm.containerId || perm.assetId) {
                     throw new BadRequestException(`Container ID without an asset ID must be provided for container permissions`);
                 }
                 await checkAppContainerRelation(this.prisma);
-            } else if (permissions.root.includes(perm.identifier)) {
+            } else if (permissions.root.map(p => Utils.convertPermissionNameToIdent(p)).includes(ident)) {
                 found = true;
                 if (perm.containerId || perm.assetId) {
                     throw new BadRequestException(`No Container ID or Asset ID must be provided for root permissions`);
@@ -128,7 +132,7 @@ export class AccountService {
             const queryObject = {
                 accountId: permissionSetDto.accountId,
                 appId: perm.appId,
-                identifier: perm.identifier,
+                identifier: ident,
                 containerId: perm.containerId ?? null,
                 assetId: perm.assetId ?? null,
             };
@@ -143,7 +147,7 @@ export class AccountService {
                     });
                     maintained.push(createdPerm);
                 } catch (_) {
-                    throw new BadRequestException("Error creating permission: some foreign keys do not exist");
+                    throw new BadRequestException('Error creating permission: some foreign keys do not exist');
                 }
             } else {
                 maintained.push(existing);

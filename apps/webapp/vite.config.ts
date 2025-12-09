@@ -1,7 +1,7 @@
-import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react-swc'
-import path from 'path'
-import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
+import { defineConfig } from 'vite';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,9 +14,16 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:3000', // local nest app
+                target: 'http://localhost:4000', // local nest app
+                changeOrigin: true,
+            },
+            '/.well-known': {
+                target: 'http://localhost:4000', // local nest app
                 changeOrigin: true,
             },
         },
     },
-})
+    build: {
+        sourcemap: true,
+    },
+});

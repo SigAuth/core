@@ -17,6 +17,7 @@ import { z } from 'zod';
 const formSchema = z.object({
     name: z.string().min(4, 'Name must be at least 4 characters long'),
     url: z.string().url('Invalid URL'),
+    oidcAuthCodeUrl: z.string().url('Invalid OIDC Authorization Code URL').optional(),
     permissions: z.object({
         asset: z.array(z.string().min(3, 'Asset permission must be at least 3 characters long')),
         container: z.array(z.string().min(3, 'Container permission must be at least 3 characters long')),
@@ -63,7 +64,7 @@ export const CreateAppDialog = () => {
     const webFetch = form.watch('webFetchEnabled');
 
     const addItem = () => {
-        if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9 _-]*$/i.test(permissionField)) {
+        if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9_-]*$/i.test(permissionField)) {
             return;
         }
 
@@ -135,6 +136,23 @@ export const CreateAppDialog = () => {
 
                             <FormField
                                 control={form.control}
+                                name="oidcAuthCodeUrl"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>OIDC Authorization Code URL</FormLabel>
+                                        <FormDescription>
+                                            The URL of your application's OIDC authorization code endpoint. (optional)
+                                        </FormDescription>
+                                        <FormControl>
+                                            <Input placeholder="https://example.com/oidc/auth" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
                                 name="webFetchEnabled"
                                 render={({ field }) => (
                                     <FormItem>
@@ -167,7 +185,7 @@ export const CreateAppDialog = () => {
                                                 <Input
                                                     id="permission-name"
                                                     placeholder="e.g Post Modify Permission"
-                                                    className={`pe-9 ${((permissionField.length > 0 && permissionField.length < 3) || !/^[A-Z0-9 _-]*$/i.test(permissionField)) && 'border-destructive !ring-destructive text-destructive placeholder:text-destructive'}`}
+                                                    className={`pe-9 ${((permissionField.length > 0 && permissionField.length < 3) || !/^[A-Z0-9_-]*$/i.test(permissionField)) && 'border-destructive !ring-destructive text-destructive placeholder:text-destructive'}`}
                                                     value={permissionField}
                                                     onChange={e => setPermissionField(e.target.value)}
                                                 />
@@ -184,7 +202,7 @@ export const CreateAppDialog = () => {
                                             </div>
 
                                             {((permissionField.length > 0 && permissionField.length < 3) ||
-                                                !/^[A-Z0-9 _-]*$/i.test(permissionField)) && (
+                                                !/^[A-Z0-9_-]*$/i.test(permissionField)) && (
                                                 <p data-slot="form-message" className="text-destructive text-sm mt-2">
                                                     Permission must be at least 3 characters long and alphanumeric.
                                                 </p>

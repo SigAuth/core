@@ -1,13 +1,5 @@
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { request } from '@/lib/utils';
@@ -20,8 +12,8 @@ const SignInPage = () => {
 
         // TODO add 2FA
         if (username.length < 3 || password.length < 3) return toast.warning('Please enter longer credentials.');
-        const res = await request('GET', `/api/authentication/login?username=${username}&password=${password}`);
-        console.log(res);
+        const res = await request('POST', `/api/auth/login`, { username, password });
+
         if (res.ok) {
             toast.success('Login successful!');
             window.location.reload();
@@ -53,11 +45,7 @@ const SignInPage = () => {
                         <div className="grid gap-2">
                             <div className="flex items-center">
                                 <Label htmlFor="password">Password</Label>
-                                <Button
-                                    disabled
-                                    variant="link"
-                                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                                >
+                                <Button disabled variant="link" className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
                                     Forgot your password?
                                 </Button>
                             </div>

@@ -16,12 +16,9 @@ export class AssetService {
         intern: boolean,
     ): Promise<Asset> {
         if (!intern && assetTypeId == PROTECTED.AssetType.id)
-            throw new BadRequestException(
-                'Cannot create asset of protected asset type (id: ' + PROTECTED.AssetType.id + ')',
-            );
+            throw new BadRequestException('Cannot create asset of protected asset type (id: ' + PROTECTED.AssetType.id + ')');
 
-        const finalAssetTypeId =
-            assetTypeId ?? (await this.prisma.asset.findUnique({ where: { id: assetId ?? -1 } }))?.typeId;
+        const finalAssetTypeId = assetTypeId ?? (await this.prisma.asset.findUnique({ where: { id: assetId ?? -1 } }))?.typeId;
         if (!finalAssetTypeId) throw new NotFoundException('Invalid asset type');
 
         const assetType = await this.prisma.assetType.findUnique({ where: { id: finalAssetTypeId } });
@@ -31,8 +28,7 @@ export class AssetService {
         if (!assetTypeFields.filter(f => f.required).every(af => Object.keys(fields).includes(af.id.toString())))
             throw new BadRequestException('Required fields are missing');
 
-        if (Object.values(fields).some(v => v === undefined))
-            throw new BadRequestException('Some fields have undefined values');
+        if (Object.values(fields).some(v => v === undefined)) throw new BadRequestException('Some fields have undefined values');
 
         if (Object.keys(fields).every(k => !assetTypeFields.find(f => f.id.toString() == k)))
             throw new BadRequestException(
@@ -77,8 +73,7 @@ export class AssetService {
     async applyUsedContainers(assetId: number, containerIds: number[]): Promise<Container[]> {
         const asset = await this.prisma.asset.findUnique({ where: { id: assetId } });
         if (!asset) throw new NotFoundException('Asset not found');
-        if (containerIds.includes(PROTECTED.Container.id))
-            throw new BadRequestException('Cannot modify protected container');
+        if (containerIds.includes(PROTECTED.Container.id)) throw new BadRequestException('Cannot modify protected container');
 
         if ((await this.prisma.container.count({ where: { id: { in: containerIds } } })) != containerIds.length)
             throw new NotFoundException('Container not found');
@@ -109,8 +104,7 @@ export class AssetService {
     async deleteAssets(ids: number[]): Promise<Asset[]> {
         const assets = await this.prisma.asset.findMany({ where: { id: { in: ids } } });
         const containers = await this.prisma.container.findMany({ where: {} });
-        if (assets.length == 0 || assets.length != ids.length)
-            throw new NotFoundException('Not all asset found or invalid ids provided');
+        if (assets.length == 0 || assets.length != ids.length) throw new NotFoundException('Not all asset found or invalid ids provided');
 
         for (const a of assets) {
             await this.prisma.permissionInstance.deleteMany({

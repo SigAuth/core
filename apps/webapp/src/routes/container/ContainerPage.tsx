@@ -5,7 +5,7 @@ import { useSession } from '@/context/SessionContext';
 import { CreateContainerDialog } from '@/routes/container/CreateContainerDialog';
 import { DeleteContainerDialog } from '@/routes/container/DeleteContainer';
 import { EditContainerDialog } from '@/routes/container/EditContainerDialog';
-import type { Container } from '@sigauth/prisma-wrapper/prisma-client';
+import type { Container } from '@sigauth/prisma-wrapper/prisma-types';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
 import { Edit, Trash } from 'lucide-react';
 import { useState } from 'react';

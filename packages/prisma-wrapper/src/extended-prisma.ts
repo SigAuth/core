@@ -1,6 +1,9 @@
-import { Prisma } from '../prisma/generated/client/client.js';
+import * as PrismaNS from './prisma-generated/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-export type AccountWithPermissions = Prisma.AccountGetPayload<{
+export { PrismaPg };
+
+export type AccountWithPermissions = PrismaNS.Prisma.AccountGetPayload<{
     include: {
         permissions: true;
     };

@@ -1,23 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AssetTypeField } from '@sigauth/prisma-wrapper/json-types';
 import { Type } from 'class-transformer';
-import {
-    IsArray,
-    IsBoolean,
-    IsNumber,
-    IsOptional,
-    IsString,
-    Max,
-    Min,
-    MinLength,
-    ValidateNested,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Max, Min, MinLength, ValidateNested } from 'class-validator';
 
 export class CreateAssetTypeDto {
     @ApiProperty({ example: 'Blog Post', type: 'string' })
     @IsString()
     @MinLength(4)
-    name: string;
+    name!: string;
 
     @ApiProperty({
         example: [
@@ -42,29 +32,29 @@ export class CreateAssetTypeDto {
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => AssetTypeFieldDto)
-    fields: AssetTypeField[];
+    fields!: AssetTypeField[];
 }
 
 export class AssetTypeFieldDto {
     @IsOptional()
     @IsNumber()
     @ApiProperty({ example: 1, type: 'number' })
-    id: number;
+    id!: number;
 
     @IsNumber()
     @Min(1)
     @Max(5)
     @ApiProperty({ example: 1, enum: [1, 2, 3, 4, 5] })
-    type: number;
+    type!: number;
 
     @IsString()
     @MinLength(4)
     @ApiProperty({ example: 'Height', type: 'string' })
-    name: string;
+    name!: string;
 
     @IsBoolean()
     @ApiProperty({ example: true, type: 'boolean' })
-    required: boolean;
+    required!: boolean;
 
     @IsArray()
     @IsString({ each: true })

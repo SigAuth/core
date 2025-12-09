@@ -6,7 +6,7 @@ export class PermissionSetDto {
     @IsNumber()
     @IsPositive()
     @ApiProperty({ example: 1, type: 'number', description: 'The ID of the account to update permissions for' })
-    accountId: number;
+    accountId!: number;
 
     @IsArray()
     @ValidateNested({ each: true })
@@ -20,7 +20,7 @@ export class PermissionSetDto {
         description: 'All permissions set for the account',
         items: { type: 'object' },
     })
-    permissions: PermissionDto[];
+    permissions!: PermissionDto[];
 }
 
 export class PermissionDto {
@@ -49,7 +49,7 @@ export class PermissionDto {
     @IsNumber()
     @IsPositive()
     @ApiProperty({ example: 1, type: 'number', description: 'The ID of the app the permission applies to' })
-    appId: number;
+    appId!: number;
 
     @ApiProperty({
         example: 'read',
@@ -57,5 +57,5 @@ export class PermissionDto {
         description: 'The identifier of the permission (has to be registered in the app)',
     })
     @IsString()
-    identifier: string;
+    identifier!: string;
 }

@@ -45,9 +45,7 @@ export class AssetTypesService {
                         1,
                     ); // remove from currentField cache to prevent multiple fields being added with the same already existing id
                 } else {
-                    throw new ConflictException(
-                        'Field with id ' + newField.id + ' could not be found (duplicate or invalid id)',
-                    );
+                    throw new ConflictException('Field with id ' + newField.id + ' could not be found (duplicate or invalid id)');
                 }
             }
 
@@ -66,17 +64,14 @@ export class AssetTypesService {
         const addedFields = newFields.filter(f => !currentFields.find(cf => cf.id == f.id)); // that are only in the new field
         const removedFields = currentFields.filter(cf => !newFields.find(nf => nf.id == cf.id)); // that are only in the old fields
         const editedFields = newFields.filter(f =>
-            currentFields.find(
-                cf => cf.id == f.id && ((cf.required != f.required && f.required) || (cf.type != f.type && f.required)),
-            ),
+            currentFields.find(cf => cf.id == f.id && ((cf.required != f.required && f.required) || (cf.type != f.type && f.required))),
         ); // that are in both maps and are now required or type changed
 
         // TODO the so called default value down below is not applicable for all field types
         const assets = await this.prisma.asset.findMany({ where: { typeId: target.id } });
         for (const field of addedFields) {
             for (const asset of assets) {
-                (asset.fields as Record<number, string | number>)[field.id] =
-                    field.type === AssetFieldType.NUMBER ? 0 : ''; // set new default value
+                (asset.fields as Record<number, string | number>)[field.id] = field.type === AssetFieldType.NUMBER ? 0 : ''; // set new default value
             }
         }
 

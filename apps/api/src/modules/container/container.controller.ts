@@ -1,5 +1,5 @@
-import { AuthGuard } from '@/modules/authentication/guards/authentication.guard';
-import { IsRoot } from '@/modules/authentication/guards/authentication.is-root.guard';
+import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
+import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { ContainerService } from '@/modules/container/container.service';
 import { CreateContainerDto } from '@/modules/container/dto/create-container.dto';
 import { DeleteContainerDto } from '@/modules/container/dto/delete-container.dto';
@@ -56,11 +56,7 @@ export class ContainerController {
         },
     })
     async createContainer(@Body() createContainerDto: CreateContainerDto) {
-        return this.containerService.createContainer(
-            createContainerDto.name,
-            createContainerDto.assets,
-            createContainerDto.apps,
-        );
+        return this.containerService.createContainer(createContainerDto.name, createContainerDto.assets, createContainerDto.apps);
     }
 
     @Post('edit')

@@ -2,8 +2,8 @@ import { AssetService } from '@/modules/asset/asset.service';
 import { CreateAssetDto } from '@/modules/asset/dto/create-asset.dto';
 import { DeleteAssetDto } from '@/modules/asset/dto/delete-asset.dto';
 import { EditAssetDto } from '@/modules/asset/dto/edit-asset.dto';
-import { AuthGuard } from '@/modules/authentication/guards/authentication.guard';
-import { IsRoot } from '@/modules/authentication/guards/authentication.is-root.guard';
+import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
+import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -41,9 +41,7 @@ export class AssetController {
             statusCode: 400,
         },
     })
-    async createAsset(
-        @Body() createAssetDto: CreateAssetDto,
-    ): Promise<{ asset: Asset; updatedContainers: Container[] }> {
+    async createAsset(@Body() createAssetDto: CreateAssetDto): Promise<{ asset: Asset; updatedContainers: Container[] }> {
         const asset = await this.assetsService.createOrUpdateAsset(
             undefined,
             createAssetDto.name,
@@ -52,10 +50,7 @@ export class AssetController {
             false,
         );
 
-        const updatedContainers: Container[] = await this.assetsService.applyUsedContainers(
-            asset.id,
-            createAssetDto.containerIds || [],
-        );
+        const updatedContainers: Container[] = await this.assetsService.applyUsedContainers(asset.id, createAssetDto.containerIds || []);
 
         return { asset, updatedContainers };
     }
@@ -96,10 +91,7 @@ export class AssetController {
             false,
         );
 
-        const updatedContainers: Container[] = await this.assetsService.applyUsedContainers(
-            asset.id,
-            editAssetDto.containerIds || [],
-        );
+        const updatedContainers: Container[] = await this.assetsService.applyUsedContainers(asset.id, editAssetDto.containerIds || []);
 
         return { asset, updatedContainers };
     }

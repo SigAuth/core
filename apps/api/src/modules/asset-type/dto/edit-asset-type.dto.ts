@@ -7,11 +7,11 @@ import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
 export class EditAssetTypeDto {
     @IsNumber()
     @ApiProperty({ example: 1, type: 'number' })
-    assetTypeId: number;
+    assetTypeId!: number;
 
     @IsString()
     @ApiProperty({ example: 'Blog Post', type: 'string' })
-    updatedName: string;
+    updatedName!: string;
 
     // new fields should have no id
     // existing field should provide their id within the AssetTypeField object
@@ -19,5 +19,5 @@ export class EditAssetTypeDto {
     @ValidateNested({ each: true })
     @Type(() => AssetTypeFieldDto)
     @ApiProperty({ type: [AssetTypeFieldDto] })
-    updatedFields: AssetTypeField[];
+    updatedFields!: AssetTypeField[];
 }

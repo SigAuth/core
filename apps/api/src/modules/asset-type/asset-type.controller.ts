@@ -2,8 +2,8 @@ import { AssetTypesService } from '@/modules/asset-type/asset-type.service';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { DeleteAssetTypeDto } from '@/modules/asset-type/dto/delete-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
-import { AuthGuard } from '@/modules/authentication/guards/authentication.guard';
-import { IsRoot } from '@/modules/authentication/guards/authentication.is-root.guard';
+import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
+import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import {
     ApiConflictResponse,
@@ -31,8 +31,9 @@ export class AssetTypesController {
                 name: 'test',
                 fields: [
                     {
-                        id: 1,
-                        name: 'test',
+                        type: 2,
+                        name: 'Text',
+                        required: true,
                     },
                 ],
             },
@@ -52,8 +53,9 @@ export class AssetTypesController {
                 name: 'test',
                 fields: [
                     {
-                        id: 1,
-                        name: 'test',
+                        type: 2,
+                        name: 'Text',
+                        required: true,
                     },
                 ],
             },

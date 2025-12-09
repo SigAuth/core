@@ -1,7 +1,30 @@
-import { AppWindow, ChevronDown, Container, FlipHorizontal, Home, Layers, NotepadText, Settings, Stamp, Users } from 'lucide-react';
+import {
+    AppWindow,
+    ChevronDown,
+    Container,
+    FlipHorizontal,
+    Home,
+    Layers,
+    NotepadText,
+    Settings,
+    Stamp,
+    TriangleAlertIcon,
+    Users,
+} from 'lucide-react';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
     Sidebar,
     SidebarContent,
@@ -18,7 +41,6 @@ import {
 } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { logout } from '@/lib/utils';
-import { Collapsible } from '@radix-ui/react-collapsible';
 import { useNavigate } from 'react-router';
 
 export type SidebarItem = {
@@ -141,9 +163,33 @@ export function AppSidebar() {
             <SidebarFooter>
                 <div className="flex items-center justify-center gap-2 m-2 mx-5">
                     <ThemeToggle />
-                    <Button onClick={logout} className="w-full">
-                        Logout
-                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button className="w-full">Logout</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader className="items-center">
+                                <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
+                                    <TriangleAlertIcon className="text-destructive size-6" />
+                                </div>
+                                <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-center">
+                                    This will log you out of your current session and all apps you are currently authenticated with.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction asChild>
+                                    <Button
+                                        className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
+                                        onClick={logout}
+                                    >
+                                        Log Out
+                                    </Button>
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </SidebarFooter>
         </Sidebar>

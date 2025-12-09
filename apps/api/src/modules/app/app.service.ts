@@ -3,7 +3,14 @@ import { Utils } from '@/common/utils';
 import { CreateAppDto } from '@/modules/app/dto/create-app.dto';
 import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, Logger, NotFoundException, RequestTimeoutException, UnprocessableEntityException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    Logger,
+    NotFoundException,
+    RequestTimeoutException,
+    UnprocessableEntityException,
+} from '@nestjs/common';
 import { AppPermission, AppWebFetch } from '@sigauth/prisma-wrapper/json-types';
 import { App } from '@sigauth/prisma-wrapper/prisma-client';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
@@ -41,6 +48,7 @@ export class AppsService {
                 name: createAppDto.name,
                 url: createAppDto.url,
                 token: appToken,
+                oidcAuthCodeUrl: createAppDto.oidcAuthCodeUrl,
                 webFetch: {
                     enabled: createAppDto.webFetchEnabled,
                     lastFetch: 0,
@@ -70,7 +78,9 @@ export class AppsService {
         const uniquePerms = Array.from(new Set(allPerms));
         if (allPerms.length !== uniquePerms.length) throw new UnprocessableEntityException('Duplicate permissions in different categories');
 
-        const newPerms = editAppDto.webFetchEnabled ? await this.fetchPermissionsFromURL(app.url) : (editAppDto.permissions as AppPermission);
+        const newPerms = editAppDto.webFetchEnabled
+            ? await this.fetchPermissionsFromURL(app.url)
+            : (editAppDto.permissions as AppPermission);
         if (!newPerms) throw new UnprocessableEntityException('Fetched permissions have invalid format');
 
         // handle permission removal
@@ -80,6 +90,7 @@ export class AppsService {
             data: {
                 name: editAppDto.name,
                 url: editAppDto.url,
+                oidcAuthCodeUrl: (editAppDto.oidcAuthCodeUrl || '').length > 0 ? editAppDto.oidcAuthCodeUrl : null,
                 webFetch: {
                     enabled: editAppDto.webFetchEnabled,
                     lastFetch: editAppDto.webFetchEnabled ? dayjs().unix() : (app.webFetch as AppWebFetch).lastFetch,
@@ -160,9 +171,77 @@ export class AppsService {
     async sendAppNudge(url: string) {
         try {
             await firstValueFrom(this.httpService.get(url + APP_NUDGE_ROUTE, { withCredentials: true }));
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
+        } catch (_) {
             this.logger.error(url + " wasn't reachable couldn't send nudge");
         }
+    }
+
+    async getAppInfo(appToken: string) {
+        const app = await this.prisma.app.findFirst({ where: { token: appToken } });
+        if (!app) throw new NotFoundException("Couldn't resolve app");
+
+        const accounts = await this.prisma.account.findMany({
+            where: {
+                permissions: {
+                    some: {
+                        appId: app.id,
+                    },
+                },
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                accounts: true,
+            },
+        });
+
+        const assets = await this.prisma.asset.findMany({
+            where: {
+                PermissionInstance: {
+                    some: {
+                        appId: app.id,
+                    },
+                },
+            },
+        });
+
+        const assetTypes = await this.prisma.assetType.findMany({
+            where: {
+                id: { in: [PROTECTED.AssetType.id, ...new Set(assets.map(a => a.typeId))] },
+            },
+        });
+
+        const containers = await this.prisma.container.findMany({
+            where: {
+                PermissionInstance: {
+                    some: {
+                        appId: app.id,
+                    },
+                },
+            },
+        });
+
+        const containerIds = containers.map(c => c.id);
+
+        const containerAssets = await this.prisma.asset.findMany({
+            where: {
+                typeId: PROTECTED.AssetType.id,
+            },
+        });
+
+        const filtered = containerAssets.filter(
+            a => Array.isArray(a.fields) && containerIds.includes((a.fields as string | number[])[0] as number),
+        );
+
+        return {
+            permissions: app.permissions,
+            webFetch: app.webFetch,
+            accounts,
+            assets,
+            assetTypes,
+            containers,
+            filtered,
+        };
     }
 }

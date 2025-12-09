@@ -1,21 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-    IsBoolean,
-    IsEmail,
-    IsNumber,
-    IsOptional,
-    IsPositive,
-    IsString,
-    IsStrongPassword,
-    Matches,
-    MinLength,
-} from 'class-validator';
+import { IsBoolean, IsEmail, IsNumber, IsOptional, IsPositive, IsString, IsStrongPassword, Matches, MinLength } from 'class-validator';
 
 export class EditAccountDto {
     @IsNumber()
     @IsPositive()
     @ApiProperty({ example: 1, type: 'number', description: 'ID of the account to edit' })
-    id: number;
+    id!: number;
 
     @IsString()
     @MinLength(4)

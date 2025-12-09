@@ -6,5 +6,5 @@ export class DeleteAccountDto {
     @ArrayMinSize(1)
     @IsNumber({}, { each: true })
     @ApiProperty({ example: [1, 2, 3], type: [Number] })
-    accountIds: number[];
+    accountIds!: number[];
 }

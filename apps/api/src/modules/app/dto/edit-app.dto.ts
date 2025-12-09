@@ -1,21 +1,29 @@
-import { IsBoolean, IsNumber, IsPositive, IsString, ValidateNested } from 'class-validator';
+import { PermissionsDto } from '@/modules/app/dto/create-app.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { PermissionsDto } from '@/modules/app/dto/create-app.dto';
+import { IsBoolean, IsNumber, IsOptional, IsPositive, IsString, IsUrl, ValidateNested } from 'class-validator';
 
 export class EditAppDto {
     @IsNumber()
     @IsPositive()
     @ApiProperty({ example: 1, type: 'number', description: 'Id of the app to edit' })
-    id: number;
+    id!: number;
 
     @IsString()
     @ApiProperty({ example: 'Starlink Monitoring', description: 'Name of the app', type: 'string' })
-    name: string;
+    name!: string;
 
     @IsString()
     @ApiProperty({ example: 'https://starlink.com', description: 'URL of the app', type: 'string' })
-    url: string;
+    url!: string;
+
+    @IsOptional()
+    @IsUrl()
+    @ApiProperty({
+        example: 'https://starlink.com/oidc/auth',
+        description: 'OIDC Authorization Code URL of the app',
+    })
+    oidcAuthCodeUrl?: string;
 
     @ValidateNested()
     @Type(() => PermissionsDto)
@@ -27,7 +35,7 @@ export class EditAppDto {
             root: ['app1-administrator', 'app1-developer'],
         },
     })
-    permissions: PermissionsDto;
+    permissions!: PermissionsDto;
 
     @IsBoolean()
     @ApiProperty({
@@ -35,7 +43,7 @@ export class EditAppDto {
         type: 'boolean',
         description: 'Enable web fetch (periodically fetch permissions from the app)',
     })
-    webFetchEnabled: boolean;
+    webFetchEnabled!: boolean;
 
     @IsBoolean()
     @ApiProperty({
@@ -43,5 +51,5 @@ export class EditAppDto {
         type: 'boolean',
         description: 'Enable nudge (send push notification to the app)',
     })
-    nudge: boolean;
+    nudge!: boolean;
 }

@@ -6,5 +6,5 @@ export class DeleteAppDto {
     @ArrayMinSize(1)
     @IsNumber({}, { each: true })
     @ApiProperty({ example: [1, 2, 3], type: [Number], minItems: 1 })
-    appIds: number[];
+    appIds!: number[];
 }

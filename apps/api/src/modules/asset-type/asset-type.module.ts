@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
 import { PrismaService } from '@/common/prisma/prisma.service';
-import { AuthGuard } from '@/modules/authentication/guards/authentication.guard';
-import { IsRoot } from '@/modules/authentication/guards/authentication.is-root.guard';
-import { AssetTypesService } from '@/modules/asset-type/asset-type.service';
 import { AssetTypesController } from '@/modules/asset-type/asset-type.controller';
+import { AssetTypesService } from '@/modules/asset-type/asset-type.service';
+import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
+import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
+import { Module } from '@nestjs/common';
 
 @Module({
     controllers: [AssetTypesController],

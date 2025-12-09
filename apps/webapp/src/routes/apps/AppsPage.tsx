@@ -7,7 +7,7 @@ import { CreateAppDialog } from '@/routes/apps/CreateAppDialog';
 import { DeleteAppDialog } from '@/routes/apps/DeleteAppDialog';
 import { EditAppDialog } from '@/routes/apps/EditAppDialog';
 import type { AppPermission } from '@sigauth/prisma-wrapper/json-types';
-import type { App } from '@sigauth/prisma-wrapper/prisma-client';
+import type { App } from '@sigauth/prisma-wrapper/prisma-types';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
 import { Copy, Edit, Trash } from 'lucide-react';
 import { useState } from 'react';

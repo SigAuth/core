@@ -6,5 +6,5 @@ export class DeleteAssetTypeDto {
     @ArrayMinSize(1)
     @IsNumber({}, { each: true })
     @ApiProperty({ example: [1, 2, 3], type: [Number] })
-    assetTypeIds: number[];
+    assetTypeIds!: number[];
 }

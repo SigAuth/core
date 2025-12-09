@@ -5,13 +5,12 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "./generated/client"
+  provider = "prisma-client"
+  output   = "../src/prisma-generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -27,17 +26,45 @@ model Account {
   permissions PermissionInstance[]
 }
 
+// login session for the main idp
 model Session {
-  sessionId         String  @id @unique
-  refreshToken      String  @unique
-  authorizationCode String? @unique
+  id String @id @unique
 
-  subject   Int
-  expire    Int
-  created   Int     @default(-1)
-  challenge String?
+  subject Int
+  expire  Int
+  created Int
 
   account Account @relation(fields: [subject], references: [id])
+
+  challenges AuthorizationChallenge[]
+  instances  AuthorizationInstance[]
+}
+
+// currently active refresh tokens provided to third parties
+model AuthorizationInstance {
+  id        Int    @id @default(autoincrement())
+  sessionId String
+  appId     Int
+
+  refreshToken       String @unique
+  refreshTokenExpire Int
+
+  app     App     @relation(fields: [appId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+// pending authorization codes
+model AuthorizationChallenge {
+  id        Int    @id @default(autoincrement())
+  sessionId String
+  appId     Int
+
+  authorizationCode String   @unique
+  challenge         String?  @unique
+  created           DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  app     App     @relation(fields: [appId], references: [id])
 }
 
 model PermissionInstance {
@@ -90,12 +117,15 @@ model Container {
 }
 
 model App {
-  id          Int    @id @default(autoincrement())
-  name        String
-  url         String
-  token       String @unique
-  permissions Json
-  webFetch    Json
+  id              Int     @id @default(autoincrement())
+  name            String
+  url             String
+  oidcAuthCodeUrl String?
+  token           String  @unique
+  permissions     Json
+  webFetch        Json
 
-  PermissionInstance PermissionInstance[]
+  PermissionInstance     PermissionInstance[]
+  AuthorizationChallenge AuthorizationChallenge[]
+  AuthorizationInstance  AuthorizationInstance[]
 }

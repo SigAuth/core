@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import type { App } from '@sigauth/prisma-wrapper/prisma-client';
+import type { App } from '@sigauth/prisma-wrapper/prisma-types';
 import { TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 

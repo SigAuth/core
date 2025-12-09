@@ -1,0 +1,21 @@
+packages:
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@scarf/scarf'
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - prisma
+
+overrides:
+  body-parser@>=2.2.0 <2.2.1: '>=2.2.1'
+  glob@>=11.0.0 <11.1.0: '>=11.1.0'
+  js-yaml@>=4.0.0 <4.1.1: '>=4.1.1'
+  tar@=7.5.1: '>=7.5.2'
+  validator@<13.15.22: '>=13.15.22'
+  vite@>=7.1.0 <=7.1.10: '>=7.1.11'

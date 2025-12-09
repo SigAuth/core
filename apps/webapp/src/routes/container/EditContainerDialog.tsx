@@ -11,7 +11,7 @@ import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Popover, PopoverContent } from '@radix-ui/react-popover';
-import type { Container } from '@sigauth/prisma-wrapper/prisma-client';
+import type { Container } from '@sigauth/prisma-wrapper/prisma-types';
 import { PROTECTED } from '@sigauth/prisma-wrapper/protected';
 import { BadgePlus, Check, ChevronsUpDown, XIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -125,7 +125,7 @@ export const EditContainerDialog = ({ container, close }: { container?: Containe
                             toast.promise(form.handleSubmit(submitToApi), {
                                 loading: 'Submitting changes...',
                                 success: 'Container edited successfully',
-                                error: (err: any) => err?.message || 'Failed to edit container',
+                                error: (err: Error) => err?.message || 'Failed to edit container',
                             });
                         }}
                         className="space-y-8"

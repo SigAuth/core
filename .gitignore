@@ -1,11 +1,11 @@
 # Dependencies
 node_modules/
-pnpm-lock.yaml
 yarn.lock
 package-lock.json
 
 # Build outputs
 dist/
+keys/
 build/
 .next/
 out/
@@ -47,3 +47,4 @@ pnpm-debug.log*
 coverage/
 .tmp/
 **/generated/
+/packages/prisma-wrapper/src/prisma-generated

@@ -4,11 +4,11 @@ import { IsNumber, IsOptional, IsString } from 'class-validator';
 export class LoginRequestDto {
     @IsString()
     @ApiProperty({ example: 'admin', type: 'string' })
-    username: string;
+    username!: string;
 
     @IsString()
     @ApiProperty({ example: 'admin', type: 'string' })
-    password: string;
+    password!: string;
 
     @IsOptional()
     @IsNumber()

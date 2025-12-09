@@ -11,11 +11,7 @@ export class ContainerService {
         private readonly assetService: AssetService,
     ) {}
 
-    async createContainer(
-        name: string,
-        assets: number[],
-        apps: number[],
-    ): Promise<{ container: Container; containerAsset: Asset }> {
+    async createContainer(name: string, assets: number[], apps: number[]): Promise<{ container: Container; containerAsset: Asset }> {
         if (apps.includes(PROTECTED.App.id)) throw new BadRequestException('Cannot add protected app to container');
         // check if assets and apps actually exist
         const assetCount = await this.prisma.asset.count({ where: { id: { in: assets.map(a => a) } } });
@@ -115,8 +111,7 @@ export class ContainerService {
     }
 
     async deleteContainers(containerIds: number[]) {
-        if (containerIds.includes(PROTECTED.Container.id))
-            throw new BadRequestException('Cannot delete protected container');
+        if (containerIds.includes(PROTECTED.Container.id)) throw new BadRequestException('Cannot delete protected container');
 
         await this.prisma.permissionInstance.deleteMany({
             where: {

@@ -9,7 +9,7 @@ import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { AppPermission, AppWebFetch } from '@sigauth/prisma-wrapper/json-types';
-import type { App } from '@sigauth/prisma-wrapper/prisma-client';
+import type { App } from '@sigauth/prisma-wrapper/prisma-types';
 import { BadgePlus, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -19,6 +19,7 @@ import { z } from 'zod';
 const formSchema = z.object({
     name: z.string().min(4, 'Name must be at least 4 characters long'),
     url: z.string().url('Invalid URL'),
+    oidcAuthCodeUrl: z.string().url('Invalid OIDC Authorization Code URL').optional(),
     permissions: z.object({
         asset: z.array(z.string().min(3, 'Asset permission must be at least 3 characters long')),
         container: z.array(z.string().min(3, 'Container permission must be at least 3 characters long')),
@@ -52,6 +53,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
         defaultValues: {
             name: app?.name,
             url: app?.url,
+            oidcAuthCodeUrl: app?.oidcAuthCodeUrl || '',
             webFetchEnabled: app ? (app.webFetch as AppWebFetch).enabled : false,
             nudge: false,
             permissions: {
@@ -69,6 +71,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
             form.reset({
                 name: app.name,
                 url: app.url,
+                oidcAuthCodeUrl: app.oidcAuthCodeUrl || '',
                 webFetchEnabled: (app.webFetch as AppWebFetch).enabled,
                 nudge: false,
                 permissions: {
@@ -84,7 +87,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
     const permissions = form.watch(`permissions.${tab}`);
     const webFetch = form.watch('webFetchEnabled');
     const addItem = () => {
-        if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9 _-]*$/i.test(permissionField)) {
+        if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9_-]*$/i.test(permissionField)) {
             return;
         }
 
@@ -149,6 +152,23 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
 
                             <FormField
                                 control={form.control}
+                                name="oidcAuthCodeUrl"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>OIDC Authorization Code URL</FormLabel>
+                                        <FormDescription>
+                                            The URL of your application's OIDC authorization code endpoint. (optional)
+                                        </FormDescription>
+                                        <FormControl>
+                                            <Input placeholder="https://example.com/oidc/auth" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
                                 name="webFetchEnabled"
                                 render={({ field }) => (
                                     <FormItem>
@@ -181,7 +201,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
                                                 <Input
                                                     id="permission-name"
                                                     placeholder="e.g Post Modify Permission"
-                                                    className={`pe-9 ${((permissionField.length > 0 && permissionField.length < 3) || !/^[A-Z0-9 _-]*$/i.test(permissionField)) && 'border-destructive !ring-destructive text-destructive placeholder:text-destructive'}`}
+                                                    className={`pe-9 ${((permissionField.length > 0 && permissionField.length < 3) || !/^[A-Z0-9_-]*$/i.test(permissionField)) && 'border-destructive !ring-destructive text-destructive placeholder:text-destructive'}`}
                                                     value={permissionField}
                                                     onChange={e => setPermissionField(e.target.value)}
                                                 />
@@ -198,7 +218,7 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
                                             </div>
 
                                             {((permissionField.length > 0 && permissionField.length < 3) ||
-                                                !/^[A-Z0-9 _-]*$/i.test(permissionField)) && (
+                                                !/^[A-Z0-9_-]*$/i.test(permissionField)) && (
                                                 <p data-slot="form-message" className="text-destructive text-sm mt-2">
                                                     Permission must be at least 3 characters long and alphanumeric.
                                                 </p>
