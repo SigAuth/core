@@ -121,6 +121,17 @@ model Container {
   PermissionInstance PermissionInstance[]
 }
 
+model Mirror {
+  id   Int    @id @default(autoincrement())
+  name String
+  code String
+
+  autoRun         Boolean   @default(false)
+  autoRunInterval Int? // in minutes
+  lastRun         DateTime?
+  lastResult      String?
+}
+
 model App {
   id              Int     @id @default(autoincrement())
   name            String

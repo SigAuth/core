@@ -85,7 +85,6 @@ export const sidebarItems: SidebarItem[] = [
     {
         title: 'Mirror',
         url: '/mirror',
-        disabled: true,
         icon: FlipHorizontal,
     },
     {

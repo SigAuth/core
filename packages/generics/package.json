@@ -54,6 +54,11 @@
             "types": "./dist/protected.d.ts",
             "import": "./dist/protected.js",
             "default": "./dist/protected.js"
+        },
+        "./mirror": {
+            "types": "./dist/mirror-types.d.ts",
+            "import": "./dist/mirror-types.js",
+            "default": "./dist/mirror-types.js"
         }
     },
     "dependencies": {
