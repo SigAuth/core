@@ -40,13 +40,19 @@ export const CodeEditor = ({ code, setCode, defaultValue }: { code: string; setC
             const editor = monaco.editor.create(editorRef.current, {
                 value:
                     defaultValue ??
-                    `export class MyMirror extends Mirror {
-                        init() {
+                    `export class MyMirror extends MirrorExecutor {
+                        async create() {
                             // Your mirror initialization code here
+                            // This function is called once when the mirror is created
                         }
 
                         async run(mirror: number, progressCallback: ProgressCallback, dataUtils: DataUtils) { 
                             // Your mirror logic here
+                        }
+
+                        async delete() {
+                            // Your mirror cleanup code here
+                            // This function is called when the mirror is deleted
                         }
                     }`,
                 language: 'typescript',

@@ -1,0 +1,28 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsNumber, IsPositive, IsString, MaxLength, MinLength } from 'class-validator';
+
+export class EditMirrorDto {
+    @IsNumber()
+    @IsPositive()
+    @ApiProperty({ example: 1, type: 'number', description: 'The ID of the mirror to edit' })
+    id!: number;
+
+    @IsString()
+    @MinLength(4)
+    @MaxLength(32)
+    @ApiProperty({ example: 'My Mirror', type: 'string', minimum: 4, maximum: 32 })
+    name!: string;
+
+    @IsString()
+    @ApiProperty({ example: 'export class MyMirror extends Mirror {}', type: 'string' })
+    code!: string;
+
+    @IsBoolean()
+    @ApiProperty({ example: true, type: 'boolean', description: 'Whether the mirror should automatically run' })
+    autoRun!: boolean;
+
+    @IsNumber()
+    @IsPositive()
+    @ApiProperty({ example: 60, type: 'number', description: 'The waiting interval for automatic runs in minutes' })
+    autoRunInterval!: number;
+}

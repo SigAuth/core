@@ -2,9 +2,10 @@
 // thats why we need to copy that build file here
 
 import { Asset, AssetType, Container } from './prisma-generated/browser.js';
-export declare abstract class Mirror {
-    abstract init(): void;
+export declare abstract class MirrorExecutor {
+    abstract create(): Promise<void>;
     abstract run(mirror: number, progressCallback: ProgressCallback, dataUtils: DataUtils): Promise<void>;
+    abstract delete(): Promise<void>;
 }
 export type ProgressCallback = (progress: number, message: string) => void;
 export type DataUtils = {
