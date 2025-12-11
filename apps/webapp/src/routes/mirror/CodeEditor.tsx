@@ -6,7 +6,7 @@ import editorWorkerUrl from 'monaco-editor/esm/vs/editor/editor.worker?url';
 
 let ran = false;
 
-export const CodeEditor = ({ code, setCode, defaultValue }: { code: string; setCode: (code: string) => void; defaultValue?: string }) => {
+export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: string) => void }) => {
     const theme = useTheme();
 
     const editorRef = useRef<HTMLDivElement | null>(null);
@@ -39,9 +39,10 @@ export const CodeEditor = ({ code, setCode, defaultValue }: { code: string; setC
 
             const editor = monaco.editor.create(editorRef.current, {
                 value:
-                    defaultValue ??
-                    `export class MyMirror extends MirrorExecutor {
-                        async create() {
+                    code.length > 0
+                        ? code
+                        : `export class MyMirror extends MirrorExecutor {
+                        async init() {
                             // Your mirror initialization code here
                             // This function is called once when the mirror is created
                         }
@@ -62,7 +63,7 @@ export const CodeEditor = ({ code, setCode, defaultValue }: { code: string; setC
             await new Promise(resolve => setTimeout(resolve, 100)); // wait a bit to ensure the editor is ready
             editor.getAction('editor.action.formatDocument').run(editor.getModel()!.uri);
 
-            editor.onEndUpdate(e => {
+            editor.onDidChangeModelContent(_ => {
                 setCode(editor.getValue());
             });
             monacoInstanceRef.current = editor;
@@ -73,11 +74,5 @@ export const CodeEditor = ({ code, setCode, defaultValue }: { code: string; setC
         return () => monacoInstanceRef.current?.dispose();
     }, [theme.theme]);
 
-    return (
-        <div
-            ref={editorRef}
-            style={{ height: '800px', border: '1px solid #333' }}
-            className="h-full border-1 border-black rounded-lg p-1 w-full"
-        />
-    );
+    return <div ref={editorRef} className="h-[800px] w-full border border-black rounded-xl overflow-hidden" />;
 };

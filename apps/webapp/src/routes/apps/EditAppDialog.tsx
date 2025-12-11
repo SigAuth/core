@@ -65,7 +65,6 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
         mode: 'onChange',
     });
 
-    // wenn sich app ändert → reset
     useEffect(() => {
         if (app) {
             form.reset({

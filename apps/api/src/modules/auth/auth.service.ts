@@ -3,7 +3,7 @@ import { Utils } from '@/common/utils';
 import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { Account, App, Asset, AssetType, Container, Session } from '@sigauth/generics/prisma-client';
+import { Account, App, Asset, AssetType, Container, Mirror, Session } from '@sigauth/generics/prisma-client';
 import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { PROTECTED, SigAuthRootPermissions } from '@sigauth/generics/protected';
 import * as bycrypt from 'bcryptjs';
@@ -108,6 +108,7 @@ export class AuthService {
         assetTypes: AssetType[];
         apps: App[];
         containers: Container[];
+        mirrors: Mirror[];
     }> {
         const session = await this.prisma.session.findUnique({ where: { id: sessionId } });
         if (!account || !session) throw new UnauthorizedException('Not authenticated');
@@ -121,15 +122,16 @@ export class AuthService {
         });
 
         if (account.permissions.some(p => p.identifier == Utils.convertPermissionNameToIdent(SigAuthRootPermissions.ROOT))) {
-            const [accounts, assets, assetTypes, apps, containers] = await Promise.all([
+            const [accounts, assets, assetTypes, apps, containers, mirrors] = await Promise.all([
                 this.prisma.account.findMany({ include: { permissions: true } }),
                 this.prisma.asset.findMany(),
                 this.prisma.assetType.findMany(),
                 this.prisma.app.findMany(),
                 this.prisma.container.findMany(),
+                this.prisma.mirror.findMany(),
             ]);
 
-            return { account, session, accounts, assets, assetTypes, apps, containers };
+            return { account, session, accounts, assets, assetTypes, apps, containers, mirrors };
         } else {
             const accounts = await this.prisma.account.findMany({
                 where: { id: { in: account.accounts as number[] } },
@@ -154,7 +156,7 @@ export class AuthService {
                 where: { id: { in: assetTypeIds } },
             });
 
-            return { account, session, accounts, assets, assetTypes, apps, containers };
+            return { account, session, accounts, assets, assetTypes, apps, containers, mirrors: [] };
         }
     }
 

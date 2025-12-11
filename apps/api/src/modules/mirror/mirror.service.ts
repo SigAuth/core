@@ -13,21 +13,21 @@ export class MirrorService {
     constructor(private readonly prisma: PrismaService) {}
 
     async createMirror(createDto: CreateMirrorDto) {
-        // minify & compile code
-        const minify = await esbuild.transform(createDto.code, {
-            loader: 'ts',
-            minify: true,
-            target: ['es2020'],
-            format: 'esm',
-        });
-        this.logger.debug('Compiled mirror code:' + minify.code);
-        const instance = await this.getExecutionInstance(minify.code);
-        await instance.create();
+        // // minify & compile code
+        // const minify = await esbuild.transform(createDto.code, {
+        //     loader: 'ts',
+        //     minify: true,
+        //     target: ['es2020'],
+        //     format: 'esm',
+        // });
+        // this.logger.debug('Compiled mirror code:' + minify.code);
+        // const instance = await this.getExecutionInstance(minify.code);
+        // await instance.create();
 
         const mirror = await this.prisma.mirror.create({
             data: {
                 name: createDto.name,
-                code: createDto.code, // TODO we need to store the ts code but minify it for execution
+                code: '',
                 autoRun: createDto.autoRun,
                 autoRunInterval: createDto.autoRunInterval || 0,
             },
@@ -42,17 +42,11 @@ export class MirrorService {
         const mirror = await this.prisma.mirror.findUnique({ where: { id: edit.id } });
         if (!mirror) throw new Error('Mirror not found');
 
-        // minify & compile code
-        const minify = await esbuild.transform(edit.code, {
-            loader: 'ts',
-            minify: true,
-        });
-
         const updatedMirror = await this.prisma.mirror.update({
             where: { id: edit.id },
             data: {
                 name: edit.name,
-                code: minify.code,
+                code: edit.code, // TODO we need to store the ts code but minify it for execution
                 autoRun: edit.autoRun,
                 autoRunInterval: edit.autoRunInterval || 0,
             },

@@ -8,10 +8,6 @@ export class CreateMirrorDto {
     @ApiProperty({ example: 'My Mirror', type: 'string', minimum: 4, maximum: 32 })
     name!: string;
 
-    @IsString()
-    @ApiProperty({ example: 'export class MyMirror extends Mirror {}', type: 'string' })
-    code!: string;
-
     @IsBoolean()
     @ApiProperty({ example: true, type: 'boolean', description: 'Whether the mirror should automatically run' })
     autoRun!: boolean;
