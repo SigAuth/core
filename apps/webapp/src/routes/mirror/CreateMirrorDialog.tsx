@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 const formSchema = z.object({
     name: z.string().min(4).max(32),
-    autoRun: z.boolean(),
+    autoRun: z.boolean().optional(),
     autoRunInterval: z.number().min(1),
 });
 
@@ -29,7 +29,7 @@ export const CreateMirrorDialog = () => {
         if (res.ok) {
             const data = await res.json();
             setOpen(false);
-            setSession({ mirrors: [...session.mirrors, data.mirror] });
+            setSession({ mirrors: [...session.mirrors, data] });
             return;
         }
         throw new Error((await res.json()).message || 'Failed to create mirror');

@@ -42,16 +42,16 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
                     code.length > 0
                         ? code
                         : `export class MyMirror extends MirrorExecutor {
-                        async init() {
+                        async init(cb: Callback) {
                             // Your mirror initialization code here
                             // This function is called once when the mirror is created
                         }
 
-                        async run(mirror: number, progressCallback: ProgressCallback, dataUtils: DataUtils) { 
+                        async run(mirror: number, cb: Callback, dataUtils: DataUtils) { 
                             // Your mirror logic here
                         }
 
-                        async delete() {
+                        async delete(cb: Callback) {
                             // Your mirror cleanup code here
                             // This function is called when the mirror is deleted
                         }

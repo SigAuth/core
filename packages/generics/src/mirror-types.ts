@@ -1,18 +1,23 @@
 import { Asset, AssetType, Container } from './prisma-generated/browser.js';
 
 export abstract class MirrorExecutor {
-    abstract init(): Promise<void>;
-    abstract run(mirror: number, progressCallback: ProgressCallback, dataUtils: DataUtils): Promise<void>;
-    abstract delete(): Promise<void>;
+    abstract init(cb: Callback): Promise<void>;
+    abstract run(mirror: number, cb: Callback, dataUtils: DataUtils): Promise<void>;
+    abstract delete(cb: Callback): Promise<void>;
 }
 
-export type ProgressCallback = (progress: number, message: string) => void;
+export type Callback = (message: string) => void;
 export type DataUtils = {
-    createAsset: (name: string, typeId: number, fields: Record<string, string | number | boolean>) => Promise<Asset>;
-    editAsset: (id: number, name: string, fields: Record<string, string | number | boolean>) => Promise<Asset>;
+    createAsset: (name: string, typeId: number, fields: Record<number, string | number>) => Promise<Asset>;
+    editAsset: (id: number, name: string, fields: Record<number, string | number>) => Promise<Asset>;
     deleteAssets: (ids: number[]) => Promise<void>;
 
-    createContainer: (customId: string, name: string, assets: number[], apps: number[]) => Promise<Container>;
+    createContainer: (
+        customId: string,
+        name: string,
+        assets: number[],
+        apps: number[],
+    ) => Promise<{ container: Container; containerAsset: Asset }>;
     editContainer: (id: number, customId: string, name: string, assets: number[], apps: number[]) => Promise<Container>;
     deleteContainers: (ids: number[]) => Promise<void>;
 

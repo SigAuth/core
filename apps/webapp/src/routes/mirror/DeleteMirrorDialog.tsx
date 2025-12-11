@@ -22,7 +22,7 @@ export const DeleteMirrorDialog = ({ mirror, close }: { mirror?: Mirror; close: 
         if (!mirror) return;
 
         const res = await request('POST', '/api/mirror/delete', {
-            mirrorIds: [mirror.id],
+            ids: [mirror.id],
         });
 
         if (res.ok) {

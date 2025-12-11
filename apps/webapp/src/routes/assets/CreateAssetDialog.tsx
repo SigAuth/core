@@ -43,6 +43,7 @@ export const CreateAssetDialog = () => {
             throw new Error('Name must be at least 4 characters long');
         }
 
+        console.log({ assetFields, assetType, containerIds });
         const res = await request('POST', '/api/asset/create', {
             assetTypeId: assetType.id,
             name: name,

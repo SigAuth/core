@@ -1,16 +1,23 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
+import { AssetService } from '@/modules/asset/asset.service';
+import { ContainerService } from '@/modules/container/container.service';
 import { CreateMirrorDto } from '@/modules/mirror/dto/create-mirror.dto';
 import { EditMirrorDto } from '@/modules/mirror/dto/edit-mirror.dto';
 import { Injectable, Logger } from '@nestjs/common';
-import { MirrorExecutor } from '@sigauth/generics/mirror';
+import { Callback, DataUtils, MirrorExecutor } from '@sigauth/generics/mirror';
 import esbuild from 'esbuild';
 import vm from 'node:vm';
+import fs from 'fs';
 
 @Injectable()
 export class MirrorService {
     private readonly logger: Logger = new Logger(MirrorService.name);
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly assetService: AssetService,
+        private readonly containerService: ContainerService,
+    ) {}
 
     async createMirror(createDto: CreateMirrorDto) {
         // // minify & compile code
@@ -59,25 +66,109 @@ export class MirrorService {
             const mirror = await this.prisma.mirror.findUnique({ where: { id } });
             if (!mirror) continue;
 
-            const compiled = await esbuild.transform(mirror.code, {
-                loader: 'ts',
-                minify: true,
-                target: ['es2020'],
-                format: 'esm',
-            });
-
-            const instance = await this.getExecutionInstance(compiled.code);
-            await instance.delete();
+            if (mirror.code.trim().length != 0) {
+                const compiled = await this.compile(mirror.code);
+                const cb = (msg: string) => {
+                    this.logger.log(`[MIRROR DELETE ${id}]: ${msg}`);
+                };
+                const instance = await this.getExecutionInstance(compiled, cb, undefined);
+                await instance.delete(cb);
+            }
 
             await this.prisma.mirror.delete({ where: { id } });
         }
     }
 
-    private async getExecutionInstance(compiledCode: string): Promise<MirrorExecutor> {
+    async runMirrorCode(method: 'init' | 'run' | 'delete', id: number, callback: (message: string) => void) {
+        const mirror = await this.prisma.mirror.findUnique({ where: { id } });
+        if (!mirror) throw new Error('Mirror not found');
+
+        if (mirror.code.trim().length != 0) {
+            const compiled = await this.compile(mirror.code);
+            const cb = (msg: string) => callback(msg);
+            const dataUtils: DataUtils = {
+                createAsset: async (name, typeId, fields) => {
+                    return this.assetService.createOrUpdateAsset(undefined, name, typeId, fields, false);
+                },
+                editAsset: async (assetId, name, fields) => {
+                    return this.assetService.createOrUpdateAsset(assetId, name, undefined, fields, false);
+                },
+                deleteAssets: async ids => {
+                    await this.assetService.deleteAssets(ids);
+                },
+                createContainer: async (customId, name, assets, apps) => {
+                    return this.containerService.createContainer(name, assets, apps, customId);
+                },
+                deleteContainers: async ids => {
+                    await this.containerService.deleteContainers(ids);
+                },
+                editContainer: async (containerId, customId, name, assets, apps) => {
+                    return this.containerService.editContainer(containerId, name, assets, apps, customId);
+                },
+                getAssets: async ids => {
+                    return this.prisma.asset.findMany({ where: { id: { in: ids } } });
+                },
+                getAssetsByFilter: async filter => {
+                    return this.prisma.asset.findMany({ where: filter });
+                },
+                getAssetType: async id => {
+                    return this.prisma.assetType.findUnique({ where: { id } });
+                },
+                getContainers: async ids => {
+                    return this.prisma.container.findMany({ where: { id: { in: ids } } });
+                },
+                getContainersByFilter: async filter => {
+                    return this.prisma.container.findMany({ where: filter });
+                },
+            };
+
+            const instance = await this.getExecutionInstance(compiled, cb, dataUtils);
+            if (method == 'init') {
+                await instance.init(cb);
+            } else if (method == 'run') {
+                let result = 'OK';
+                try {
+                    await instance.run(id, cb, dataUtils);
+                } catch (e) {
+                    result = 'ERROR: ' + (e as Error).message;
+                }
+
+                await this.prisma.mirror.update({
+                    where: { id },
+                    data: { lastRun: new Date(), lastResult: result },
+                });
+            } else if (method == 'delete') {
+                await instance.delete(cb);
+            }
+        }
+    }
+
+    private async compile(code: string): Promise<string> {
+        const types = fs.readFileSync(require.resolve('@sigauth/generics/mirror'), 'utf-8');
+
+        const compiled = await esbuild.transform(`${types}\n${code}`, {
+            loader: 'ts',
+            minify: true,
+            target: ['es2020'],
+            format: 'cjs',
+        });
+
+        return compiled.code;
+    }
+
+    private async getExecutionInstance(compiledCode: string, cb: Callback, dataUtils?: DataUtils): Promise<MirrorExecutor> {
         const script = new vm.Script(compiledCode, { filename: 'mirror.js' });
-        const context = vm.createContext({ exports: {}, require });
-        await script.runInContext(context);
-        const MirrorClass = context.exports.default;
-        return new MirrorClass() as MirrorExecutor;
+        const context = vm.createContext({
+            module: { exports: {} },
+            exports: {},
+            fetch,
+            dataUtils,
+            Math,
+            cb,
+        });
+        script.runInContext(context);
+
+        const MirrorClass = context.module.exports.MyMirror;
+        return new MirrorClass();
     }
 }

@@ -11,7 +11,12 @@ export class ContainerService {
         private readonly assetService: AssetService,
     ) {}
 
-    async createContainer(name: string, assets: number[], apps: number[]): Promise<{ container: Container; containerAsset: Asset }> {
+    async createContainer(
+        name: string,
+        assets: number[],
+        apps: number[],
+        customId?: string,
+    ): Promise<{ container: Container; containerAsset: Asset }> {
         if (apps.includes(PROTECTED.App.id)) throw new BadRequestException('Cannot add protected app to container');
         // check if assets and apps actually exist
         const assetCount = await this.prisma.asset.count({ where: { id: { in: assets.map(a => a) } } });
@@ -25,6 +30,7 @@ export class ContainerService {
                 name,
                 assets,
                 apps,
+                customId,
             },
         });
 
@@ -49,7 +55,7 @@ export class ContainerService {
         return { container, containerAsset };
     }
 
-    async editContainer(containerId: number, name: string, assets: number[], apps: number[]): Promise<Container> {
+    async editContainer(containerId: number, name: string, assets: number[], apps: number[], customId?: string): Promise<Container> {
         if (apps.includes(PROTECTED.App.id)) throw new BadRequestException('Cannot add protected app to container');
         if (containerId == PROTECTED.Container.id) throw new BadRequestException('Cannot edit protected container');
 
@@ -106,6 +112,7 @@ export class ContainerService {
                 name,
                 assets,
                 apps,
+                customId,
             },
         });
     }

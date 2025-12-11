@@ -1,7 +1,7 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { AccountModule } from '@/modules/account/account.module';
 import { AppsModule } from '@/modules/app/app.module';
-import { AssetTypesModule } from '@/modules/asset-type/asset-type.module';
+import { AssetTypeModule } from '@/modules/asset-type/asset-type.module';
 import { AssetModule } from '@/modules/asset/asset.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { ContainerModule } from '@/modules/container/container.module';
@@ -27,7 +27,7 @@ import { MirrorModule } from '@/modules/mirror/mirror.module';
                 limit: 50,
             },
         ]),
-        AssetTypesModule,
+        AssetTypeModule,
         AssetModule,
         AppsModule,
         ContainerModule,

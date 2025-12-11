@@ -28,7 +28,14 @@ export class AssetController {
     @ApiCreatedResponse({
         description: 'Asset created successfully',
         example: {
-            asset: { id: 1, name: 'test' },
+            asset: {
+                id: 1,
+                name: 'test',
+                fields: {
+                    0: 'value',
+                    1: 123,
+                },
+            },
             updatedContainers: [{ id: 3, name: 'container1', assets: [3], apps: [6] }],
         },
     })
@@ -64,12 +71,10 @@ export class AssetController {
             asset: {
                 id: 1,
                 name: 'test',
-                fields: [
-                    {
-                        id: 1,
-                        name: 'test',
-                    },
-                ],
+                fields: {
+                    0: 'value',
+                    1: 123,
+                },
             },
         },
     })

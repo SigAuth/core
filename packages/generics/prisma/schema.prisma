@@ -115,6 +115,7 @@ model Asset {
 // TODO add a relation table for container-apps and container-assets to simply mainting the integrity of the database
 model Container {
   id                 Int                  @id @default(autoincrement())
+  customId           String?              @unique
   name               String
   assets             Int[]                @default([])
   apps               Int[]                @default([])

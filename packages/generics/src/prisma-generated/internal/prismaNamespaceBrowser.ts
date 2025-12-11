@@ -159,6 +159,7 @@ export type AssetScalarFieldEnum = (typeof AssetScalarFieldEnum)[keyof typeof As
 
 export const ContainerScalarFieldEnum = {
   id: 'id',
+  customId: 'customId',
   name: 'name',
   assets: 'assets',
   apps: 'apps'

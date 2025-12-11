@@ -6,7 +6,7 @@ import { AssetType } from '@sigauth/generics/prisma-client';
 import { PROTECTED } from '@sigauth/generics/protected';
 
 @Injectable()
-export class AssetTypesService {
+export class AssetTypeService {
     constructor(private readonly prisma: PrismaService) {}
 
     async createAssetType(createAssetTypeDto: CreateAssetTypeDto): Promise<AssetType> {
