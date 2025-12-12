@@ -111,7 +111,7 @@ export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; ope
             </DialogTrigger>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Edit {app.name}</DialogTitle>
+                    <DialogTitle>Edit {app?.name}</DialogTitle>
                     <DialogDescription>Reconfigure your application settings and permissions.</DialogDescription>
                 </DialogHeader>
                 <div>
