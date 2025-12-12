@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
 import { usePagination } from '@/lib/use-pagination';
-import { cn } from '@/lib/utils';
+import { cn, logout, request } from '@/lib/utils';
 import type { AccountWithPermissions } from '@sigauth/generics';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -31,6 +31,7 @@ import {
     FileSpreadsheetIcon,
     FileTextIcon,
     Hammer,
+    MonitorX,
     Trash,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -46,6 +47,7 @@ import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
 import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
 import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
+import { toast } from 'sonner';
 
 export const AccountsList = () => {
     const pageSize = 20;
@@ -121,6 +123,19 @@ export const AccountsList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
+                                toast.promise(logOutAll(row.original.id), {
+                                    position: 'bottom-right',
+                                    loading: 'Signing out everywhere...',
+                                    success: 'Signed out everywhere successfully',
+                                    error: 'Failed to sign out everywhere',
+                                });
+                            }}
+                        >
+                            <MonitorX className="mr-2 size-4" />
+                            Sign out everywhere
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => {
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -140,6 +155,15 @@ export const AccountsList = () => {
             ),
         },
     ];
+
+    const logOutAll = async (accountId: number) => {
+        const res = await request('POST', `/api/account/logout-all`, { accountId });
+        if (!res.ok) throw new Error('Failed to sign out everywhere');
+        if (accountId === session.account.id) {
+            logout();
+            window.location.reload();
+        }
+    };
 
     const exportToCSV = () => {
         const selectedRows = table.getSelectedRowModel().rows;

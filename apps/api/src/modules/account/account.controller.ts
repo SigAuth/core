@@ -5,9 +5,10 @@ import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
 import { PermissionSetDto } from '@/modules/account/dto/permission-set.dto';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
+import { type Request } from 'express';
 
 @Controller('account')
 @UseGuards(AuthGuard)
@@ -58,5 +59,14 @@ export class AccountController {
     async setPermissions(@Body() permissionUpdateDto: PermissionSetDto) {
         const perms = await this.accountService.setPermissions(permissionUpdateDto);
         return { permissions: perms };
+    }
+
+    @Post('logout-all')
+    @UseGuards(IsRoot) // TODO Change to proper permissions
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'Signed out user successfully!' })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+    async logoutAll(@Body('accountId') accountId: String) {
+        await this.accountService.logOutAll(accountId);
     }
 }

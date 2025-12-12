@@ -164,4 +164,10 @@ export class AccountService {
 
         return maintained;
     }
+
+    async logOutAll(accountId: String) {
+        await this.prisma.session.deleteMany({
+            where: { subject: +accountId },
+        });
+    }
 }
