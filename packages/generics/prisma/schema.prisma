@@ -131,6 +131,7 @@ model Mirror {
   autoRunInterval Int? // in minutes
   lastRun         DateTime?
   lastResult      String?
+  isRunning       Boolean   @default(false)
 }
 
 model App {

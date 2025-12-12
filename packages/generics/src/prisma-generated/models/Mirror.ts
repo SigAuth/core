@@ -44,6 +44,7 @@ export type MirrorMinAggregateOutputType = {
   autoRunInterval: number | null
   lastRun: Date | null
   lastResult: string | null
+  isRunning: boolean | null
 }
 
 export type MirrorMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type MirrorMaxAggregateOutputType = {
   autoRunInterval: number | null
   lastRun: Date | null
   lastResult: string | null
+  isRunning: boolean | null
 }
 
 export type MirrorCountAggregateOutputType = {
@@ -64,6 +66,7 @@ export type MirrorCountAggregateOutputType = {
   autoRunInterval: number
   lastRun: number
   lastResult: number
+  isRunning: number
   _all: number
 }
 
@@ -86,6 +89,7 @@ export type MirrorMinAggregateInputType = {
   autoRunInterval?: true
   lastRun?: true
   lastResult?: true
+  isRunning?: true
 }
 
 export type MirrorMaxAggregateInputType = {
@@ -96,6 +100,7 @@ export type MirrorMaxAggregateInputType = {
   autoRunInterval?: true
   lastRun?: true
   lastResult?: true
+  isRunning?: true
 }
 
 export type MirrorCountAggregateInputType = {
@@ -106,6 +111,7 @@ export type MirrorCountAggregateInputType = {
   autoRunInterval?: true
   lastRun?: true
   lastResult?: true
+  isRunning?: true
   _all?: true
 }
 
@@ -203,6 +209,7 @@ export type MirrorGroupByOutputType = {
   autoRunInterval: number | null
   lastRun: Date | null
   lastResult: string | null
+  isRunning: boolean
   _count: MirrorCountAggregateOutputType | null
   _avg: MirrorAvgAggregateOutputType | null
   _sum: MirrorSumAggregateOutputType | null
@@ -236,6 +243,7 @@ export type MirrorWhereInput = {
   autoRunInterval?: Prisma.IntNullableFilter<"Mirror"> | number | null
   lastRun?: Prisma.DateTimeNullableFilter<"Mirror"> | Date | string | null
   lastResult?: Prisma.StringNullableFilter<"Mirror"> | string | null
+  isRunning?: Prisma.BoolFilter<"Mirror"> | boolean
 }
 
 export type MirrorOrderByWithRelationInput = {
@@ -246,6 +254,7 @@ export type MirrorOrderByWithRelationInput = {
   autoRunInterval?: Prisma.SortOrderInput | Prisma.SortOrder
   lastRun?: Prisma.SortOrderInput | Prisma.SortOrder
   lastResult?: Prisma.SortOrderInput | Prisma.SortOrder
+  isRunning?: Prisma.SortOrder
 }
 
 export type MirrorWhereUniqueInput = Prisma.AtLeast<{
@@ -259,6 +268,7 @@ export type MirrorWhereUniqueInput = Prisma.AtLeast<{
   autoRunInterval?: Prisma.IntNullableFilter<"Mirror"> | number | null
   lastRun?: Prisma.DateTimeNullableFilter<"Mirror"> | Date | string | null
   lastResult?: Prisma.StringNullableFilter<"Mirror"> | string | null
+  isRunning?: Prisma.BoolFilter<"Mirror"> | boolean
 }, "id">
 
 export type MirrorOrderByWithAggregationInput = {
@@ -269,6 +279,7 @@ export type MirrorOrderByWithAggregationInput = {
   autoRunInterval?: Prisma.SortOrderInput | Prisma.SortOrder
   lastRun?: Prisma.SortOrderInput | Prisma.SortOrder
   lastResult?: Prisma.SortOrderInput | Prisma.SortOrder
+  isRunning?: Prisma.SortOrder
   _count?: Prisma.MirrorCountOrderByAggregateInput
   _avg?: Prisma.MirrorAvgOrderByAggregateInput
   _max?: Prisma.MirrorMaxOrderByAggregateInput
@@ -287,6 +298,7 @@ export type MirrorScalarWhereWithAggregatesInput = {
   autoRunInterval?: Prisma.IntNullableWithAggregatesFilter<"Mirror"> | number | null
   lastRun?: Prisma.DateTimeNullableWithAggregatesFilter<"Mirror"> | Date | string | null
   lastResult?: Prisma.StringNullableWithAggregatesFilter<"Mirror"> | string | null
+  isRunning?: Prisma.BoolWithAggregatesFilter<"Mirror"> | boolean
 }
 
 export type MirrorCreateInput = {
@@ -296,6 +308,7 @@ export type MirrorCreateInput = {
   autoRunInterval?: number | null
   lastRun?: Date | string | null
   lastResult?: string | null
+  isRunning?: boolean
 }
 
 export type MirrorUncheckedCreateInput = {
@@ -306,6 +319,7 @@ export type MirrorUncheckedCreateInput = {
   autoRunInterval?: number | null
   lastRun?: Date | string | null
   lastResult?: string | null
+  isRunning?: boolean
 }
 
 export type MirrorUpdateInput = {
@@ -315,6 +329,7 @@ export type MirrorUpdateInput = {
   autoRunInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastRun?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResult?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isRunning?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type MirrorUncheckedUpdateInput = {
@@ -325,6 +340,7 @@ export type MirrorUncheckedUpdateInput = {
   autoRunInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastRun?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResult?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isRunning?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type MirrorCreateManyInput = {
@@ -335,6 +351,7 @@ export type MirrorCreateManyInput = {
   autoRunInterval?: number | null
   lastRun?: Date | string | null
   lastResult?: string | null
+  isRunning?: boolean
 }
 
 export type MirrorUpdateManyMutationInput = {
@@ -344,6 +361,7 @@ export type MirrorUpdateManyMutationInput = {
   autoRunInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastRun?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResult?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isRunning?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type MirrorUncheckedUpdateManyInput = {
@@ -354,6 +372,7 @@ export type MirrorUncheckedUpdateManyInput = {
   autoRunInterval?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   lastRun?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastResult?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isRunning?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type MirrorCountOrderByAggregateInput = {
@@ -364,6 +383,7 @@ export type MirrorCountOrderByAggregateInput = {
   autoRunInterval?: Prisma.SortOrder
   lastRun?: Prisma.SortOrder
   lastResult?: Prisma.SortOrder
+  isRunning?: Prisma.SortOrder
 }
 
 export type MirrorAvgOrderByAggregateInput = {
@@ -379,6 +399,7 @@ export type MirrorMaxOrderByAggregateInput = {
   autoRunInterval?: Prisma.SortOrder
   lastRun?: Prisma.SortOrder
   lastResult?: Prisma.SortOrder
+  isRunning?: Prisma.SortOrder
 }
 
 export type MirrorMinOrderByAggregateInput = {
@@ -389,6 +410,7 @@ export type MirrorMinOrderByAggregateInput = {
   autoRunInterval?: Prisma.SortOrder
   lastRun?: Prisma.SortOrder
   lastResult?: Prisma.SortOrder
+  isRunning?: Prisma.SortOrder
 }
 
 export type MirrorSumOrderByAggregateInput = {
@@ -414,6 +436,7 @@ export type MirrorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   autoRunInterval?: boolean
   lastRun?: boolean
   lastResult?: boolean
+  isRunning?: boolean
 }, ExtArgs["result"]["mirror"]>
 
 export type MirrorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -424,6 +447,7 @@ export type MirrorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   autoRunInterval?: boolean
   lastRun?: boolean
   lastResult?: boolean
+  isRunning?: boolean
 }, ExtArgs["result"]["mirror"]>
 
 export type MirrorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -434,6 +458,7 @@ export type MirrorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   autoRunInterval?: boolean
   lastRun?: boolean
   lastResult?: boolean
+  isRunning?: boolean
 }, ExtArgs["result"]["mirror"]>
 
 export type MirrorSelectScalar = {
@@ -444,9 +469,10 @@ export type MirrorSelectScalar = {
   autoRunInterval?: boolean
   lastRun?: boolean
   lastResult?: boolean
+  isRunning?: boolean
 }
 
-export type MirrorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "autoRun" | "autoRunInterval" | "lastRun" | "lastResult", ExtArgs["result"]["mirror"]>
+export type MirrorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "code" | "autoRun" | "autoRunInterval" | "lastRun" | "lastResult" | "isRunning", ExtArgs["result"]["mirror"]>
 
 export type $MirrorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Mirror"
@@ -459,6 +485,7 @@ export type $MirrorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     autoRunInterval: number | null
     lastRun: Date | null
     lastResult: string | null
+    isRunning: boolean
   }, ExtArgs["result"]["mirror"]>
   composites: {}
 }
@@ -889,6 +916,7 @@ export interface MirrorFieldRefs {
   readonly autoRunInterval: Prisma.FieldRef<"Mirror", 'Int'>
   readonly lastRun: Prisma.FieldRef<"Mirror", 'DateTime'>
   readonly lastResult: Prisma.FieldRef<"Mirror", 'String'>
+  readonly isRunning: Prisma.FieldRef<"Mirror", 'Boolean'>
 }
     
 

@@ -15,19 +15,39 @@ export class MirrorCronService {
 
     @Cron('* * * * *') // Runs every minute
     async tick() {
-        const mirrors = await this.prisma.mirror.findMany({ where: { autoRun: true, NOT: { autoRunInterval: null } } });
+        const mirrors = await this.prisma.mirror.findMany({ 
+            where: { 
+                autoRun: true, 
+                isRunning: false, // Only select mirrors that are not currently running
+                NOT: { autoRunInterval: null } 
+            } 
+        });
 
         const now = Date.now();
         for (const mirror of mirrors) {
             const msPassed = now - (mirror.lastRun?.getTime() ?? 0);
             if (msPassed >= mirror.autoRunInterval! * 60 * 1000) {
-                // Execute mirror logic here
-                this.logger.log(`Executing mirror ${mirror.name} (ID: ${mirror.id})`);
-                const res = await this.mirrorService.runMirrorCode('run', mirror.id, (msg: string) => {
-                    this.logger.debug(`Mirror ${mirror.name} says: ${msg}`);
+                // Set the lock before executing
+                await this.prisma.mirror.update({
+                    where: { id: mirror.id },
+                    data: { isRunning: true },
                 });
 
-                if (res != 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
+                try {
+                    // Execute mirror logic here
+                    this.logger.log(`Executing mirror ${mirror.name} (ID: ${mirror.id})`);
+                    const res = await this.mirrorService.runMirrorCode('run', mirror.id, (msg: string) => {
+                        this.logger.debug(`Mirror ${mirror.name} says: ${msg}`);
+                    });
+
+                    if (res != 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
+                } finally {
+                    // Always release the lock, even if execution fails
+                    await this.prisma.mirror.update({
+                        where: { id: mirror.id },
+                        data: { isRunning: false },
+                    });
+                }
             }
         }
     }
