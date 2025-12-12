@@ -5,6 +5,7 @@ import { Cron } from '@nestjs/schedule';
 @Injectable()
 export class MirrorCronService {
     private readonly logger: Logger = new Logger(MirrorCronService.name);
+    private readonly runningMirrors: Set<number> = new Set();
 
     constructor(
         private readonly prisma: PrismaService,
@@ -17,16 +18,36 @@ export class MirrorCronService {
 
         const now = Date.now();
         for (const mirror of mirrors) {
+            // Skip if this mirror is already running
+            if (this.runningMirrors.has(mirror.id)) {
+                this.logger.debug(`Skipping mirror ${mirror.name} (ID: ${mirror.id}) - already running`);
+                continue;
+            }
+
             const msPassed = now - (mirror.lastRun?.getTime() ?? 0);
             if (msPassed >= mirror.autoRunInterval! * 60 * 1000) {
-                // Execute mirror logic here
-                this.logger.log(`Executing mirror ${mirror.name} (ID: ${mirror.id})`);
-                const res = await this.mirrorService.runMirrorCode('run', mirror.id, (msg: string) => {
-                    this.logger.debug(`Mirror ${mirror.name} says: ${msg}`);
-                });
+                // Mark mirror as running in memory
+                this.runningMirrors.add(mirror.id);
 
-                if (res != 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
+                // Execute asynchronously to not block other mirrors
+                void this.executeMirror(mirror).finally(() => {
+                    // Remove from running set when done
+                    this.runningMirrors.delete(mirror.id);
+                });
             }
+        }
+    }
+
+    private async executeMirror(mirror: Mirror): Promise<void> {
+        try {
+            this.logger.log(`Executing mirror ${mirror.name} (ID: ${mirror.id})`);
+            const res = await this.mirrorService.runMirrorCode('run', mirror.id, (msg: string) => {
+                this.logger.debug(`Mirror ${mirror.name} says: ${msg}`);
+            });
+
+            if (res !== 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
+        } catch (error) {
+            this.logger.error(`Mirror ${mirror.name} (ID: ${mirror.id}) execution failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }
