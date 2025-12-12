@@ -22,6 +22,7 @@ export class MirrorCronService {
         for (const mirror of mirrors) {
             // Skip if this mirror is already running
             if (this.runningMirrors.has(mirror.id)) {
+                this.logger.debug(`Skipping mirror ${mirror.name} (ID: ${mirror.id}) - already running`);
                 continue;
             }
 
