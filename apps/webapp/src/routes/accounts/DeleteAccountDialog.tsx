@@ -56,7 +56,7 @@ export const DeleteAccountDialog = ({
                     </div>
                     <AlertDialogTitle>Are you absolutely sure you want to delete?</AlertDialogTitle>
                     <AlertDialogDescription className="text-center">
-                        This action cannot be undone. This will permanently delete the selected {accountIds.length} account(s) and remove
+                        This action cannot be undone. This will permanently delete the selected {accountIds?.length ?? 0} account(s) and remove
                         all related authorization data with it.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
