@@ -31,7 +31,7 @@ export class MirrorCronService {
                 this.runningMirrors.add(mirror.id);
 
                 // Execute asynchronously to not block other mirrors
-                this.executeMirror(mirror).finally(() => {
+                void this.executeMirror(mirror).finally(() => {
                     // Remove from running set when done
                     this.runningMirrors.delete(mirror.id);
                 });
@@ -40,11 +40,15 @@ export class MirrorCronService {
     }
 
     private async executeMirror(mirror: Mirror): Promise<void> {
-        this.logger.log(`Executing mirror ${mirror.name} (ID: ${mirror.id})`);
-        const res = await this.mirrorService.runMirrorCode('run', mirror.id, (msg: string) => {
-            this.logger.debug(`Mirror ${mirror.name} says: ${msg}`);
-        });
+        try {
+            this.logger.log(`Executing mirror ${mirror.name} (ID: ${mirror.id})`);
+            const res = await this.mirrorService.runMirrorCode('run', mirror.id, (msg: string) => {
+                this.logger.debug(`Mirror ${mirror.name} says: ${msg}`);
+            });
 
-        if (res != 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
+            if (res != 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
+        } catch (error) {
+            this.logger.error(`Mirror ${mirror.name} (ID: ${mirror.id}) execution failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 }
