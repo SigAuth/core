@@ -59,6 +59,7 @@ export const ModelName = {
   AssetType: 'AssetType',
   Asset: 'Asset',
   Container: 'Container',
+  Mirror: 'Mirror',
   App: 'App'
 } as const
 
@@ -158,12 +159,26 @@ export type AssetScalarFieldEnum = (typeof AssetScalarFieldEnum)[keyof typeof As
 
 export const ContainerScalarFieldEnum = {
   id: 'id',
+  customId: 'customId',
   name: 'name',
   assets: 'assets',
   apps: 'apps'
 } as const
 
 export type ContainerScalarFieldEnum = (typeof ContainerScalarFieldEnum)[keyof typeof ContainerScalarFieldEnum]
+
+
+export const MirrorScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  code: 'code',
+  autoRun: 'autoRun',
+  autoRunInterval: 'autoRunInterval',
+  lastRun: 'lastRun',
+  lastResult: 'lastResult'
+} as const
+
+export type MirrorScalarFieldEnum = (typeof MirrorScalarFieldEnum)[keyof typeof MirrorScalarFieldEnum]
 
 
 export const AppScalarFieldEnum = {

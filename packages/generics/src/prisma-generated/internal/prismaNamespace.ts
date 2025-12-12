@@ -392,6 +392,7 @@ export const ModelName = {
   AssetType: 'AssetType',
   Asset: 'Asset',
   Container: 'Container',
+  Mirror: 'Mirror',
   App: 'App'
 } as const
 
@@ -408,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "account" | "session" | "authorizationInstance" | "authorizationChallenge" | "permissionInstance" | "assetType" | "asset" | "container" | "app"
+    modelProps: "account" | "session" | "authorizationInstance" | "authorizationChallenge" | "permissionInstance" | "assetType" | "asset" | "container" | "mirror" | "app"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1004,6 +1005,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Mirror: {
+      payload: Prisma.$MirrorPayload<ExtArgs>
+      fields: Prisma.MirrorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MirrorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MirrorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>
+        }
+        findFirst: {
+          args: Prisma.MirrorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MirrorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>
+        }
+        findMany: {
+          args: Prisma.MirrorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>[]
+        }
+        create: {
+          args: Prisma.MirrorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>
+        }
+        createMany: {
+          args: Prisma.MirrorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MirrorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>[]
+        }
+        delete: {
+          args: Prisma.MirrorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>
+        }
+        update: {
+          args: Prisma.MirrorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>
+        }
+        deleteMany: {
+          args: Prisma.MirrorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MirrorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MirrorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>[]
+        }
+        upsert: {
+          args: Prisma.MirrorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MirrorPayload>
+        }
+        aggregate: {
+          args: Prisma.MirrorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMirror>
+        }
+        groupBy: {
+          args: Prisma.MirrorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MirrorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MirrorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MirrorCountAggregateOutputType> | number
+        }
+      }
+    }
     App: {
       payload: Prisma.$AppPayload<ExtArgs>
       fields: Prisma.AppFieldRefs
@@ -1197,12 +1272,26 @@ export type AssetScalarFieldEnum = (typeof AssetScalarFieldEnum)[keyof typeof As
 
 export const ContainerScalarFieldEnum = {
   id: 'id',
+  customId: 'customId',
   name: 'name',
   assets: 'assets',
   apps: 'apps'
 } as const
 
 export type ContainerScalarFieldEnum = (typeof ContainerScalarFieldEnum)[keyof typeof ContainerScalarFieldEnum]
+
+
+export const MirrorScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  code: 'code',
+  autoRun: 'autoRun',
+  autoRunInterval: 'autoRunInterval',
+  lastRun: 'lastRun',
+  lastResult: 'lastResult'
+} as const
+
+export type MirrorScalarFieldEnum = (typeof MirrorScalarFieldEnum)[keyof typeof MirrorScalarFieldEnum]
 
 
 export const AppScalarFieldEnum = {
@@ -1317,6 +1406,13 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -1436,6 +1532,7 @@ export type GlobalOmitConfig = {
   assetType?: Prisma.AssetTypeOmit
   asset?: Prisma.AssetOmit
   container?: Prisma.ContainerOmit
+  mirror?: Prisma.MirrorOmit
   app?: Prisma.AppOmit
 }
 

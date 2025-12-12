@@ -1,5 +1,5 @@
 import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
-import type { App, Asset, AssetType, Container, Session } from '@sigauth/generics/prisma-types';
+import type { App, Asset, AssetType, Container, Mirror, Session } from '@sigauth/generics/prisma-types';
 import { createContext, use, useState, type ReactNode } from 'react';
 
 export type SessionStorage = {
@@ -10,6 +10,7 @@ export type SessionStorage = {
     assets: Asset[];
     apps: App[];
     containers: Container[];
+    mirrors: Mirror[];
 };
 
 export type SessionContext = {
@@ -25,6 +26,7 @@ const defaultSessionContext: SessionStorage = {
     assets: [],
     apps: [],
     containers: [],
+    mirrors: [],
 };
 
 export const SessionStorageContext = createContext<SessionContext | null>(null);

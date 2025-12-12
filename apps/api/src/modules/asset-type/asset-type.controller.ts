@@ -1,4 +1,4 @@
-import { AssetTypesService } from '@/modules/asset-type/asset-type.service';
+import { AssetTypeService } from '@/modules/asset-type/asset-type.service';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { DeleteAssetTypeDto } from '@/modules/asset-type/dto/delete-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
@@ -19,8 +19,8 @@ import { AssetType } from '@sigauth/generics/prisma-client';
 @UseGuards(AuthGuard, IsRoot)
 @ApiUnauthorizedResponse({ description: "Thrown when the user isn't authenticated" })
 @ApiForbiddenResponse({ description: 'This route can only be called from accounts with root access' })
-export class AssetTypesController {
-    constructor(private readonly assetTypesService: AssetTypesService) {}
+export class AssetTypeController {
+    constructor(private readonly assetTypesService: AssetTypeService) {}
 
     @Post('create')
     @ApiCreatedResponse({

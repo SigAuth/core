@@ -40,16 +40,19 @@ export type ContainerSumAggregateOutputType = {
 
 export type ContainerMinAggregateOutputType = {
   id: number | null
+  customId: string | null
   name: string | null
 }
 
 export type ContainerMaxAggregateOutputType = {
   id: number | null
+  customId: string | null
   name: string | null
 }
 
 export type ContainerCountAggregateOutputType = {
   id: number
+  customId: number
   name: number
   assets: number
   apps: number
@@ -71,16 +74,19 @@ export type ContainerSumAggregateInputType = {
 
 export type ContainerMinAggregateInputType = {
   id?: true
+  customId?: true
   name?: true
 }
 
 export type ContainerMaxAggregateInputType = {
   id?: true
+  customId?: true
   name?: true
 }
 
 export type ContainerCountAggregateInputType = {
   id?: true
+  customId?: true
   name?: true
   assets?: true
   apps?: true
@@ -175,6 +181,7 @@ export type ContainerGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 
 export type ContainerGroupByOutputType = {
   id: number
+  customId: string | null
   name: string
   assets: number[]
   apps: number[]
@@ -205,6 +212,7 @@ export type ContainerWhereInput = {
   OR?: Prisma.ContainerWhereInput[]
   NOT?: Prisma.ContainerWhereInput | Prisma.ContainerWhereInput[]
   id?: Prisma.IntFilter<"Container"> | number
+  customId?: Prisma.StringNullableFilter<"Container"> | string | null
   name?: Prisma.StringFilter<"Container"> | string
   assets?: Prisma.IntNullableListFilter<"Container">
   apps?: Prisma.IntNullableListFilter<"Container">
@@ -213,6 +221,7 @@ export type ContainerWhereInput = {
 
 export type ContainerOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  customId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   assets?: Prisma.SortOrder
   apps?: Prisma.SortOrder
@@ -221,6 +230,7 @@ export type ContainerOrderByWithRelationInput = {
 
 export type ContainerWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  customId?: string
   AND?: Prisma.ContainerWhereInput | Prisma.ContainerWhereInput[]
   OR?: Prisma.ContainerWhereInput[]
   NOT?: Prisma.ContainerWhereInput | Prisma.ContainerWhereInput[]
@@ -228,10 +238,11 @@ export type ContainerWhereUniqueInput = Prisma.AtLeast<{
   assets?: Prisma.IntNullableListFilter<"Container">
   apps?: Prisma.IntNullableListFilter<"Container">
   PermissionInstance?: Prisma.PermissionInstanceListRelationFilter
-}, "id">
+}, "id" | "customId">
 
 export type ContainerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  customId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   assets?: Prisma.SortOrder
   apps?: Prisma.SortOrder
@@ -247,12 +258,14 @@ export type ContainerScalarWhereWithAggregatesInput = {
   OR?: Prisma.ContainerScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ContainerScalarWhereWithAggregatesInput | Prisma.ContainerScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Container"> | number
+  customId?: Prisma.StringNullableWithAggregatesFilter<"Container"> | string | null
   name?: Prisma.StringWithAggregatesFilter<"Container"> | string
   assets?: Prisma.IntNullableListFilter<"Container">
   apps?: Prisma.IntNullableListFilter<"Container">
 }
 
 export type ContainerCreateInput = {
+  customId?: string | null
   name: string
   assets?: Prisma.ContainerCreateassetsInput | number[]
   apps?: Prisma.ContainerCreateappsInput | number[]
@@ -261,6 +274,7 @@ export type ContainerCreateInput = {
 
 export type ContainerUncheckedCreateInput = {
   id?: number
+  customId?: string | null
   name: string
   assets?: Prisma.ContainerCreateassetsInput | number[]
   apps?: Prisma.ContainerCreateappsInput | number[]
@@ -268,6 +282,7 @@ export type ContainerUncheckedCreateInput = {
 }
 
 export type ContainerUpdateInput = {
+  customId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   assets?: Prisma.ContainerUpdateassetsInput | number[]
   apps?: Prisma.ContainerUpdateappsInput | number[]
@@ -276,6 +291,7 @@ export type ContainerUpdateInput = {
 
 export type ContainerUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  customId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   assets?: Prisma.ContainerUpdateassetsInput | number[]
   apps?: Prisma.ContainerUpdateappsInput | number[]
@@ -284,12 +300,14 @@ export type ContainerUncheckedUpdateInput = {
 
 export type ContainerCreateManyInput = {
   id?: number
+  customId?: string | null
   name: string
   assets?: Prisma.ContainerCreateassetsInput | number[]
   apps?: Prisma.ContainerCreateappsInput | number[]
 }
 
 export type ContainerUpdateManyMutationInput = {
+  customId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   assets?: Prisma.ContainerUpdateassetsInput | number[]
   apps?: Prisma.ContainerUpdateappsInput | number[]
@@ -297,6 +315,7 @@ export type ContainerUpdateManyMutationInput = {
 
 export type ContainerUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  customId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   assets?: Prisma.ContainerUpdateassetsInput | number[]
   apps?: Prisma.ContainerUpdateappsInput | number[]
@@ -317,6 +336,7 @@ export type IntNullableListFilter<$PrismaModel = never> = {
 
 export type ContainerCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  customId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   assets?: Prisma.SortOrder
   apps?: Prisma.SortOrder
@@ -330,11 +350,13 @@ export type ContainerAvgOrderByAggregateInput = {
 
 export type ContainerMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  customId?: Prisma.SortOrder
   name?: Prisma.SortOrder
 }
 
 export type ContainerMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  customId?: Prisma.SortOrder
   name?: Prisma.SortOrder
 }
 
@@ -379,6 +401,7 @@ export type ContainerUpdateappsInput = {
 }
 
 export type ContainerCreateWithoutPermissionInstanceInput = {
+  customId?: string | null
   name: string
   assets?: Prisma.ContainerCreateassetsInput | number[]
   apps?: Prisma.ContainerCreateappsInput | number[]
@@ -386,6 +409,7 @@ export type ContainerCreateWithoutPermissionInstanceInput = {
 
 export type ContainerUncheckedCreateWithoutPermissionInstanceInput = {
   id?: number
+  customId?: string | null
   name: string
   assets?: Prisma.ContainerCreateassetsInput | number[]
   apps?: Prisma.ContainerCreateappsInput | number[]
@@ -408,6 +432,7 @@ export type ContainerUpdateToOneWithWhereWithoutPermissionInstanceInput = {
 }
 
 export type ContainerUpdateWithoutPermissionInstanceInput = {
+  customId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   assets?: Prisma.ContainerUpdateassetsInput | number[]
   apps?: Prisma.ContainerUpdateappsInput | number[]
@@ -415,6 +440,7 @@ export type ContainerUpdateWithoutPermissionInstanceInput = {
 
 export type ContainerUncheckedUpdateWithoutPermissionInstanceInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  customId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   assets?: Prisma.ContainerUpdateassetsInput | number[]
   apps?: Prisma.ContainerUpdateappsInput | number[]
@@ -453,6 +479,7 @@ export type ContainerCountOutputTypeCountPermissionInstanceArgs<ExtArgs extends 
 
 export type ContainerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  customId?: boolean
   name?: boolean
   assets?: boolean
   apps?: boolean
@@ -462,6 +489,7 @@ export type ContainerSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type ContainerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  customId?: boolean
   name?: boolean
   assets?: boolean
   apps?: boolean
@@ -469,6 +497,7 @@ export type ContainerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
 
 export type ContainerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  customId?: boolean
   name?: boolean
   assets?: boolean
   apps?: boolean
@@ -476,12 +505,13 @@ export type ContainerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
 
 export type ContainerSelectScalar = {
   id?: boolean
+  customId?: boolean
   name?: boolean
   assets?: boolean
   apps?: boolean
 }
 
-export type ContainerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "assets" | "apps", ExtArgs["result"]["container"]>
+export type ContainerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "customId" | "name" | "assets" | "apps", ExtArgs["result"]["container"]>
 export type ContainerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   PermissionInstance?: boolean | Prisma.Container$PermissionInstanceArgs<ExtArgs>
   _count?: boolean | Prisma.ContainerCountOutputTypeDefaultArgs<ExtArgs>
@@ -496,6 +526,7 @@ export type $ContainerPayload<ExtArgs extends runtime.Types.Extensions.InternalA
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    customId: string | null
     name: string
     assets: number[]
     apps: number[]
@@ -924,6 +955,7 @@ export interface Prisma__ContainerClient<T, Null = never, ExtArgs extends runtim
  */
 export interface ContainerFieldRefs {
   readonly id: Prisma.FieldRef<"Container", 'Int'>
+  readonly customId: Prisma.FieldRef<"Container", 'String'>
   readonly name: Prisma.FieldRef<"Container", 'String'>
   readonly assets: Prisma.FieldRef<"Container", 'Int[]'>
   readonly apps: Prisma.FieldRef<"Container", 'Int[]'>

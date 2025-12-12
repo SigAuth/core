@@ -39,6 +39,7 @@ CREATE TABLE "AuthorizationChallenge" (
     "appId" INTEGER NOT NULL,
     "authorizationCode" TEXT NOT NULL,
     "challenge" TEXT,
+    "redirectUri" TEXT NOT NULL,
     "created" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "AuthorizationChallenge_pkey" PRIMARY KEY ("id")
@@ -78,11 +79,25 @@ CREATE TABLE "Asset" (
 -- CreateTable
 CREATE TABLE "Container" (
     "id" SERIAL NOT NULL,
+    "customId" TEXT,
     "name" TEXT NOT NULL,
     "assets" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
     "apps" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
 
     CONSTRAINT "Container_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Mirror" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "autoRun" BOOLEAN NOT NULL DEFAULT false,
+    "autoRunInterval" INTEGER,
+    "lastRun" TIMESTAMP(3),
+    "lastResult" TEXT,
+
+    CONSTRAINT "Mirror_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -136,6 +151,9 @@ CREATE INDEX "PermissionInstance_accountId_identifier_idx" ON "PermissionInstanc
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PermissionInstance_accountId_appId_identifier_containerId_a_key" ON "PermissionInstance"("accountId", "appId", "identifier", "containerId", "assetId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Container_customId_key" ON "Container"("customId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "App_token_key" ON "App"("token");

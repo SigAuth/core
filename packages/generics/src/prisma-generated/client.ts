@@ -80,6 +80,11 @@ export type Asset = Prisma.AssetModel
  */
 export type Container = Prisma.ContainerModel
 /**
+ * Model Mirror
+ * 
+ */
+export type Mirror = Prisma.MirrorModel
+/**
  * Model App
  * 
  */
