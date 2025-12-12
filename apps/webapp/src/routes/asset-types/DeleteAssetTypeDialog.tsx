@@ -7,44 +7,55 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import type { AssetType } from '@sigauth/generics/prisma-types';
-import { TriangleAlertIcon } from 'lucide-react';
+import { Trash, TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const DeleteAssetTypeDialog = ({ assetType, close }: { assetType?: AssetType; close: () => void }) => {
+export const DeleteAssetTypeDialog = ({
+    typeIds,
+    open,
+    setOpen,
+}: {
+    typeIds: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        if (!assetType) return;
+        if (!typeIds || typeIds.length === 0) return;
 
         const res = await request('POST', '/api/asset-type/delete', {
-            assetTypeIds: [assetType.id],
+            assetTypeIds: typeIds,
         });
 
         if (res.ok) {
-            setSession({ assetTypes: session.assetTypes.filter(at => at.id !== assetType.id) });
+            setSession({ assetTypes: session.assetTypes.filter(at => !typeIds.includes(at.id)) });
         } else {
             console.error(await res.text());
             throw new Error();
         }
     };
 
-    if (!assetType) return null;
-
     return (
-        <AlertDialog open={true} onOpenChange={() => close()}>
-            <AlertDialogContent className="!max-w-fit">
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon-lg" disabled={typeIds?.length === 0} className="w-fit">
+                    <Trash />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
                 <AlertDialogHeader className="items-center">
                     <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
                         <TriangleAlertIcon className="text-destructive size-6" />
                     </div>
                     <AlertDialogTitle>Are you absolutely sure you want to delete?</AlertDialogTitle>
                     <AlertDialogDescription className="text-center">
-                        This action cannot be undone. This will permanently delete the asset type and remove all related assets with it.
+                        This action cannot be undone. This will permanently delete the asset types and remove all related assets with them.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

@@ -354,7 +354,21 @@ export const AppsList = () => {
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map(row => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                                <TableRow
+                                    key={row.id}
+                                    data-state={row.getIsSelected() && 'selected'}
+                                    onClick={event => {
+                                        const target = event.target as HTMLElement | null;
+
+                                        if (
+                                            target?.closest(
+                                                'button, a, input, textarea, select, label, [role="button"], [data-no-row-select="true"]',
+                                            )
+                                        )
+                                            return;
+                                        row.toggleSelected();
+                                    }}
+                                >
                                     {row.getVisibleCells().map(cell => (
                                         <TableCell
                                             key={cell.id}

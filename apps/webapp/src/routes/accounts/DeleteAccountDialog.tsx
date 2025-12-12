@@ -49,7 +49,7 @@ export const DeleteAccountDialog = ({
                     <Trash />
                 </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-[6rem]">
+            <AlertDialogContent>
                 <AlertDialogHeader className="items-center">
                     <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
                         <TriangleAlertIcon className="text-destructive size-6" />

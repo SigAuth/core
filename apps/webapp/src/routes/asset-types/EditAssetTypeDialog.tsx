@@ -9,14 +9,17 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
-import type { AssetType } from '@sigauth/generics/prisma-types';
 import { BadgePlus, Trash } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export const EditAssetTypeDialog = ({ assetType, close }: { assetType?: AssetType; close: () => void }) => {
+export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: number[]; open: boolean; setOpen: (open: boolean) => void }) => {
     const { session, setSession } = useSession();
 
+    const assetType = useMemo(() => {
+        if (typeIds.length !== 1) return undefined;
+        return session.assetTypes.find(at => at.id === typeIds[0]);
+    }, [typeIds, session.assetTypes]);
     const [fields, setFields] = useState<AssetTypeField[]>([]);
     const [fieldCache, setFieldCache] = useState<AssetTypeField[]>([]);
 
@@ -40,7 +43,6 @@ export const EditAssetTypeDialog = ({ assetType, close }: { assetType?: AssetTyp
 
     const handleSubmit = async () => {
         const name = (document.getElementById('edit-name') as HTMLInputElement).value.trim();
-        console.log('RUN NAME', name);
         if (!assetType) return;
         if (name.length < 4) {
             toast.error('Name must be at least 4 characters long');
@@ -67,12 +69,11 @@ export const EditAssetTypeDialog = ({ assetType, close }: { assetType?: AssetTyp
         }
     };
 
-    if (!assetType) return null;
     return (
-        <Dialog open={true} onOpenChange={() => close()}>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Edit {assetType.name}</DialogTitle>
+                    <DialogTitle>Edit {assetType?.name}</DialogTitle>
                     <DialogDescription>
                         Edit asset type (a blueprint for your assets) by specifying its name, and variables that assets can have.
                     </DialogDescription>
@@ -81,7 +82,7 @@ export const EditAssetTypeDialog = ({ assetType, close }: { assetType?: AssetTyp
                     <div className="grid gap-4">
                         <div className="grid gap-3">
                             <Label htmlFor="edit-name">Name</Label>
-                            <Input id="edit-name" name="edit-name" placeholder="e.G Blog Post" defaultValue={assetType.name} />
+                            <Input id="edit-name" name="edit-name" placeholder="e.G Blog Post" defaultValue={assetType?.name} />
                         </div>
                     </div>
 

@@ -64,7 +64,7 @@ export const CreateAssetTypeDialog = () => {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" className="w-fit">
+                <Button size="icon-lg" variant="ghost" className="w-fit">
                     <BadgePlus />
                 </Button>
             </DialogTrigger>
