@@ -79,6 +79,13 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // run once per instance
 
+    // Update editor value if `code` prop changes after mount
+    useEffect(() => {
+        const editor = monacoInstanceRef.current;
+        if (editor && editor.getValue() !== code) {
+            editor.setValue(code);
+        }
+    }, [code]);
     // React to theme changes without re-creating the editor
     useEffect(() => {
         if (monacoInstanceRef.current) {
