@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -9,9 +9,8 @@ import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
-import type { App } from '@sigauth/generics/prisma-types';
-import { BadgePlus, XIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { BadgePlus, Edit, XIcon } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -29,8 +28,13 @@ const formSchema = z.object({
     webFetchEnabled: z.boolean().optional(),
 });
 
-export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) => {
+export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; open: boolean; setOpen: (open: boolean) => void }) => {
     const { session, setSession } = useSession();
+
+    const app = useMemo(() => {
+        if (appIds.length !== 1) return undefined;
+        return session.apps.find(a => a.id === appIds[0]);
+    }, [appIds, session.apps]);
 
     const [tab, setTab] = useState<'asset' | 'container' | 'root'>('asset');
     const [permissionField, setPermissionField] = useState<string>('');
@@ -99,10 +103,15 @@ export const EditAppDialog = ({ app, close }: { app?: App; close: () => void }) 
     };
 
     return (
-        <Dialog open={true} onOpenChange={close}>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button disabled={appIds.length !== 1} variant="ghost" size="icon-lg" className="w-fit">
+                    <Edit />
+                </Button>
+            </DialogTrigger>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Edit {app.name}</DialogTitle>
+                    <DialogTitle>Edit {app?.name}</DialogTitle>
                     <DialogDescription>Reconfigure your application settings and permissions.</DialogDescription>
                 </DialogHeader>
                 <div>

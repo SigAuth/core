@@ -2,6 +2,7 @@ import { PrismaService } from '@/common/prisma/prisma.service';
 import { MirrorService } from '@/modules/mirror/mirror.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { Mirror } from '@sigauth/generics/prisma-client';
 @Injectable()
 export class MirrorCronService {
     private readonly logger: Logger = new Logger(MirrorCronService.name);
@@ -47,7 +48,9 @@ export class MirrorCronService {
 
             if (res !== 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
         } catch (error) {
-            this.logger.error(`Mirror ${mirror.name} (ID: ${mirror.id}) execution failed: ${error instanceof Error ? error.message : String(error)}`);
+            this.logger.error(
+                `Mirror ${mirror.name} (ID: ${mirror.id}) execution failed: ${error instanceof Error ? error.message : String(error)}`,
+            );
         }
     }
 }

@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +11,8 @@ import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Popover, PopoverContent } from '@radix-ui/react-popover';
-import type { Container } from '@sigauth/generics/prisma-types';
 import { PROTECTED } from '@sigauth/generics/protected';
-import { BadgePlus, Check, ChevronsUpDown, XIcon } from 'lucide-react';
+import { BadgePlus, Check, ChevronsUpDown, Edit, XIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -25,9 +24,21 @@ const formSchema = z.object({
     apps: z.array(z.number()),
 });
 
-export const EditContainerDialog = ({ container, close }: { container?: Container; close: () => void }) => {
+export const EditContainerDialog = ({
+    containerIds,
+    open,
+    setOpen,
+}: {
+    containerIds: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
 
+    const container = useMemo(() => {
+        if (containerIds.length !== 1) return undefined;
+        return session.containers.find(c => c.id === containerIds[0]);
+    }, [containerIds, session.containers]);
     const [assetSelectorOpen, setAssetSelectorOpen] = useState(false);
     const [assetIdField, setAssetIdField] = useState('');
     const [appSelectorOpen, setAppSelectorOpen] = useState(false);
@@ -70,7 +81,6 @@ export const EditContainerDialog = ({ container, close }: { container?: Containe
     }, [container]);
 
     const isAssetIdFieldValid = useMemo(() => /^\d*(?:[,-]\d+)*$/.test(assetIdField), [assetIdField]);
-
     const addAssetFromIdField = () => {
         if (!isAssetIdFieldValid) return;
         const notfoundIds: number[] = [];
@@ -109,12 +119,16 @@ export const EditContainerDialog = ({ container, close }: { container?: Containe
         }
     };
 
-    if (!container) return <></>;
     return (
-        <Dialog open={!!container} onOpenChange={close}>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button disabled={containerIds.length !== 1} size="icon-lg" variant="ghost" className="w-fit">
+                    <Edit />
+                </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-3xl flex flex-col gap-5">
                 <DialogHeader>
-                    <DialogTitle>Edit {container.name}</DialogTitle>
+                    <DialogTitle>Edit {container?.name}</DialogTitle>
                     <DialogDescription>Edit the container to group assets and applications together.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>

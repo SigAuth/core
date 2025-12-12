@@ -7,36 +7,48 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import type { Mirror } from '@sigauth/generics/prisma-types';
-import { TriangleAlertIcon } from 'lucide-react';
+import { Trash, TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const DeleteMirrorDialog = ({ mirror, close }: { mirror?: Mirror; close: () => void }) => {
+export const DeleteMirrorDialog = ({
+    mirrorIds,
+    open,
+    setOpen,
+}: {
+    mirrorIds: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        if (!mirror) return;
+        if (mirrorIds.length === 0) return;
 
         const res = await request('POST', '/api/mirror/delete', {
-            ids: [mirror.id],
+            ids: mirrorIds,
         });
 
         if (res.ok) {
-            setSession({ mirrors: session.mirrors.filter(m => m.id !== mirror.id) });
+            setSession({ mirrors: session.mirrors.filter(m => !mirrorIds.includes(m.id)) });
         } else {
             console.error(await res.text());
             throw new Error();
         }
     };
 
-    if (!mirror) return null;
     return (
-        <AlertDialog open={true} onOpenChange={() => close()}>
-            <AlertDialogContent className="!max-w-fit">
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon-lg" disabled={mirrorIds.length === 0} className="w-fit">
+                    <Trash />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
                 <AlertDialogHeader className="items-center">
                     <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
                         <TriangleAlertIcon className="text-destructive size-6" />
@@ -53,9 +65,9 @@ export const DeleteMirrorDialog = ({ mirror, close }: { mirror?: Mirror; close: 
                             className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                             onClick={() =>
                                 toast.promise(handleSubmit, {
-                                    loading: 'Deleting mirror...',
-                                    success: 'Mirror deleted successfully',
-                                    error: 'Failed to delete mirror',
+                                    loading: 'Deleting...',
+                                    success: 'Deleted successfully',
+                                    error: 'Failed to delete',
                                 })
                             }
                         >

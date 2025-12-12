@@ -47,7 +47,7 @@ export const CreateMirrorDialog = () => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" className="w-fit">
+                <Button size="icon-lg" variant="ghost" className="w-fit">
                     <BadgePlus />
                 </Button>
             </DialogTrigger>
@@ -113,14 +113,14 @@ export const CreateMirrorDialog = () => {
                                                 </FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch checked={field.value} defaultChecked={false} onCheckedChange={field.onChange} />
                                             </FormControl>
                                         </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
-                            <Button className="w-full" type="submit">
+                            <Button className="w-full" type="submit" disabled={!form.formState.isValid}>
                                 Create
                             </Button>
                         </form>

@@ -101,9 +101,9 @@ export class AuthService {
         sessionId: string,
         account?: AccountWithPermissions,
     ): Promise<{
-        account: Account;
+        account: Partial<AccountWithPermissions>;
         session: Session;
-        accounts: Account[];
+        accounts: Partial<AccountWithPermissions>[];
         assets: Asset[];
         assetTypes: AssetType[];
         apps: App[];
@@ -123,7 +123,9 @@ export class AuthService {
 
         if (account.permissions.some(p => p.identifier == Utils.convertPermissionNameToIdent(SigAuthRootPermissions.ROOT))) {
             const [accounts, assets, assetTypes, apps, containers, mirrors] = await Promise.all([
-                this.prisma.account.findMany({ include: { permissions: true } }),
+                this.prisma.account.findMany({
+                    select: { id: true, name: true, email: true, api: true, accounts: true, permissions: true },
+                }),
                 this.prisma.asset.findMany(),
                 this.prisma.assetType.findMany(),
                 this.prisma.app.findMany(),
@@ -135,7 +137,7 @@ export class AuthService {
         } else {
             const accounts = await this.prisma.account.findMany({
                 where: { id: { in: account.accounts as number[] } },
-                include: { permissions: true },
+                select: { id: true, name: true, email: true, api: true, accounts: true, permissions: true },
             });
 
             const apps = await this.prisma.app.findMany({

@@ -99,7 +99,7 @@ export const CreateContainerDialog = () => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" className="w-fit">
+                <Button size="icon-lg" variant="ghost" className="w-fit">
                     <BadgePlus />
                 </Button>
             </DialogTrigger>

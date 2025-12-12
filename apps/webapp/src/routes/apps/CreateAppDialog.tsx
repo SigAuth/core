@@ -79,7 +79,7 @@ export const CreateAppDialog = () => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" className="w-fit">
+                <Button variant="ghost" size="icon-lg" className="w-fit">
                     <BadgePlus />
                 </Button>
             </DialogTrigger>

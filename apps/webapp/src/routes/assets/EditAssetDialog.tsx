@@ -1,7 +1,16 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -9,15 +18,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
-import { type Asset, type Container } from '@sigauth/generics/prisma-types';
+import { type Container } from '@sigauth/generics/prisma-types';
 import { PROTECTED } from '@sigauth/generics/protected';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Edit } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export const EditAssetDialog = ({ asset, close }: { asset?: Asset; close: () => void }) => {
+export const EditAssetDialog = ({ assetIds, open, setOpen }: { assetIds: number[]; open: boolean; setOpen: (open: boolean) => void }) => {
     const { session, setSession } = useSession();
 
+    const asset = useMemo(() => {
+        if (assetIds.length !== 1) return undefined;
+        return session.assets.find(a => a.id === assetIds[0]);
+    }, [assetIds, session.assets]);
     const [assetFields, setAssetFields] = useState<Record<string, string | number | boolean>>({});
 
     const [containerIds, setContainerIds] = useState<number[]>([]);
@@ -61,20 +74,24 @@ export const EditAssetDialog = ({ asset, close }: { asset?: Asset; close: () => 
         throw new Error('Failed to edit asset');
     };
 
-    if (!asset) return null;
     return (
-        <Dialog open={!!asset} onOpenChange={close}>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button disabled={assetIds.length !== 1} size="icon-lg" variant="ghost" className="w-fit">
+                    <Edit />
+                </Button>
+            </DialogTrigger>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Edit {asset.name}</DialogTitle>
+                    <DialogTitle>Edit {asset?.name}</DialogTitle>
                     <DialogDescription>
-                        Edit the asset depending on a asset type. You can create as many asset types as you want and fill them with data.
+                        Edit the asset depending on an asset type. You can create as many asset types as you want and fill them with data.
                     </DialogDescription>
                 </DialogHeader>
                 <div>
                     <div className="grid gap-3">
                         <Label htmlFor="edit-name">Name</Label>
-                        <Input id="edit-name" name="name" placeholder="e.G Back to the Future 3" defaultValue={asset.name} />
+                        <Input id="edit-name" name="name" placeholder="e.G Back to the Future 3" defaultValue={asset?.name} />
                     </div>
 
                     {/* Container selection */}
@@ -177,7 +194,7 @@ export const EditAssetDialog = ({ asset, close }: { asset?: Asset; close: () => 
                                 })
                             }
                         >
-                            Create
+                            Edit
                         </Button>
                     </DialogClose>
                 </DialogFooter>

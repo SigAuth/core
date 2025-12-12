@@ -7,36 +7,48 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import type { Container } from '@sigauth/generics/prisma-types';
-import { TriangleAlertIcon } from 'lucide-react';
+import { Trash, TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const DeleteContainerDialog = ({ container, close }: { container?: Container; close: () => void }) => {
+export const DeleteContainerDialog = ({
+    containerIds,
+    open,
+    setOpen,
+}: {
+    containerIds: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        if (!container) return;
+        if (containerIds.length === 0) return;
 
         const res = await request('POST', '/api/container/delete', {
-            containerIds: [container.id],
+            containerIds,
         });
 
         if (res.ok) {
-            setSession({ containers: session.containers.filter(c => c.id !== container.id) });
+            setSession({ containers: session.containers.filter(c => !containerIds.includes(c.id)) });
         } else {
             console.error(await res.text());
             throw new Error();
         }
     };
 
-    if (!container) return null;
     return (
-        <AlertDialog open={true} onOpenChange={() => close()}>
-            <AlertDialogContent className="!max-w-fit">
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon-lg" disabled={containerIds.length === 0} className="w-fit">
+                    <Trash />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
                 <AlertDialogHeader className="items-center">
                     <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
                         <TriangleAlertIcon className="text-destructive size-6" />
@@ -54,9 +66,9 @@ export const DeleteContainerDialog = ({ container, close }: { container?: Contai
                             className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                             onClick={() =>
                                 toast.promise(handleSubmit, {
-                                    loading: 'Deleting container...',
-                                    success: 'Container deleted successfully',
-                                    error: 'Failed to delete container',
+                                    loading: 'Deleting...',
+                                    success: 'Deleted successfully',
+                                    error: 'Failed to delete',
                                 })
                             }
                         >
