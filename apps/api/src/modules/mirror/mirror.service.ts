@@ -20,17 +20,6 @@ export class MirrorService {
     ) {}
 
     async createMirror(createDto: CreateMirrorDto) {
-        // // minify & compile code
-        // const minify = await esbuild.transform(createDto.code, {
-        //     loader: 'ts',
-        //     minify: true,
-        //     target: ['es2020'],
-        //     format: 'esm',
-        // });
-        // this.logger.debug('Compiled mirror code:' + minify.code);
-        // const instance = await this.getExecutionInstance(minify.code);
-        // await instance.create();
-
         const mirror = await this.prisma.mirror.create({
             data: {
                 name: createDto.name,
@@ -39,8 +28,6 @@ export class MirrorService {
                 autoRunInterval: createDto.autoRunInterval || 0,
             },
         });
-
-        // TODO call create mirror function
 
         return mirror;
     }
@@ -125,6 +112,7 @@ export class MirrorService {
             const instance = await this.getExecutionInstance(compiled, cb, dataUtils);
             if (method == 'init') {
                 await instance.init(cb);
+                return 'OK';
             } else if (method == 'run') {
                 let result = 'OK';
                 try {
@@ -137,8 +125,10 @@ export class MirrorService {
                     where: { id },
                     data: { lastRun: new Date(), lastResult: result },
                 });
+                return result;
             } else if (method == 'delete') {
                 await instance.delete(cb);
+                return 'OK';
             }
         }
     }

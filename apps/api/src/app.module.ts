@@ -13,12 +13,14 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { WellKnownModule } from './modules/well-known/well-known.module';
 import { MirrorModule } from '@/modules/mirror/mirror.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
     imports: [
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '../..', 'webapp', 'dist'),
         }),
+        ScheduleModule.forRoot(),
         ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env'] }),
         AccountModule,
         ThrottlerModule.forRoot([

@@ -109,6 +109,7 @@ export const MirrorPage: React.FC = () => {
                             <TableHead>Name</TableHead>
                             <TableHead>Auto-Run</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Last Run</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -133,6 +134,7 @@ export const MirrorPage: React.FC = () => {
                                         </Badge>
                                     )}
                                 </TableCell>
+                                <TableCell>{mirror.lastRun ? new Date(mirror.lastRun).toLocaleString() : 'Never'}</TableCell>
                                 <TableCell className="justify-end flex gap-2">
                                     <Button variant="outline" size="sm" onClick={() => setSelectedMirror(mirror)}>
                                         <Code />

@@ -22,15 +22,16 @@ export const EditMirrorDialog = ({ mirror, reset }: { mirror?: Mirror; reset: ()
     const { session, setSession } = useSession();
 
     const submitToApi = async (values: z.infer<typeof formSchema>) => {
-        const res = await request('POST', 'api/mirror/edit', { id: mirror!.id, ...values });
+        if (!mirror) return;
+        const res = await request('POST', 'api/mirror/edit', { id: mirror.id, ...values, code: mirror.code });
 
         if (res.ok) {
             const data = await res.json();
-            setSession({ mirrors: session.mirrors.map(m => (m.id === data.mirror.id ? data.mirror : m)) });
+            setSession({ mirrors: session.mirrors.map(m => (m.id === data.id ? data : m)) });
             reset();
             return;
         }
-        throw new Error((await res.json()).message || 'Failed to create mirror');
+        throw new Error((await res.json()).message || 'Failed to edit mirror');
     };
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -68,9 +69,9 @@ export const EditMirrorDialog = ({ mirror, reset }: { mirror?: Mirror; reset: ()
                                 e.preventDefault();
                                 if (!form.formState.isValid) return;
                                 toast.promise(form.handleSubmit(submitToApi), {
-                                    loading: 'Creating Mirror...',
-                                    success: 'Mirror created successfully',
-                                    error: (err: Error) => err?.message || 'Failed to create mirror',
+                                    loading: 'Editing Mirror...',
+                                    success: 'Mirror edited successfully',
+                                    error: (err: Error) => err?.message || 'Failed to edit mirror',
                                 });
                             }}
                             className="space-y-8"
@@ -126,7 +127,7 @@ export const EditMirrorDialog = ({ mirror, reset }: { mirror?: Mirror; reset: ()
                                 )}
                             />
                             <Button className="w-full" type="submit">
-                                Create
+                                Edit
                             </Button>
                         </form>
                     </Form>
