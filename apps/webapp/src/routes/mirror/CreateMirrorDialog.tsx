@@ -61,7 +61,6 @@ export const CreateMirrorDialog = () => {
                         <form
                             onSubmit={(e: React.FormEvent) => {
                                 e.preventDefault();
-                                console.log(form.formState.isValid, form.formState.errors, form.getValues());
                                 if (!form.formState.isValid) return;
                                 toast.promise(form.handleSubmit(submitToApi), {
                                     loading: 'Creating Mirror...',
