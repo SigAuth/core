@@ -2,8 +2,6 @@ import { PrismaService } from '@/common/prisma/prisma.service';
 import { MirrorService } from '@/modules/mirror/mirror.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { Mirror } from '@sigauth/generics/prisma-client';
-
 @Injectable()
 export class MirrorCronService {
     private readonly logger: Logger = new Logger(MirrorCronService.name);
