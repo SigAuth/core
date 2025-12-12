@@ -7,44 +7,58 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
-import { TriangleAlertIcon } from 'lucide-react';
+import { Trash, TriangleAlertIcon } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
-export const DeleteAccountDialog = ({ account, close }: { account?: AccountWithPermissions; close: () => void }) => {
+export const DeleteAccountDialog = ({
+    accountIds,
+    open,
+    setOpen,
+}: {
+    accountIds?: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        if (!account) return;
+        const accounts = session.accounts.filter(a => accountIds?.includes(a.id));
+        if (accounts.length != accountIds?.length || accounts.length == 0) return;
 
         const res = await request('POST', '/api/account/delete', {
-            accountIds: [account.id],
+            accountIds,
         });
 
         if (res.ok) {
-            setSession({ accounts: session.accounts.filter(a => a.id !== account.id) });
+            setSession({ accounts: session.accounts.filter(a => !accountIds?.includes(a.id)) });
         } else {
             console.error(await res.text());
             throw new Error();
         }
     };
 
-    if (!account) return null;
     return (
-        <AlertDialog open={true} onOpenChange={() => close()}>
-            <AlertDialogContent className="!max-w-fit">
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon-lg" disabled={accountIds?.length === 0} className="w-fit">
+                    <Trash />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-[6rem]">
                 <AlertDialogHeader className="items-center">
                     <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
                         <TriangleAlertIcon className="text-destructive size-6" />
                     </div>
                     <AlertDialogTitle>Are you absolutely sure you want to delete?</AlertDialogTitle>
                     <AlertDialogDescription className="text-center">
-                        This action cannot be undone. This will permanently delete the account and remove all related authorization data
-                        with it.
+                        This action cannot be undone. This will permanently delete the selected {accountIds.length} account(s) and remove
+                        all related authorization data with it.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

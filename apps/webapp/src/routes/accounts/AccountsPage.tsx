@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
+import { AccountsList } from '@/routes/accounts/AccountList';
 import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
 import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
 import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
@@ -25,12 +26,9 @@ export const AccountsPage: React.FC = () => {
             </p>
 
             <Card className="w-full py-2! p-2">
-                <CreateAccountDialog />
-                <EditAccountDialog account={editAccount} close={() => setEditAccount(undefined)} />
-                <DeleteAccountDialog account={deleteAccount} close={() => setDeleteAccount(undefined)} />
-                <PermissionSetAccountDialog account={setPermissionAccount} close={() => updateSetPermissionAccount(undefined)} />
 
-                <Table>
+                <AccountsList />
+                {/* <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[100px]">ID</TableHead>
@@ -61,7 +59,7 @@ export const AccountsPage: React.FC = () => {
                             </TableRow>
                         ))}
                     </TableBody>
-                </Table>
+                </Table> */}
             </Card>
         </>
     );

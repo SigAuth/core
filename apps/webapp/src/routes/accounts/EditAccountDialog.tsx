@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -7,13 +7,27 @@ import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
-import { useEffect } from 'react';
+import { Edit } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-export const EditAccountDialog = ({ account, close }: { account?: AccountWithPermissions; close: () => void }) => {
+export const EditAccountDialog = ({
+    accountIds,
+    open,
+    setOpen,
+}: {
+    accountIds: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
+
+    const account = useMemo(() => {
+        if (accountIds.length !== 1) return undefined;
+        return session.accounts.find(a => a.id === accountIds[0]);
+    }, [accountIds, session.accounts]);
 
     const formSchema = z.object({
         name: z
@@ -58,10 +72,10 @@ export const EditAccountDialog = ({ account, close }: { account?: AccountWithPer
         if (res.ok) {
             const data = await res.json();
             setSession({ accounts: session.accounts.map(a => (a.id === account.id ? data.account : a)) });
-            close();
+            setOpen(false);
             return;
         }
-        throw new Error((await res.json()).message || 'Failed to create account');
+        throw new Error((await res.json()).message || 'Failed to edit account');
     };
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -78,14 +92,18 @@ export const EditAccountDialog = ({ account, close }: { account?: AccountWithPer
         });
     }, [account]);
 
-    if (!account) return null;
     return (
-        <Dialog open={!!account} onOpenChange={close}>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" disabled={accountIds.length !== 1} size="icon-lg" className="w-fit">
+                    <Edit />
+                </Button>
+            </DialogTrigger>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Edit {account.name}</DialogTitle>
+                    <DialogTitle>Edit {account?.name}</DialogTitle>
                     <DialogDescription>
-                        Update {account.name} here. You can create as many accounts as you want and fill them with data.
+                        Update {account?.name} here. You can create as many accounts as you want and fill them with data.
                     </DialogDescription>
                 </DialogHeader>
                 <div>

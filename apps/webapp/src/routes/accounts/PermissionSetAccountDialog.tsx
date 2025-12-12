@@ -13,11 +13,24 @@ import type { AppPermission } from '@sigauth/generics/json-types';
 import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import type { App, PermissionInstance } from '@sigauth/generics/prisma-types';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export const PermissionSetAccountDialog = ({ account, close }: { account?: AccountWithPermissions; close: () => void }) => {
+export const PermissionSetAccountDialog = ({
+    accountIds,
+    open,
+    setOpen,
+}: {
+    accountIds: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
+
+    const account = useMemo(() => {
+        if (accountIds.length !== 1) return undefined;
+        return session.accounts.find(a => a.id === accountIds[0]);
+    }, [accountIds, session.accounts]);
 
     const [currentApp, setCurrentApp] = useState<App | undefined>(undefined);
     const [currentContainer, setCurrentContainer] = useState<number | undefined>(undefined);
@@ -27,7 +40,6 @@ export const PermissionSetAccountDialog = ({ account, close }: { account?: Accou
     const [containerPermissionOpen, setContainerPermissionOpen] = useState(false);
 
     useEffect(() => setPermissions(account ? account.permissions : []), [account]);
-
     useEffect(() => {
         setCurrentContainer(undefined);
     }, [currentApp]);
@@ -48,14 +60,12 @@ export const PermissionSetAccountDialog = ({ account, close }: { account?: Accou
         throw new Error('Failed to set permissions');
     };
 
-    if (!account) return <></>;
-
     const availableContainers = session.containers.filter(c => c.apps.includes(currentApp?.id || -1));
     return (
-        <Dialog open={!!account} onOpenChange={close}>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Set explicit permissions for {account.name}</DialogTitle>
+                    <DialogTitle>Set explicit permissions for {account?.name}</DialogTitle>
                     <DialogDescription>Specify the permissions you want to grant to this account.</DialogDescription>
                 </DialogHeader>
                 <div>
