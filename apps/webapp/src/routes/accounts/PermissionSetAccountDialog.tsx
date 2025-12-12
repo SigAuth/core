@@ -10,7 +10,6 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import type { AppPermission } from '@sigauth/generics/json-types';
-import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import type { App, PermissionInstance } from '@sigauth/generics/prisma-types';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';

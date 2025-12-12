@@ -1,39 +1,6 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useSession } from '@/context/SessionContext';
-import { usePagination } from '@/lib/use-pagination';
-import { cn } from '@/lib/utils';
-import type { AccountWithPermissions } from '@sigauth/generics';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
-import {
-    flexRender,
-    getCoreRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    type PaginationState,
-    type SortingState,
-    useReactTable,
-    type ColumnDef,
-    getFilteredRowModel,
-} from '@tanstack/react-table';
-import {
-    ChevronDownIcon,
-    ChevronLeftIcon,
-    ChevronRightIcon,
-    ChevronUpIcon,
-    DownloadCloudIcon,
-    Edit,
-    EllipsisVertical,
-    FileSpreadsheetIcon,
-    FileTextIcon,
-    Hammer,
-    Trash,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -42,22 +9,55 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
-import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
-import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
-import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useSession } from '@/context/SessionContext';
+import { usePagination } from '@/lib/use-pagination';
+import { cn } from '@/lib/utils';
+import { CreateAppDialog } from '@/routes/apps/CreateAppDialog';
+import { DeleteAppDialog } from '@/routes/apps/DeleteAppDialog';
+import { EditAppDialog } from '@/routes/apps/EditAppDialog';
+import type { AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
+import type { App } from '@sigauth/generics/prisma-client';
+import {
+    type ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    type PaginationState,
+    type SortingState,
+    useReactTable,
+} from '@tanstack/react-table';
+import {
+    ChevronDownIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    ChevronUpIcon,
+    Copy,
+    DownloadCloudIcon,
+    Edit,
+    EllipsisVertical,
+    FileSpreadsheetIcon,
+    FileTextIcon,
+    Trash,
+} from 'lucide-react';
+import Papa from 'papaparse';
+import { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 
-export const AccountsList = () => {
+export const AppsList = () => {
     const pageSize = 20;
     const { session } = useSession();
 
-    const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
 
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize });
     const [rowSelection, setRowSelection] = useState({});
-    const [data, setData] = useState<AccountWithPermissions[]>(session.accounts); // Replace with actual data fetching logic
+    const [data, setData] = useState<App[]>(session.apps); // Replace with actual data fetching logic
 
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<SortingState>([
@@ -68,11 +68,11 @@ export const AccountsList = () => {
     ]);
 
     useEffect(() => {
-        setData(session.accounts);
+        setData(session.apps);
         setRowSelection({});
-    }, [session.accounts]);
+    }, [session.apps]);
 
-    const columns: ColumnDef<AccountWithPermissions>[] = [
+    const columns: ColumnDef<App>[] = [
         {
             id: 'select',
             maxSize: 1,
@@ -90,9 +90,45 @@ export const AccountsList = () => {
         },
         { header: 'ID', accessorKey: 'id', maxSize: 1 },
         { header: 'Name', accessorKey: 'name', cell: info => info.getValue() },
-        { header: 'E-Mail', accessorKey: 'email', cell: info => info.getValue() },
-        { header: 'Related Containers', accessorFn: row => new Set(row.permissions.map(p => p.containerId)).size },
-        { header: 'API Access', accessorKey: 'apiAccess', cell: info => (info.getValue() ? 'Yes' : 'No') },
+        { header: 'URL', accessorKey: 'url', cell: info => info.getValue() },
+        {
+            header: 'API Token',
+            accessorKey: 'token',
+            cell: info => (
+                <>
+                    {`${info.getValue<string>().slice(0, 6)}...${info.getValue<string>().slice(-4)}`}
+                    <Button
+                        onClick={() => navigator.clipboard.writeText(info.getValue<string>())}
+                        className="ring-offset-background hover:ring-primary/90 transition-all duration-300 hover:ring-2 ml-3 hover:ring-offset-2"
+                        size="icon-sm"
+                    >
+                        <Copy />
+                    </Button>
+                </>
+            ),
+        },
+        {
+            header: 'Web Fetch',
+            accessorKey: 'webFetch',
+            cell: info =>
+                info.getValue<AppWebFetch>().enabled ? <Badge color="green">Enabled</Badge> : <Badge variant="destructive">Disabled</Badge>,
+        },
+        {
+            header: 'Containers',
+            accessorFn: app => session.containers.filter(container => container.apps.includes(app.id)).length,
+        },
+        {
+            header: 'Assets',
+            accessorFn: app =>
+                session.containers
+                    .filter(container => container.apps.includes(app.id))
+                    .reduce((acc, container) => acc + container.assets.length, 0),
+        },
+        {
+            header: 'Permissions',
+            accessorFn: app =>
+                `${(app.permissions as AppPermission).asset.length} / ${(app.permissions as AppPermission).container.length} / ${(app.permissions as AppPermission).root.length}`,
+        },
         {
             header: 'Actions',
             id: 'actions',
@@ -102,24 +138,6 @@ export const AccountsList = () => {
                         <EllipsisVertical />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        {row.original.api && (
-                            <>
-                                <DropdownMenuItem>
-                                    <FileTextIcon className="mr-2 size-4" />
-                                    Copy API Key
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                            </>
-                        )}
-                        <DropdownMenuItem
-                            onClick={() => {
-                                setRowSelection({ [row.id]: true });
-                                setPermissionDialogOpen(true);
-                            }}
-                        >
-                            <Hammer className="mr-2 size-4" />
-                            Permissions
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
                                 setRowSelection({ [row.id]: true });
@@ -159,7 +177,7 @@ export const AccountsList = () => {
         const url = URL.createObjectURL(blob);
 
         link.setAttribute('href', url);
-        link.setAttribute('download', `accounts-${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', `apps-${new Date().toISOString().split('T')[0]}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -178,7 +196,7 @@ export const AccountsList = () => {
         const url = URL.createObjectURL(blob);
 
         link.setAttribute('href', url);
-        link.setAttribute('download', `accounts-${new Date().toISOString().split('T')[0]}.json`);
+        link.setAttribute('download', `apps-${new Date().toISOString().split('T')[0]}.json`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -194,13 +212,13 @@ export const AccountsList = () => {
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
 
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Accounts');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Apps');
 
         const cols = [{ wch: 10 }, { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 15 }];
 
         worksheet['!cols'] = cols;
 
-        XLSX.writeFile(workbook, `accounts-${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(workbook, `apps-${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     const table = useReactTable({
@@ -227,7 +245,7 @@ export const AccountsList = () => {
         },
     });
 
-    const selectedAccountIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+    const selectedAppIds = table.getSelectedRowModel().rows.map(row => row.original.id);
     const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
         currentPage: table.getState().pagination.pageIndex + 1,
         totalPages: table.getPageCount(),
@@ -246,14 +264,9 @@ export const AccountsList = () => {
                     />
 
                     <div className="flex gap-2 ml-3">
-                        <CreateAccountDialog />
-                        <DeleteAccountDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} accountIds={selectedAccountIds} />
-                        <EditAccountDialog setOpen={setEditDialogOpen} open={editDialogOpen} accountIds={selectedAccountIds} />
-                        <PermissionSetAccountDialog
-                            open={permissionDialogOpen}
-                            setOpen={setPermissionDialogOpen}
-                            accountIds={selectedAccountIds}
-                        />
+                        <CreateAppDialog />
+                        <DeleteAppDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} appIds={selectedAppIds} />
+                        <EditAppDialog setOpen={setEditDialogOpen} open={editDialogOpen} appIds={selectedAppIds} />
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">

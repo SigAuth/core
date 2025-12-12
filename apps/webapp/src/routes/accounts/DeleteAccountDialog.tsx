@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { Trash, TriangleAlertIcon } from 'lucide-react';
-import { useState } from 'react';
 import { toast } from 'sonner';
 
 export const DeleteAccountDialog = ({

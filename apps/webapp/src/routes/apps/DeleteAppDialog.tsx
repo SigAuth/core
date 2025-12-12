@@ -7,35 +7,39 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import type { App } from '@sigauth/generics/prisma-types';
-import { TriangleAlertIcon } from 'lucide-react';
+import { Trash, TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const DeleteAppDialog = ({ app, close }: { app?: App; close: () => void }) => {
+export const DeleteAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; open: boolean; setOpen: (open: boolean) => void }) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        if (!app) return;
+        if (appIds.length === 0) return;
 
         const res = await request('POST', '/api/app/delete', {
-            appIds: [app.id],
+            appIds,
         });
 
         if (res.ok) {
-            setSession({ apps: session.apps.filter(a => a.id !== app.id) });
+            setSession({ apps: session.apps.filter(a => !appIds.includes(a.id)) });
         } else {
             console.error(await res.text());
             throw new Error();
         }
     };
 
-    if (!app) return null;
     return (
-        <AlertDialog open={true} onOpenChange={() => close()}>
+        <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon-lg" disabled={appIds?.length === 0} className="w-fit">
+                    <Trash />
+                </Button>
+            </AlertDialogTrigger>
             <AlertDialogContent className="!max-w-fit">
                 <AlertDialogHeader className="items-center">
                     <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">

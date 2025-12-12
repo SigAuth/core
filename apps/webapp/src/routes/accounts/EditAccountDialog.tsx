@@ -6,7 +6,6 @@ import { Switch } from '@/components/ui/switch';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { Edit } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
