@@ -142,7 +142,7 @@ export const EditMirrorDialog = ({
                                     </FormItem>
                                 )}
                             />
-                            <Button className="w-full" type="submit">
+                            <Button className="w-full" type="submit" disabled={!form.formState.isValid}>
                                 Edit
                             </Button>
                         </form>
