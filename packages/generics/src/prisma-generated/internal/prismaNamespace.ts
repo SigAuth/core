@@ -1288,8 +1288,7 @@ export const MirrorScalarFieldEnum = {
   autoRun: 'autoRun',
   autoRunInterval: 'autoRunInterval',
   lastRun: 'lastRun',
-  lastResult: 'lastResult',
-  isRunning: 'isRunning'
+  lastResult: 'lastResult'
 } as const
 
 export type MirrorScalarFieldEnum = (typeof MirrorScalarFieldEnum)[keyof typeof MirrorScalarFieldEnum]
