@@ -47,7 +47,7 @@ export class MirrorCronService {
                 this.logger.debug(`Mirror ${mirror.name} says: ${msg}`);
             });
 
-            if (res != 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
+            if (res !== 'OK') this.logger.warn(`Mirror ${mirror.name} execution returned unexpected result: ${res}`);
         } catch (error) {
             this.logger.error(`Mirror ${mirror.name} (ID: ${mirror.id}) execution failed: ${error instanceof Error ? error.message : String(error)}`);
         }
