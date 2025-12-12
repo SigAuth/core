@@ -12,7 +12,7 @@ export class AssetService {
         assetId: number | undefined,
         name: string,
         assetTypeId: number | undefined,
-        fields: Record<string, string | number>,
+        fields: Record<number, string | number>,
         intern: boolean,
     ): Promise<Asset> {
         if (!intern && assetTypeId == PROTECTED.AssetType.id)

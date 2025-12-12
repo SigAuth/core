@@ -115,10 +115,22 @@ model Asset {
 // TODO add a relation table for container-apps and container-assets to simply mainting the integrity of the database
 model Container {
   id                 Int                  @id @default(autoincrement())
+  customId           String?              @unique
   name               String
   assets             Int[]                @default([])
   apps               Int[]                @default([])
   PermissionInstance PermissionInstance[]
+}
+
+model Mirror {
+  id   Int    @id @default(autoincrement())
+  name String
+  code String
+
+  autoRun         Boolean   @default(false)
+  autoRunInterval Int? // in minutes
+  lastRun         DateTime?
+  lastResult      String?
 }
 
 model App {

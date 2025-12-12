@@ -10,6 +10,7 @@ import { AssetPage } from '@/routes/assets/AssetPage';
 import { OIDCSignInPage } from '@/routes/auth/oidc/OIDCSignInPage';
 import { ContainerPage } from '@/routes/container/ContainerPage';
 import HomePage from '@/routes/home/HomePage';
+import { MirrorPage } from '@/routes/mirror/MirrorPage';
 import { SettingsPage } from '@/routes/settings/SettingsPage';
 import SignInPage from '@/routes/SignIn';
 import type { Session } from '@sigauth/generics/prisma-types';
@@ -63,6 +64,7 @@ const RootComponent: React.FC = () => {
                                             <Route path="/container" element={<ContainerPage />} />
                                             <Route path="/settings" element={<SettingsPage />} />
                                             <Route path="/apps" element={<AppsPage />} />
+                                            <Route path="/mirror" element={<MirrorPage />} />
                                             <Route path="*" element={<h1>404 Not Found</h1>} />
                                         </Route>
                                     </>
