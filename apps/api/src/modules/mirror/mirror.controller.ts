@@ -10,12 +10,10 @@ import {
     Get,
     HttpCode,
     HttpStatus,
-    Injectable,
     Logger,
     Post,
     Query,
     Res,
-    UnauthorizedException,
     UseGuards,
 } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
