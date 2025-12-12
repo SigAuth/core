@@ -10,6 +10,7 @@ import { CodeEditor } from '@/routes/mirror/CodeEditor';
 import { CreateMirrorDialog } from '@/routes/mirror/CreateMirrorDialog';
 import { DeleteMirrorDialog } from '@/routes/mirror/DeleteMirrorDialog';
 import { EditMirrorDialog } from '@/routes/mirror/EditMirrorDialog';
+import { MirrorList } from '@/routes/mirror/MirrorList';
 import type { Mirror } from '@sigauth/generics/prisma-client';
 import { Check, Code, Edit, Play, Save, Trash, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -99,57 +100,7 @@ export const MirrorPage: React.FC = () => {
                 Create and manage your mirrors here. You can create, edit, or delete them as you wish.
             </p>
             <Card className="w-full py-2! p-2 mb-6">
-                <CreateMirrorDialog />
-                <EditMirrorDialog mirror={editMirror} reset={() => setEditMirror(null)} />
-                <DeleteMirrorDialog mirror={deleteMirror} close={() => setDeleteMirror(null)} />
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[100px]">ID</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Auto-Run</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Last Run</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {session.mirrors.map(mirror => (
-                            <TableRow key={mirror.id}>
-                                <TableCell className="w-[100px]">{mirror.id}</TableCell>
-                                <TableCell>{mirror.name}</TableCell>
-                                <TableCell>{mirror.autoRun ? `Every ${mirror.autoRunInterval} min` : 'No'}</TableCell>
-                                <TableCell>
-                                    {mirror.lastResult == 'OK' ? (
-                                        <Badge className="scale-110 py-1 dark:bg-green-900 bg-green-200">
-                                            <Check />
-                                        </Badge>
-                                    ) : !mirror.lastResult ? (
-                                        <Badge className="scale-110 py-1 " variant="default" color="gray">
-                                            ?
-                                        </Badge>
-                                    ) : (
-                                        <Badge className="scale-110 py-1 " variant="destructive">
-                                            <X />
-                                        </Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell>{mirror.lastRun ? new Date(mirror.lastRun).toLocaleString() : 'Never'}</TableCell>
-                                <TableCell className="justify-end flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setSelectedMirror(mirror)}>
-                                        <Code />
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => setEditMirror(mirror)}>
-                                        <Edit />
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => setDeleteMirror(mirror)}>
-                                        <Trash />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                <MirrorList openCodeEditor={m => setSelectedMirror(m)} />
             </Card>
             {selectedMirror && (
                 <div className="grid xl:grid-cols-2 gap-2">

@@ -1,13 +1,13 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Mirror } from '@sigauth/generics/prisma-client';
-import { useEffect } from 'react';
+import { Edit } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -18,8 +18,21 @@ const formSchema = z.object({
     autoRunInterval: z.number().min(1),
 });
 
-export const EditMirrorDialog = ({ mirror, reset }: { mirror?: Mirror; reset: () => void }) => {
+export const EditMirrorDialog = ({
+    mirrorIds,
+    open,
+    setOpen,
+}: {
+    mirrorIds: number[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
+
+    const mirror = useMemo(() => {
+        if (mirrorIds.length !== 1) return undefined;
+        return session.mirrors.find(m => m.id === mirrorIds[0]);
+    }, [mirrorIds, session.mirrors]);
 
     const submitToApi = async (values: z.infer<typeof formSchema>) => {
         if (!mirror) return;
@@ -28,7 +41,7 @@ export const EditMirrorDialog = ({ mirror, reset }: { mirror?: Mirror; reset: ()
         if (res.ok) {
             const data = await res.json();
             setSession({ mirrors: session.mirrors.map(m => (m.id === data.id ? data : m)) });
-            reset();
+            setOpen(false);
             return;
         }
         throw new Error((await res.json()).message || 'Failed to edit mirror');
@@ -56,7 +69,12 @@ export const EditMirrorDialog = ({ mirror, reset }: { mirror?: Mirror; reset: ()
 
     if (!mirror) return null;
     return (
-        <Dialog open={true} onOpenChange={() => reset()}>
+        <Dialog open={open} onOpenChange={() => setOpen(false)}>
+            <DialogTrigger asChild>
+                <Button disabled={mirrorIds.length !== 1} size="icon-lg" variant="ghost" className="w-fit">
+                    <Edit />
+                </Button>
+            </DialogTrigger>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
                     <DialogTitle>Edit your mirror</DialogTitle>
