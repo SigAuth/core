@@ -129,7 +129,6 @@ export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -138,7 +137,6 @@ export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setDeleteDialogOpen(true);
                             }}
                         >
@@ -175,7 +173,7 @@ export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror
         },
     });
 
-    const selectedContainerIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+    const selectedMirrorIds = table.getSelectedRowModel().rows.map(row => row.original.id);
     const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
         currentPage: table.getState().pagination.pageIndex + 1,
         totalPages: table.getPageCount(),
@@ -195,8 +193,8 @@ export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror
 
                     <div className="flex gap-2 ml-3">
                         <CreateMirrorDialog />
-                        <DeleteMirrorDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} mirrorIds={selectedContainerIds} />
-                        <EditMirrorDialog setOpen={setEditDialogOpen} open={editDialogOpen} mirrorIds={selectedContainerIds} />
+                        <DeleteMirrorDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} mirrorIds={selectedMirrorIds} />
+                        <EditMirrorDialog setOpen={setEditDialogOpen} open={editDialogOpen} mirrorIds={selectedMirrorIds} />
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">

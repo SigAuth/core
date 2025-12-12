@@ -33,15 +33,14 @@ export const EditMirrorDialog = ({
         if (mirrorIds.length !== 1) return undefined;
         return session.mirrors.find(m => m.id === mirrorIds[0]);
     }, [mirrorIds, session.mirrors]);
-
     const submitToApi = async (values: z.infer<typeof formSchema>) => {
-        if (!mirror) return;
+        if (!mirror) throw new Error('Mirror not found');
         const res = await request('POST', 'api/mirror/edit', { id: mirror.id, ...values, code: mirror.code });
 
+        setOpen(false);
         if (res.ok) {
             const data = await res.json();
             setSession({ mirrors: session.mirrors.map(m => (m.id === data.id ? data : m)) });
-            setOpen(false);
             return;
         }
         throw new Error((await res.json()).message || 'Failed to edit mirror');
@@ -67,9 +66,8 @@ export const EditMirrorDialog = ({
         }
     }, [mirror]);
 
-    if (!mirror) return null;
     return (
-        <Dialog open={open} onOpenChange={() => setOpen(false)}>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button disabled={mirrorIds.length !== 1} size="icon-lg" variant="ghost" className="w-fit">
                     <Edit />
@@ -87,9 +85,9 @@ export const EditMirrorDialog = ({
                                 e.preventDefault();
                                 if (!form.formState.isValid) return;
                                 toast.promise(form.handleSubmit(submitToApi), {
-                                    loading: 'Editing Mirror...',
-                                    success: 'Mirror edited successfully',
-                                    error: (err: Error) => err?.message || 'Failed to edit mirror',
+                                    loading: 'Editing...',
+                                    success: 'Edited successfully',
+                                    error: (err: Error) => err?.message || 'Failed to edit',
                                 });
                             }}
                             className="space-y-8"

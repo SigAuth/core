@@ -67,9 +67,9 @@ export const DeleteAccountDialog = ({
                             className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                             onClick={() =>
                                 toast.promise(handleSubmit, {
-                                    loading: 'Deleting account...',
-                                    success: 'Account deleted successfully',
-                                    error: 'Failed to delete account',
+                                    loading: 'Deleting...',
+                                    success: 'Deleted successfully',
+                                    error: 'Failed to delete',
                                 })
                             }
                         >

@@ -66,9 +66,9 @@ export const DeleteAssetDialog = ({
                             className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                             onClick={() =>
                                 toast.promise(handleSubmit, {
-                                    loading: 'Deleting asset...',
-                                    success: 'Asset deleted successfully',
-                                    error: 'Failed to delete asset',
+                                    loading: 'Deleting...',
+                                    success: 'Deleted successfully',
+                                    error: 'Failed to delete',
                                 })
                             }
                         >

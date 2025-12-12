@@ -132,7 +132,7 @@ export const AppsList = () => {
         {
             header: 'Actions',
             id: 'actions',
-            cell: ({ row }) => (
+            cell: () => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <EllipsisVertical />
@@ -140,7 +140,6 @@ export const AppsList = () => {
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -149,7 +148,6 @@ export const AppsList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setDeleteDialogOpen(true);
                             }}
                         >

@@ -66,9 +66,9 @@ export const DeleteContainerDialog = ({
                             className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                             onClick={() =>
                                 toast.promise(handleSubmit, {
-                                    loading: 'Deleting container...',
-                                    success: 'Container deleted successfully',
-                                    error: 'Failed to delete container',
+                                    loading: 'Deleting...',
+                                    success: 'Deleted successfully',
+                                    error: 'Failed to delete',
                                 })
                             }
                         >

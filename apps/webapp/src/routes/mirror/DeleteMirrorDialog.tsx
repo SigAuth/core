@@ -65,9 +65,9 @@ export const DeleteMirrorDialog = ({
                             className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                             onClick={() =>
                                 toast.promise(handleSubmit, {
-                                    loading: 'Deleting mirror...',
-                                    success: 'Mirror deleted successfully',
-                                    error: 'Failed to delete mirror',
+                                    loading: 'Deleting...',
+                                    success: 'Deleted successfully',
+                                    error: 'Failed to delete',
                                 })
                             }
                         >

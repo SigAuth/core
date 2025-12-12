@@ -57,9 +57,9 @@ export const DeleteAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; o
                             className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                             onClick={() =>
                                 toast.promise(handleSubmit, {
-                                    loading: 'Deleting app...',
-                                    success: 'App deleted successfully',
-                                    error: 'Failed to delete app',
+                                    loading: 'Deleting...',
+                                    success: 'Deleted successfully',
+                                    error: 'Failed to delete',
                                 })
                             }
                         >

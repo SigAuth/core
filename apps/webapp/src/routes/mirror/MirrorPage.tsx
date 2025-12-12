@@ -1,18 +1,13 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { useSession } from '@/context/SessionContext';
 import { request, streamChunks } from '@/lib/utils';
 import { CodeEditor } from '@/routes/mirror/CodeEditor';
-import { CreateMirrorDialog } from '@/routes/mirror/CreateMirrorDialog';
-import { DeleteMirrorDialog } from '@/routes/mirror/DeleteMirrorDialog';
-import { EditMirrorDialog } from '@/routes/mirror/EditMirrorDialog';
 import { MirrorList } from '@/routes/mirror/MirrorList';
 import type { Mirror } from '@sigauth/generics/prisma-client';
-import { Check, Code, Edit, Play, Save, Trash, X } from 'lucide-react';
+import { Play, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -22,8 +17,6 @@ export const MirrorPage: React.FC = () => {
     const [currentRun, setCurrentRun] = useState<string>('');
     const [log, setLog] = useState<string>('');
 
-    const [editMirror, setEditMirror] = useState<Mirror | null>(null);
-    const [deleteMirror, setDeleteMirror] = useState<Mirror | null>(null);
     const [selectedMirror, setSelectedMirror] = useState<Mirror | null>(null);
 
     const saveCode = async () => {

@@ -93,7 +93,7 @@ export const AssetTypeList = () => {
         {
             header: 'Actions',
             id: 'actions',
-            cell: ({ row }) => (
+            cell: () => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <EllipsisVertical />
@@ -101,7 +101,6 @@ export const AssetTypeList = () => {
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -110,7 +109,6 @@ export const AssetTypeList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setDeleteDialogOpen(true);
                             }}
                         >

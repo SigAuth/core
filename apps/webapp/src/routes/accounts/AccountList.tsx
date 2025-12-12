@@ -113,7 +113,6 @@ export const AccountsList = () => {
                         )}
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setPermissionDialogOpen(true);
                             }}
                         >
@@ -122,7 +121,6 @@ export const AccountsList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -131,7 +129,6 @@ export const AccountsList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
-                                setRowSelection({ [row.id]: true });
                                 setDeleteDialogOpen(true);
                             }}
                         >

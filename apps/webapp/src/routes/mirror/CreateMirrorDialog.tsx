@@ -61,6 +61,7 @@ export const CreateMirrorDialog = () => {
                         <form
                             onSubmit={(e: React.FormEvent) => {
                                 e.preventDefault();
+                                console.log(form.formState.isValid, form.formState.errors, form.getValues());
                                 if (!form.formState.isValid) return;
                                 toast.promise(form.handleSubmit(submitToApi), {
                                     loading: 'Creating Mirror...',
@@ -113,14 +114,14 @@ export const CreateMirrorDialog = () => {
                                                 </FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch checked={field.value} defaultChecked={false} onCheckedChange={field.onChange} />
                                             </FormControl>
                                         </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
-                            <Button className="w-full" type="submit">
+                            <Button className="w-full" type="submit" disabled={!form.formState.isValid}>
                                 Create
                             </Button>
                         </form>
