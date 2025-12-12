@@ -4,8 +4,6 @@ import { useEffect, useRef } from 'react';
 import tsWorkerUrl from 'monaco-editor/esm/vs/language/typescript/ts.worker?url';
 import editorWorkerUrl from 'monaco-editor/esm/vs/editor/editor.worker?url';
 
-let ran = false;
-
 export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: string) => void }) => {
     const theme = useTheme();
 
@@ -14,10 +12,10 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
 
     const currentTheme = theme.theme === 'dark' ? 'vs-dark' : 'vs-light';
 
+    // Initialize editor once per component instance
     useEffect(() => {
         const run = async () => {
-            if (!editorRef.current || ran) return;
-            ran = true;
+            if (!editorRef.current || monacoInstanceRef.current) return;
 
             // load this from real file that is also accessible to backend
             const res = await fetch('/mirror-types.txt');
@@ -26,8 +24,9 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
             const globalText = text
                 .replace(/export declare /g, 'declare ')
                 .replace(/export type /g, 'type ')
-                .replace(/import .* from .*/g, ''); // Imports entfernen
+                .replace(/import .* from .*/g, '');
             monaco.typescript.typescriptDefaults.addExtraLib(globalText, 'file:///node_modules/@sigauth/generics/mirror.d.ts');
+
             self.MonacoEnvironment = {
                 getWorkerUrl: function (_, label) {
                     if (label === 'typescript' || label === 'javascript') {
@@ -60,19 +59,39 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
                 theme: currentTheme,
                 automaticLayout: true,
             });
-            await new Promise(resolve => setTimeout(resolve, 100)); // wait a bit to ensure the editor is ready
+
+            await new Promise(resolve => setTimeout(resolve, 100));
             editor.getAction('editor.action.formatDocument').run(editor.getModel()!.uri);
 
             editor.onDidChangeModelContent(_ => {
                 setCode(editor.getValue());
             });
+
             monacoInstanceRef.current = editor;
-            ran = false;
         };
+
         run();
 
-        return () => monacoInstanceRef.current?.dispose();
-    }, [theme.theme]);
+        return () => {
+            monacoInstanceRef.current?.dispose();
+            monacoInstanceRef.current = null;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // run once per instance
+
+    // Update editor value if `code` prop changes after mount
+    useEffect(() => {
+        const editor = monacoInstanceRef.current;
+        if (editor && editor.getValue() !== code) {
+            editor.setValue(code);
+        }
+    }, [code]);
+    // React to theme changes without re-creating the editor
+    useEffect(() => {
+        if (monacoInstanceRef.current) {
+            monaco.editor.setTheme(currentTheme);
+        }
+    }, [currentTheme]);
 
     return <div ref={editorRef} className="h-[800px] w-full border border-black rounded-xl overflow-hidden" />;
 };
