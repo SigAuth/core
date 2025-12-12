@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSession } from '@/context/SessionContext';
 import { usePagination } from '@/lib/use-pagination';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ import { DeleteAssetTypeDialog } from '@/routes/asset-types/DeleteAssetTypeDialo
 import { EditAssetTypeDialog } from '@/routes/asset-types/EditAssetTypeDialog';
 import type { AssetTypeField } from '@sigauth/generics/json-types';
 import type { AssetType } from '@sigauth/generics/prisma-client';
+import { PROTECTED } from '@sigauth/generics/protected';
 import {
     type ColumnDef,
     flexRender,
@@ -81,9 +83,25 @@ export const AssetTypeList = () => {
                     aria-label="Select all"
                 />
             ),
-            cell: ({ row }) => (
-                <Checkbox checked={row.getIsSelected()} onCheckedChange={value => row.toggleSelected(!!value)} aria-label="Select row" />
-            ),
+            cell: ({ row }) =>
+                row.original.id != PROTECTED.AssetType.id ? (
+                    <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={value => row.toggleSelected(!!value)}
+                        aria-label="Select row"
+                    />
+                ) : (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span>
+                                <Checkbox disabled />
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>You cannot select the internal asset type.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                ),
             enableSorting: false,
         },
         { header: 'ID', accessorKey: 'id', maxSize: 1 },
@@ -93,7 +111,7 @@ export const AssetTypeList = () => {
         {
             header: 'Actions',
             id: 'actions',
-            cell: () => (
+            cell: ({ row }) => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <EllipsisVertical />
@@ -103,6 +121,7 @@ export const AssetTypeList = () => {
                             onClick={() => {
                                 setEditDialogOpen(true);
                             }}
+                            disabled={row.original.id === PROTECTED.AssetType.id}
                         >
                             <Edit className="mr-2 size-4" />
                             Edit
@@ -111,6 +130,7 @@ export const AssetTypeList = () => {
                             onClick={() => {
                                 setDeleteDialogOpen(true);
                             }}
+                            disabled={row.original.id === PROTECTED.AssetType.id}
                         >
                             <Trash className="mr-2 size-4" />
                             Delete
@@ -210,6 +230,16 @@ export const AssetTypeList = () => {
         totalPages: table.getPageCount(),
         paginationItemsToDisplay: 5,
     });
+
+    useEffect(() => {
+        if (selectedTypeIds.includes(PROTECTED.AssetType.id)) {
+            table.getRowModel().rows.forEach(row => {
+                if (row.original.id === PROTECTED.AssetType.id) {
+                    row.toggleSelected(false);
+                }
+            });
+        }
+    }, [rowSelection]);
 
     return (
         <div className="w-full space-y-4">

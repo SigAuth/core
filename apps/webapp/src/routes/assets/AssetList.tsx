@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSession } from '@/context/SessionContext';
 import { usePagination } from '@/lib/use-pagination';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ import { CreateAssetDialog } from '@/routes/assets/CreateAssetDialog';
 import { DeleteAssetDialog } from '@/routes/assets/DeleteAssetDialog';
 import { EditAssetDialog } from '@/routes/assets/EditAssetDialog';
 import type { Asset } from '@sigauth/generics/prisma-client';
+import { PROTECTED } from '@sigauth/generics/protected';
 import {
     type ColumnDef,
     flexRender,
@@ -80,9 +82,25 @@ export const AssetList = () => {
                     aria-label="Select all"
                 />
             ),
-            cell: ({ row }) => (
-                <Checkbox checked={row.getIsSelected()} onCheckedChange={value => row.toggleSelected(!!value)} aria-label="Select row" />
-            ),
+            cell: ({ row }) =>
+                row.original.typeId != PROTECTED.AssetType.id ? (
+                    <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={value => row.toggleSelected(!!value)}
+                        aria-label="Select row"
+                    />
+                ) : (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span>
+                                <Checkbox disabled />
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>You cannot select internal assets.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                ),
             enableSorting: false,
         },
         { header: 'ID', accessorKey: 'id', maxSize: 1 },
@@ -96,7 +114,7 @@ export const AssetList = () => {
         {
             header: 'Actions',
             id: 'actions',
-            cell: () => (
+            cell: ({ row }) => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <EllipsisVertical />
@@ -106,6 +124,7 @@ export const AssetList = () => {
                             onClick={() => {
                                 setEditDialogOpen(true);
                             }}
+                            disabled={row.original.typeId === PROTECTED.AssetType.id}
                         >
                             <Edit className="mr-2 size-4" />
                             Edit
@@ -114,6 +133,7 @@ export const AssetList = () => {
                             onClick={() => {
                                 setDeleteDialogOpen(true);
                             }}
+                            disabled={row.original.typeId === PROTECTED.AssetType.id}
                         >
                             <Trash className="mr-2 size-4" />
                             Delete
@@ -207,12 +227,20 @@ export const AssetList = () => {
         },
     });
 
-    const selectedTypeIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+    const selectedAssetIds = table.getSelectedRowModel().rows.map(row => row.original.id);
     const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
         currentPage: table.getState().pagination.pageIndex + 1,
         totalPages: table.getPageCount(),
         paginationItemsToDisplay: 5,
     });
+
+    useEffect(() => {
+        table.getRowModel().rows.forEach(row => {
+            if (row.original.typeId === PROTECTED.AssetType.id) {
+                row.toggleSelected(false);
+            }
+        });
+    }, [rowSelection]);
 
     return (
         <div className="w-full space-y-4">
@@ -227,8 +255,8 @@ export const AssetList = () => {
 
                     <div className="flex gap-2 ml-3">
                         <CreateAssetDialog />
-                        <DeleteAssetDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} assetIds={selectedTypeIds} />
-                        <EditAssetDialog setOpen={setEditDialogOpen} open={editDialogOpen} assetIds={selectedTypeIds} />
+                        <DeleteAssetDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} assetIds={selectedAssetIds} />
+                        <EditAssetDialog setOpen={setEditDialogOpen} open={editDialogOpen} assetIds={selectedAssetIds} />
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">

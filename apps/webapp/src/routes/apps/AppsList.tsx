@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSession } from '@/context/SessionContext';
 import { usePagination } from '@/lib/use-pagination';
 import { cn } from '@/lib/utils';
@@ -20,6 +21,7 @@ import { DeleteAppDialog } from '@/routes/apps/DeleteAppDialog';
 import { EditAppDialog } from '@/routes/apps/EditAppDialog';
 import type { AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
 import type { App } from '@sigauth/generics/prisma-client';
+import { PROTECTED } from '@sigauth/generics/protected';
 import {
     type ColumnDef,
     flexRender,
@@ -83,9 +85,25 @@ export const AppsList = () => {
                     aria-label="Select all"
                 />
             ),
-            cell: ({ row }) => (
-                <Checkbox checked={row.getIsSelected()} onCheckedChange={value => row.toggleSelected(!!value)} aria-label="Select row" />
-            ),
+            cell: ({ row }) =>
+                row.original.id != PROTECTED.App.id ? (
+                    <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={value => row.toggleSelected(!!value)}
+                        aria-label="Select row"
+                    />
+                ) : (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span>
+                                <Checkbox disabled />
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>You cannot select the internal app.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                ),
             enableSorting: false,
         },
         { header: 'ID', accessorKey: 'id', maxSize: 1 },
@@ -132,13 +150,14 @@ export const AppsList = () => {
         {
             header: 'Actions',
             id: 'actions',
-            cell: () => (
+            cell: ({ row }) => (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <EllipsisVertical />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
+                            disabled={row.original.id === PROTECTED.App.id}
                             onClick={() => {
                                 setEditDialogOpen(true);
                             }}
@@ -147,6 +166,7 @@ export const AppsList = () => {
                             Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                            disabled={row.original.id === PROTECTED.App.id}
                             onClick={() => {
                                 setDeleteDialogOpen(true);
                             }}
@@ -249,6 +269,16 @@ export const AppsList = () => {
         totalPages: table.getPageCount(),
         paginationItemsToDisplay: 5,
     });
+
+    useEffect(() => {
+        if (selectedAppIds.includes(PROTECTED.App.id)) {
+            table.getRowModel().rows.forEach(row => {
+                if (row.original.id === PROTECTED.App.id) {
+                    row.toggleSelected(false);
+                }
+            });
+        }
+    }, [rowSelection]);
 
     return (
         <div className="w-full space-y-4">
