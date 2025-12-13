@@ -33,6 +33,8 @@ import {
     Hammer,
     MonitorX,
     Trash,
+    UserRoundPlus,
+    UserRoundX,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -42,10 +44,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
 import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
 import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
+import { ToggleAccountDialog } from '@/routes/accounts/ToggleAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
 import { toast } from 'sonner';
 
@@ -56,10 +60,12 @@ export const AccountsList = () => {
     const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [toggleAccountDialogOpen, setToggleAccountDialogOpen] = useState(false);
+    const [toggleAccountAction, setToggleAccountAction] = useState<'activate' | 'deactivate'>('deactivate');
 
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize });
     const [rowSelection, setRowSelection] = useState({});
-    const [data, setData] = useState<AccountWithPermissions[]>(session.accounts); // Replace with actual data fetching logic
+    const [data, setData] = useState<AccountWithPermissions[]>(session.accounts);
 
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<SortingState>([
@@ -91,7 +97,32 @@ export const AccountsList = () => {
             enableSorting: false,
         },
         { header: 'ID', accessorKey: 'id', maxSize: 1 },
-        { header: 'Name', accessorKey: 'name', cell: info => info.getValue() },
+        {
+            header: 'Name',
+            accessorKey: 'name',
+            cell: ({ row, getValue }) => {
+                const isDeactivated = row.original.deactivated;
+
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{getValue<string>()}</span>
+
+                        {isDeactivated && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <UserRoundX className="size-4 text-muted-foreground" aria-label="Deactivated account" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <span>Deactivated</span>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </div>
+                );
+            },
+        },
         { header: 'E-Mail', accessorKey: 'email', cell: info => info.getValue() },
         { header: 'Related Containers', accessorFn: row => new Set(row.permissions.map(p => p.containerId)).size },
         { header: 'API Access', accessorKey: 'apiAccess', cell: info => (info.getValue() ? 'Yes' : 'No') },
@@ -110,7 +141,6 @@ export const AccountsList = () => {
                                     <FileTextIcon className="mr-2 size-4" />
                                     Copy API Key
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
                             </>
                         )}
                         <DropdownMenuItem
@@ -120,6 +150,14 @@ export const AccountsList = () => {
                         >
                             <Hammer className="mr-2 size-4" />
                             Permissions
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => {
+                                setEditDialogOpen(true);
+                            }}
+                        >
+                            <Edit className="mr-2 size-4" />
+                            Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
@@ -134,14 +172,17 @@ export const AccountsList = () => {
                             <MonitorX className="mr-2 size-4" />
                             Sign out everywhere
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={() => {
-                                setEditDialogOpen(true);
+                                setToggleAccountAction(row.original.deactivated ? 'activate' : 'deactivate');
+                                setToggleAccountDialogOpen(true);
                             }}
                         >
-                            <Edit className="mr-2 size-4" />
-                            Edit
+                            {row.original.deactivated ? <UserRoundPlus className="mr-2 size-4" /> : <UserRoundX className="mr-2 size-4" />}
+                            {row.original.deactivated ? 'Activate' : 'Deactivate'}
                         </DropdownMenuItem>
+
                         <DropdownMenuItem
                             onClick={() => {
                                 setDeleteDialogOpen(true);
@@ -270,6 +311,12 @@ export const AccountsList = () => {
                         <CreateAccountDialog />
                         <DeleteAccountDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} accountIds={selectedAccountIds} />
                         <EditAccountDialog setOpen={setEditDialogOpen} open={editDialogOpen} accountIds={selectedAccountIds} />
+                        <ToggleAccountDialog
+                            open={toggleAccountDialogOpen}
+                            setOpen={setToggleAccountDialogOpen}
+                            accountIds={selectedAccountIds}
+                            action={toggleAccountAction}
+                        />
                         <PermissionSetAccountDialog
                             open={permissionDialogOpen}
                             setOpen={setPermissionDialogOpen}

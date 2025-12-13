@@ -8,7 +8,8 @@ import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
-import { type Request } from 'express';
+import { DeactivateAccountDto } from './dto/deactivate-account.dto';
+import { ActivateAccountDto } from './dto/activate-account.dto';
 
 @Controller('account')
 @UseGuards(AuthGuard)
@@ -48,6 +49,25 @@ export class AccountController {
     @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
     async deleteAccount(@Body() deleteAccountDto: DeleteAccountDto): Promise<void> {
         await this.accountService.deleteAccount(deleteAccountDto);
+    }
+
+    @Post('deactivate')
+    @UseGuards(IsRoot) // TODO Change to proper permission
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
+    async deactivateAccount(@Body() deactivateAccount: DeactivateAccountDto): Promise<void> {
+        deactivateAccount.accountIds.forEach(async accountId => {
+            await this.accountService.logOutAll(accountId.toString());
+        });
+        await this.accountService.deactivateAccount(deactivateAccount);
+    }
+
+    @Post('activate')
+    @UseGuards(IsRoot) // TODO Change to proper permission
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
+    async activeAccount(@Body() activateAccount: ActivateAccountDto): Promise<void> {
+        await this.accountService.activateAccount(activateAccount);
     }
 
     @Post('permissions/set')

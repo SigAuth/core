@@ -9,6 +9,8 @@ import { AppPermission } from '@sigauth/generics/json-types';
 import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { Account, PermissionInstance, Prisma, PrismaClient } from '@sigauth/generics/prisma-client';
 import bcrypt from 'bcryptjs';
+import { DeactivateAccountDto } from './dto/deactivate-account.dto';
+import { ActivateAccountDto } from './dto/activate-account.dto';
 
 @Injectable()
 export class AccountService {
@@ -81,6 +83,20 @@ export class AccountService {
 
         await this.prisma.account.deleteMany({
             where: { id: { in: deleteAccountDto.accountIds } },
+        });
+    }
+
+    async deactivateAccount(deactivateAccountDto: DeactivateAccountDto) {
+        await this.prisma.account.updateMany({
+            data: { deactivated: true },
+            where: { id: { in: deactivateAccountDto.accountIds } },
+        });
+    }
+
+    async activateAccount(deactivateAccountDto: ActivateAccountDto) {
+        await this.prisma.account.updateMany({
+            data: { deactivated: false },
+            where: { id: { in: deactivateAccountDto.accountIds } },
         });
     }
 
