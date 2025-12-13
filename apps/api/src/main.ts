@@ -5,8 +5,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
+const logger = new Logger('Main');
+
 async function bootstrap() {
-    const logger = new Logger('Main');
     const app = await NestFactory.create(AppModule);
     app.setGlobalPrefix('api', {
         exclude: [{ path: '.well-known/*path', method: RequestMethod.GET }],
@@ -33,5 +34,5 @@ async function bootstrap() {
 }
 
 bootstrap()
-    .then(() => console.log('API is running...'))
-    .catch(console.error);
+    .then(() => logger.log('API is running...'))
+    .catch(logger.error);
