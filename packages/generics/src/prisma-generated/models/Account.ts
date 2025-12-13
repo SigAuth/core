@@ -41,6 +41,7 @@ export type AccountMinAggregateOutputType = {
   api: string | null
   secondFactor: string | null
   password: string | null
+  deactivated: boolean | null
 }
 
 export type AccountMaxAggregateOutputType = {
@@ -50,6 +51,7 @@ export type AccountMaxAggregateOutputType = {
   api: string | null
   secondFactor: string | null
   password: string | null
+  deactivated: boolean | null
 }
 
 export type AccountCountAggregateOutputType = {
@@ -60,6 +62,7 @@ export type AccountCountAggregateOutputType = {
   secondFactor: number
   password: number
   accounts: number
+  deactivated: number
   _all: number
 }
 
@@ -79,6 +82,7 @@ export type AccountMinAggregateInputType = {
   api?: true
   secondFactor?: true
   password?: true
+  deactivated?: true
 }
 
 export type AccountMaxAggregateInputType = {
@@ -88,6 +92,7 @@ export type AccountMaxAggregateInputType = {
   api?: true
   secondFactor?: true
   password?: true
+  deactivated?: true
 }
 
 export type AccountCountAggregateInputType = {
@@ -98,6 +103,7 @@ export type AccountCountAggregateInputType = {
   secondFactor?: true
   password?: true
   accounts?: true
+  deactivated?: true
   _all?: true
 }
 
@@ -195,6 +201,7 @@ export type AccountGroupByOutputType = {
   secondFactor: string | null
   password: string
   accounts: runtime.JsonValue
+  deactivated: boolean
   _count: AccountCountAggregateOutputType | null
   _avg: AccountAvgAggregateOutputType | null
   _sum: AccountSumAggregateOutputType | null
@@ -228,6 +235,7 @@ export type AccountWhereInput = {
   secondFactor?: Prisma.StringNullableFilter<"Account"> | string | null
   password?: Prisma.StringFilter<"Account"> | string
   accounts?: Prisma.JsonFilter<"Account">
+  deactivated?: Prisma.BoolFilter<"Account"> | boolean
   sessions?: Prisma.SessionListRelationFilter
   permissions?: Prisma.PermissionInstanceListRelationFilter
 }
@@ -240,6 +248,7 @@ export type AccountOrderByWithRelationInput = {
   secondFactor?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrder
   accounts?: Prisma.SortOrder
+  deactivated?: Prisma.SortOrder
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   permissions?: Prisma.PermissionInstanceOrderByRelationAggregateInput
 }
@@ -255,6 +264,7 @@ export type AccountWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.AccountWhereInput | Prisma.AccountWhereInput[]
   password?: Prisma.StringFilter<"Account"> | string
   accounts?: Prisma.JsonFilter<"Account">
+  deactivated?: Prisma.BoolFilter<"Account"> | boolean
   sessions?: Prisma.SessionListRelationFilter
   permissions?: Prisma.PermissionInstanceListRelationFilter
 }, "id" | "email" | "name" | "api" | "secondFactor">
@@ -267,6 +277,7 @@ export type AccountOrderByWithAggregationInput = {
   secondFactor?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrder
   accounts?: Prisma.SortOrder
+  deactivated?: Prisma.SortOrder
   _count?: Prisma.AccountCountOrderByAggregateInput
   _avg?: Prisma.AccountAvgOrderByAggregateInput
   _max?: Prisma.AccountMaxOrderByAggregateInput
@@ -285,6 +296,7 @@ export type AccountScalarWhereWithAggregatesInput = {
   secondFactor?: Prisma.StringNullableWithAggregatesFilter<"Account"> | string | null
   password?: Prisma.StringWithAggregatesFilter<"Account"> | string
   accounts?: Prisma.JsonWithAggregatesFilter<"Account">
+  deactivated?: Prisma.BoolWithAggregatesFilter<"Account"> | boolean
 }
 
 export type AccountCreateInput = {
@@ -294,6 +306,7 @@ export type AccountCreateInput = {
   secondFactor?: string | null
   password: string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
   sessions?: Prisma.SessionCreateNestedManyWithoutAccountInput
   permissions?: Prisma.PermissionInstanceCreateNestedManyWithoutAccountInput
 }
@@ -306,6 +319,7 @@ export type AccountUncheckedCreateInput = {
   secondFactor?: string | null
   password: string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutAccountInput
   permissions?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAccountInput
 }
@@ -317,6 +331,7 @@ export type AccountUpdateInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUpdateManyWithoutAccountNestedInput
   permissions?: Prisma.PermissionInstanceUpdateManyWithoutAccountNestedInput
 }
@@ -329,6 +344,7 @@ export type AccountUncheckedUpdateInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutAccountNestedInput
   permissions?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAccountNestedInput
 }
@@ -341,6 +357,7 @@ export type AccountCreateManyInput = {
   secondFactor?: string | null
   password: string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
 }
 
 export type AccountUpdateManyMutationInput = {
@@ -350,6 +367,7 @@ export type AccountUpdateManyMutationInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type AccountUncheckedUpdateManyInput = {
@@ -360,6 +378,7 @@ export type AccountUncheckedUpdateManyInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type AccountCountOrderByAggregateInput = {
@@ -370,6 +389,7 @@ export type AccountCountOrderByAggregateInput = {
   secondFactor?: Prisma.SortOrder
   password?: Prisma.SortOrder
   accounts?: Prisma.SortOrder
+  deactivated?: Prisma.SortOrder
 }
 
 export type AccountAvgOrderByAggregateInput = {
@@ -383,6 +403,7 @@ export type AccountMaxOrderByAggregateInput = {
   api?: Prisma.SortOrder
   secondFactor?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  deactivated?: Prisma.SortOrder
 }
 
 export type AccountMinOrderByAggregateInput = {
@@ -392,6 +413,7 @@ export type AccountMinOrderByAggregateInput = {
   api?: Prisma.SortOrder
   secondFactor?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  deactivated?: Prisma.SortOrder
 }
 
 export type AccountSumOrderByAggregateInput = {
@@ -409,6 +431,10 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type IntFieldUpdateOperationsInput = {
@@ -454,6 +480,7 @@ export type AccountCreateWithoutSessionsInput = {
   secondFactor?: string | null
   password: string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
   permissions?: Prisma.PermissionInstanceCreateNestedManyWithoutAccountInput
 }
 
@@ -465,6 +492,7 @@ export type AccountUncheckedCreateWithoutSessionsInput = {
   secondFactor?: string | null
   password: string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
   permissions?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAccountInput
 }
 
@@ -491,6 +519,7 @@ export type AccountUpdateWithoutSessionsInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.PermissionInstanceUpdateManyWithoutAccountNestedInput
 }
 
@@ -502,6 +531,7 @@ export type AccountUncheckedUpdateWithoutSessionsInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAccountNestedInput
 }
 
@@ -512,6 +542,7 @@ export type AccountCreateWithoutPermissionsInput = {
   secondFactor?: string | null
   password: string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
   sessions?: Prisma.SessionCreateNestedManyWithoutAccountInput
 }
 
@@ -523,6 +554,7 @@ export type AccountUncheckedCreateWithoutPermissionsInput = {
   secondFactor?: string | null
   password: string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutAccountInput
 }
 
@@ -549,6 +581,7 @@ export type AccountUpdateWithoutPermissionsInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUpdateManyWithoutAccountNestedInput
 }
 
@@ -560,6 +593,7 @@ export type AccountUncheckedUpdateWithoutPermissionsInput = {
   secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.StringFieldUpdateOperationsInput | string
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutAccountNestedInput
 }
 
@@ -611,6 +645,7 @@ export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   secondFactor?: boolean
   password?: boolean
   accounts?: boolean
+  deactivated?: boolean
   sessions?: boolean | Prisma.Account$sessionsArgs<ExtArgs>
   permissions?: boolean | Prisma.Account$permissionsArgs<ExtArgs>
   _count?: boolean | Prisma.AccountCountOutputTypeDefaultArgs<ExtArgs>
@@ -624,6 +659,7 @@ export type AccountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   secondFactor?: boolean
   password?: boolean
   accounts?: boolean
+  deactivated?: boolean
 }, ExtArgs["result"]["account"]>
 
 export type AccountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -634,6 +670,7 @@ export type AccountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   secondFactor?: boolean
   password?: boolean
   accounts?: boolean
+  deactivated?: boolean
 }, ExtArgs["result"]["account"]>
 
 export type AccountSelectScalar = {
@@ -644,9 +681,10 @@ export type AccountSelectScalar = {
   secondFactor?: boolean
   password?: boolean
   accounts?: boolean
+  deactivated?: boolean
 }
 
-export type AccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "api" | "secondFactor" | "password" | "accounts", ExtArgs["result"]["account"]>
+export type AccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "api" | "secondFactor" | "password" | "accounts" | "deactivated", ExtArgs["result"]["account"]>
 export type AccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.Account$sessionsArgs<ExtArgs>
   permissions?: boolean | Prisma.Account$permissionsArgs<ExtArgs>
@@ -669,6 +707,7 @@ export type $AccountPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     secondFactor: string | null
     password: string
     accounts: runtime.JsonValue
+    deactivated: boolean
   }, ExtArgs["result"]["account"]>
   composites: {}
 }
@@ -1101,6 +1140,7 @@ export interface AccountFieldRefs {
   readonly secondFactor: Prisma.FieldRef<"Account", 'String'>
   readonly password: Prisma.FieldRef<"Account", 'String'>
   readonly accounts: Prisma.FieldRef<"Account", 'Json'>
+  readonly deactivated: Prisma.FieldRef<"Account", 'Boolean'>
 }
     
 

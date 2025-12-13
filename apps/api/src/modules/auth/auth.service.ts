@@ -59,6 +59,10 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
+        if (account.deactivated) {
+            throw new UnauthorizedException('Your account has been deactivated. Please contact your administrator for assistance.');
+        }
+
         // validate 2fa
         if (account.secondFactor && typeof loginRequestDto.secondFactor !== 'string') {
             throw new UnauthorizedException('2FA required');
@@ -124,7 +128,7 @@ export class AuthService {
         if (account.permissions.some(p => p.identifier == Utils.convertPermissionNameToIdent(SigAuthRootPermissions.ROOT))) {
             const [accounts, assets, assetTypes, apps, containers, mirrors] = await Promise.all([
                 this.prisma.account.findMany({
-                    select: { id: true, name: true, email: true, api: true, accounts: true, permissions: true },
+                    select: { id: true, name: true, email: true, api: true, accounts: true, permissions: true, deactivated: true },
                 }),
                 this.prisma.asset.findMany(),
                 this.prisma.assetType.findMany(),

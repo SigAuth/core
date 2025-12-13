@@ -86,7 +86,8 @@ export const AccountScalarFieldEnum = {
   api: 'api',
   secondFactor: 'secondFactor',
   password: 'password',
-  accounts: 'accounts'
+  accounts: 'accounts',
+  deactivated: 'deactivated'
 } as const
 
 export type AccountScalarFieldEnum = (typeof AccountScalarFieldEnum)[keyof typeof AccountScalarFieldEnum]

@@ -396,10 +396,6 @@ export type MirrorSumOrderByAggregateInput = {
   autoRunInterval?: Prisma.SortOrder
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }

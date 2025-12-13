@@ -26,6 +26,7 @@ model Account {
   password     String
   sessions     Session[]
   accounts     Json      @default("[]") // number[]
+  deactivated  Boolean   @default(false)
 
   permissions PermissionInstance[]
 }

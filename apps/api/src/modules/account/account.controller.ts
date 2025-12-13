@@ -8,6 +8,8 @@ import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
+import { DeactivateAccountDto } from './dto/deactivate-account.dto';
+import { ActivateAccountDto } from './dto/activate-account.dto';
 
 @Controller('account')
 @UseGuards(AuthGuard)
@@ -49,6 +51,22 @@ export class AccountController {
         await this.accountService.deleteAccount(deleteAccountDto);
     }
 
+    @Post('deactivate')
+    @UseGuards(IsRoot) // TODO Change to proper permission
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
+    async deactivateAccount(@Body() deactivateAccount: DeactivateAccountDto): Promise<void> {
+        await this.accountService.deactivateAccount(deactivateAccount);
+    }
+
+    @Post('activate')
+    @UseGuards(IsRoot) // TODO Change to proper permission
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
+    async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<void> {
+        await this.accountService.activateAccount(activateAccountDto);
+    }
+
     @Post('permissions/set')
     @UseGuards(IsRoot) // TODO Change to proper permissions
     @ApiOkResponse({ description: 'Updated permissions successfully!' })
@@ -58,5 +76,14 @@ export class AccountController {
     async setPermissions(@Body() permissionUpdateDto: PermissionSetDto) {
         const perms = await this.accountService.setPermissions(permissionUpdateDto);
         return { permissions: perms };
+    }
+
+    @Post('logout-all')
+    @UseGuards(IsRoot) // TODO Change to proper permissions
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'Signed out user successfully!' })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+    async logoutAll(@Body('accountId') accountId: string) {
+        await this.accountService.logOutAll(accountId);
     }
 }
