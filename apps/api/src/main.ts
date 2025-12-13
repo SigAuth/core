@@ -17,7 +17,7 @@ async function bootstrap() {
     if (process.env.EXPOSE_SWAGGER === 'true') {
         const config = new DocumentBuilder()
             .setTitle('SigAuth API')
-            .setDescription('The SigAuth API is rate limited and protected by 2FA. You cant send more than 10 requests per minute.')
+            .setDescription('The SigAuth API is rate limited and protected by 2FA. You can\'t send more than 10 requests per minute.')
             .setVersion('0.2')
             .build();
 
