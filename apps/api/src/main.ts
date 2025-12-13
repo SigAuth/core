@@ -14,14 +14,19 @@ async function bootstrap() {
     app.useGlobalFilters(new UnauthorizedExceptionFilter());
     app.use(cookieParser());
 
-    const config = new DocumentBuilder()
-        .setTitle('SigAuth API')
-        .setDescription('The SigAuth API is rate limited and protected by 2FA. You cant send more than 10 requests per minute.')
-        .setVersion('0.2')
-        .build();
+    if (process.env.EXPOSE_SWAGGER === 'true') {
+        const config = new DocumentBuilder()
+            .setTitle('SigAuth API')
+            .setDescription('The SigAuth API is rate limited and protected by 2FA. You cant send more than 10 requests per minute.')
+            .setVersion('0.2')
+            .build();
 
-    const documentFactory = () => SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, documentFactory);
+        const document = SwaggerModule.createDocument(app, config);
+        SwaggerModule.setup('api/docs', app, document);
+        console.log('SigAuth Swagger is exposed at /api/docs');
+    } else {
+        console.log('SigAuth Swagger is disabled by environment variable');
+    }
 
     await app.listen(process.env.PORT ?? 4000);
 }
