@@ -15,12 +15,12 @@ import { TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const ToggleAccountDialog = ({
-    accountIds,
+    accountId,
     open,
     setOpen,
     action,
 }: {
-    accountIds?: number[];
+    accountId: number;
     open: boolean;
     setOpen: (open: boolean) => void;
     action: 'deactivate' | 'activate';
@@ -28,19 +28,18 @@ export const ToggleAccountDialog = ({
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        const accounts = session.accounts.filter(a => accountIds?.includes(a.id));
-        if (accounts.length !== accountIds?.length || accounts.length === 0) return;
-
-        const res = await request('POST', `/api/account/${action}`, {
-            accountIds,
+        const res = await request('POST', `/api/account/status`, {
+            accountId,
+            action
         });
 
         if (res.ok) {
             setSession({
                 accounts: session.accounts.map(acc =>
-                    accountIds?.includes(acc.id) ? { ...acc, deactivated: action === 'deactivate' } : acc,
+                    acc.id === accountId ? { ...acc, deactivated: action === 'deactivate' } : acc,
                 ),
             });
+            setOpen(false);
         }
     };
 
@@ -55,7 +54,7 @@ export const ToggleAccountDialog = ({
                     </div>
                     <AlertDialogTitle>Are you sure you want to {action}?</AlertDialogTitle>
                     <AlertDialogDescription className="text-center">
-                        The selected {accountIds?.length ?? 0} account(s) will be {action}d and{' '}
+                        The selected account will be {action}d and{' '}
                         {isDeactivate ? 'cannot log in anymore' : 'can log in again'}.
                     </AlertDialogDescription>
                 </AlertDialogHeader>

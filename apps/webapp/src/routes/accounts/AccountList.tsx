@@ -314,7 +314,7 @@ export const AccountsList = () => {
                         <ToggleAccountDialog
                             open={toggleAccountDialogOpen}
                             setOpen={setToggleAccountDialogOpen}
-                            accountIds={selectedAccountIds}
+                            accountId={selectedAccountIds[0]}
                             action={toggleAccountAction}
                         />
                         <PermissionSetAccountDialog

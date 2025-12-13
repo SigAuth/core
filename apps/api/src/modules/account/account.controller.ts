@@ -8,8 +8,7 @@ import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
-import { DeactivateAccountDto } from './dto/deactivate-account.dto';
-import { ActivateAccountDto } from './dto/activate-account.dto';
+import { UpdateAccountStatusDto } from '@/modules/account/dto/update-account-status.dto';
 
 @Controller('account')
 @UseGuards(AuthGuard)
@@ -51,20 +50,12 @@ export class AccountController {
         await this.accountService.deleteAccount(deleteAccountDto);
     }
 
-    @Post('deactivate')
+    @Post('status')
     @UseGuards(IsRoot) // TODO Change to proper permission
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
-    async deactivateAccount(@Body() deactivateAccount: DeactivateAccountDto): Promise<void> {
-        await this.accountService.deactivateAccount(deactivateAccount);
-    }
-
-    @Post('activate')
-    @UseGuards(IsRoot) // TODO Change to proper permission
-    @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
-    async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<void> {
-        await this.accountService.activateAccount(activateAccountDto);
+    async changeAccountStatus(@Body() accountStatus: UpdateAccountStatusDto): Promise<void> {
+        await this.accountService.updateAccountStatus(accountStatus);
     }
 
     @Post('permissions/set')

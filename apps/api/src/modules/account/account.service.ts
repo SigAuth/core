@@ -9,8 +9,7 @@ import { AppPermission } from '@sigauth/generics/json-types';
 import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { Account, PermissionInstance, Prisma, PrismaClient } from '@sigauth/generics/prisma-client';
 import bcrypt from 'bcryptjs';
-import { DeactivateAccountDto } from './dto/deactivate-account.dto';
-import { ActivateAccountDto } from './dto/activate-account.dto';
+import { UpdateAccountStatusDto } from '@/modules/account/dto/update-account-status.dto';
 
 @Injectable()
 export class AccountService {
@@ -86,19 +85,17 @@ export class AccountService {
         });
     }
 
-    async deactivateAccount(deactivateAccountDto: DeactivateAccountDto) {
-        await this.prisma.account.updateMany({
-            data: { deactivated: true },
-            where: { id: { in: deactivateAccountDto.accountIds } },
-        });
-        await Promise.all(deactivateAccountDto.accountIds.map(accountId => this.logOutAll(accountId.toString())));
-    }
+    async updateAccountStatus(accountStatus: UpdateAccountStatusDto) {
+        const isDeactivating = accountStatus.action === 'deactivate';
 
-    async activateAccount(activateAccountDto: ActivateAccountDto) {
-        await this.prisma.account.updateMany({
-            data: { deactivated: false },
-            where: { id: { in: activateAccountDto.accountIds } },
+        const updatedAccount = await this.prisma.account.updateMany({
+            data: { deactivated: isDeactivating },
+            where: { id:  accountStatus.accountId },
         });
+
+        if (isDeactivating && updatedAccount) {
+            await this.logOutAll(accountStatus.accountId.toString());
+        }
     }
 
     async setPermissions(permissionSetDto: PermissionSetDto) {
