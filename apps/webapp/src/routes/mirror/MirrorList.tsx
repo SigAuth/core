@@ -7,6 +7,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } fro
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
+import { LIST_DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { usePagination } from '@/lib/use-pagination';
 import { cn } from '@/lib/utils';
 import { CreateMirrorDialog } from '@/routes/mirror/CreateMirrorDialog';
@@ -39,7 +40,7 @@ import {
 import { useEffect, useState } from 'react';
 
 export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror) => void }) => {
-    const pageSize = 20;
+    const pageSize = LIST_DEFAULT_PAGE_SIZE;
     const { session } = useSession();
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

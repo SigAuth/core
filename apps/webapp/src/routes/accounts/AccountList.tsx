@@ -46,9 +46,10 @@ import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
 import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
 import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
+import { LIST_DEFAULT_PAGE_SIZE } from '@/lib/constants';
 
 export const AccountsList = () => {
-    const pageSize = 20;
+    const pageSize = LIST_DEFAULT_PAGE_SIZE;
     const { session } = useSession();
 
     const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
