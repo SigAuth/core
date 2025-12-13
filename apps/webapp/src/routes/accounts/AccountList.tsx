@@ -52,9 +52,10 @@ import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
 import { ToggleAccountDialog } from '@/routes/accounts/ToggleAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
 import { toast } from 'sonner';
+import { LIST_DEFAULT_PAGE_SIZE } from '@/lib/constants';
 
 export const AccountsList = () => {
-    const pageSize = 20;
+    const pageSize = LIST_DEFAULT_PAGE_SIZE;
     const { session } = useSession();
 
     const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
