@@ -87,9 +87,7 @@ export class AccountService {
     }
 
     async deactivateAccount(deactivateAccountDto: DeactivateAccountDto) {
-        deactivateAccountDto.accountIds.forEach(async accountId => {
-            await this.logOutAll(accountId.toString());
-        });
+        await Promise.all(deactivateAccountDto.accountIds.map(accountId => this.logOutAll(accountId.toString())));
 
         await this.prisma.account.updateMany({
             data: { deactivated: true },
@@ -97,10 +95,10 @@ export class AccountService {
         });
     }
 
-    async activateAccount(deactivateAccountDto: ActivateAccountDto) {
+    async activateAccount(activateAccountDto: ActivateAccountDto) {
         await this.prisma.account.updateMany({
             data: { deactivated: false },
-            where: { id: { in: deactivateAccountDto.accountIds } },
+            where: { id: { in: activateAccountDto.accountIds } },
         });
     }
 
@@ -185,7 +183,7 @@ export class AccountService {
         return maintained;
     }
 
-    async logOutAll(accountId: String) {
+    async logOutAll(accountId: string) {
         await this.prisma.session.deleteMany({
             where: { subject: +accountId },
         });

@@ -5,7 +5,7 @@ import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
 import { PermissionSetDto } from '@/modules/account/dto/permission-set.dto';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
 import { DeactivateAccountDto } from './dto/deactivate-account.dto';
@@ -63,8 +63,8 @@ export class AccountController {
     @UseGuards(IsRoot) // TODO Change to proper permission
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
-    async activeAccount(@Body() activateAccount: ActivateAccountDto): Promise<void> {
-        await this.accountService.activateAccount(activateAccount);
+    async activateAccount(@Body() activateAccountDto: ActivateAccountDto): Promise<void> {
+        await this.accountService.activateAccount(activateAccountDto);
     }
 
     @Post('permissions/set')
@@ -83,7 +83,7 @@ export class AccountController {
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ description: 'Signed out user successfully!' })
     @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-    async logoutAll(@Body('accountId') accountId: String) {
+    async logoutAll(@Body('accountId') accountId: string) {
         await this.accountService.logOutAll(accountId);
     }
 }

@@ -60,7 +60,7 @@ export class AuthService {
         }
 
         if (account.deactivated) {
-            throw new UnauthorizedException('Account deactivated');
+            throw new UnauthorizedException('Your account has been deactivated. Please contact your administrator for assistance.');
         }
 
         // validate 2fa
