@@ -111,7 +111,7 @@ export const AccountsList = () => {
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <UserRoundX className="size-4 text-muted-foreground" aria-label="Deactivated account" />
+                                        <UserRoundX className="size-4 text-destructive" aria-label="Deactivated account" />
                                     </TooltipTrigger>
                                     <TooltipContent side="top">
                                         <span>Deactivated</span>
