@@ -87,12 +87,11 @@ export class AccountService {
     }
 
     async deactivateAccount(deactivateAccountDto: DeactivateAccountDto) {
-        await Promise.all(deactivateAccountDto.accountIds.map(accountId => this.logOutAll(accountId.toString())));
-
         await this.prisma.account.updateMany({
             data: { deactivated: true },
             where: { id: { in: deactivateAccountDto.accountIds } },
         });
+        await Promise.all(deactivateAccountDto.accountIds.map(accountId => this.logOutAll(accountId.toString())));
     }
 
     async activateAccount(activateAccountDto: ActivateAccountDto) {
