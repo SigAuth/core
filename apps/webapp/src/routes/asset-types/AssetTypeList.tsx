@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSession } from '@/context/SessionContext';
+import { LIST_DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { usePagination } from '@/lib/use-pagination';
 import { cn } from '@/lib/utils';
 import { CreateAssetTypeDialog } from '@/routes/asset-types/CreateAssetTypeDialog';
@@ -49,7 +50,7 @@ import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export const AssetTypeList = () => {
-    const pageSize = 25;
+    const pageSize = LIST_DEFAULT_PAGE_SIZE;
     const { session } = useSession();
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
