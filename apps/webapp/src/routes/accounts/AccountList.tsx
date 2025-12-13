@@ -48,7 +48,7 @@ import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
 
 export const AccountsList = () => {
-    const pageSize = 20;
+    const pageSize = 25;
     const { session } = useSession();
 
     const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);

@@ -39,7 +39,7 @@ import {
 import { useEffect, useState } from 'react';
 
 export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror) => void }) => {
-    const pageSize = 20;
+    const pageSize = 25;
     const { session } = useSession();
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

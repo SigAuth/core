@@ -49,7 +49,7 @@ import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export const AssetTypeList = () => {
-    const pageSize = 20;
+    const pageSize = 25;
     const { session } = useSession();
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
