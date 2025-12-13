@@ -56,9 +56,6 @@ export class AccountController {
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
     async deactivateAccount(@Body() deactivateAccount: DeactivateAccountDto): Promise<void> {
-        deactivateAccount.accountIds.forEach(async accountId => {
-            await this.accountService.logOutAll(accountId.toString());
-        });
         await this.accountService.deactivateAccount(deactivateAccount);
     }
 
