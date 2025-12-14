@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 const logger = new Logger('Main');
-const API_RATE_LIMIT = Number(process.env.API_RATE_LIMIT ?? 15);
+const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
