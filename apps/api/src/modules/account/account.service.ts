@@ -9,7 +9,7 @@ import { AppPermission } from '@sigauth/generics/json-types';
 import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { Account, PermissionInstance, Prisma, PrismaClient } from '@sigauth/generics/prisma-client';
 import bcrypt from 'bcryptjs';
-import { UpdateAccountStatusDto } from '@/modules/account/dto/update-account-status.dto';
+import { ToggleActivationDto } from '@/modules/account/dto/toggleActivation.dto';
 
 @Injectable()
 export class AccountService {
@@ -85,16 +85,16 @@ export class AccountService {
         });
     }
 
-    async updateAccountStatus(accountStatus: UpdateAccountStatusDto) {
-        const isDeactivating = accountStatus.action === 'deactivate';
+    async updateAccountActivation(toggleActivationAccount: ToggleActivationDto) {
+        const isDeactivating = toggleActivationAccount.action === 'deactivate';
 
         const updatedAccount = await this.prisma.account.updateMany({
             data: { deactivated: isDeactivating },
-            where: { id:  accountStatus.accountId },
+            where: { id:  toggleActivationAccount.accountId },
         });
 
         if (isDeactivating && updatedAccount) {
-            await this.logOutAll(accountStatus.accountId.toString());
+            await this.logOutAll(toggleActivationAccount.accountId.toString());
         }
     }
 

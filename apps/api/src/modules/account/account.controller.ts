@@ -8,7 +8,7 @@ import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
-import { UpdateAccountStatusDto } from '@/modules/account/dto/update-account-status.dto';
+import { ToggleActivationDto } from '@/modules/account/dto/toggleActivation.dto';
 
 @Controller('account')
 @UseGuards(AuthGuard)
@@ -50,12 +50,12 @@ export class AccountController {
         await this.accountService.deleteAccount(deleteAccountDto);
     }
 
-    @Post('status')
+    @Post('toggleActivation')
     @UseGuards(IsRoot) // TODO Change to proper permission
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
-    async changeAccountStatus(@Body() accountStatus: UpdateAccountStatusDto): Promise<void> {
-        await this.accountService.updateAccountStatus(accountStatus);
+    async toggleActivation(@Body() toggleActivationAccount: ToggleActivationDto): Promise<void> {
+        await this.accountService.updateAccountActivation(toggleActivationAccount);
     }
 
     @Post('permissions/set')

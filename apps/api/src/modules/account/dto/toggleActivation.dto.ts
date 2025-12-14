@@ -1,7 +1,7 @@
 import { IsIn, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateAccountStatusDto {
+export class ToggleActivationDto {
     @ApiProperty({
         description: 'target account id',
         example: '3',
