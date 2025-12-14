@@ -268,7 +268,7 @@ export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror
 
                                         if (
                                             target?.closest(
-                                                'button, a, input, textarea, select, label, [role="button"], [data-no-row-select="true"]',
+                                                'button, a, input, textarea, select, label, [role="button"], [role="menuitem"], [data-no-row-select="true"]',
                                             )
                                         )
                                             return;
