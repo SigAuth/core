@@ -15,7 +15,7 @@ import { WellKnownModule } from './modules/well-known/well-known.module';
 import { MirrorModule } from '@/modules/mirror/mirror.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
-const API_RATE_LIMIT = Number(process.env.API_RATE_LIMIT ?? 15);
+const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
 
 @Module({
     imports: [
