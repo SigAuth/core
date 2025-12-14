@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 const logger = new Logger('Main');
+const API_RATE_LIMIT = Number(process.env.API_RATE_LIMIT ?? 15);
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -19,7 +20,9 @@ async function bootstrap() {
     if (process.env.EXPOSE_SWAGGER === 'true') {
         const config = new DocumentBuilder()
             .setTitle('SigAuth API')
-            .setDescription("The SigAuth API is rate limited and protected by 2FA. You can't send more than 10 requests per minute.")
+            .setDescription(
+                `The SigAuth API is rate limited and protected by 2FA. You can't send more than ${API_RATE_LIMIT} requests per minute.`
+            )
             .setVersion('0.2')
             .build();
 
