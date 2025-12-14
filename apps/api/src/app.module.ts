@@ -15,6 +15,8 @@ import { WellKnownModule } from './modules/well-known/well-known.module';
 import { MirrorModule } from '@/modules/mirror/mirror.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
+const API_RATE_LIMIT = Number(process.env.API_RATE_LIMIT ?? 15);
+
 @Module({
     imports: [
         ServeStaticModule.forRoot({
@@ -25,8 +27,8 @@ import { ScheduleModule } from '@nestjs/schedule';
         AccountModule,
         ThrottlerModule.forRoot([
             {
-                ttl: 60 * 1000,
-                limit: 50,
+                ttl: 60 * 1000, // 1 minute
+                limit: API_RATE_LIMIT,
             },
         ]),
         AssetTypeModule,
