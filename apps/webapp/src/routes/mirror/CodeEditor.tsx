@@ -9,15 +9,16 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
 
     const editorRef = useRef<HTMLDivElement | null>(null);
     const monacoInstanceRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+    const init = useRef<boolean>(false);
 
     const currentTheme = theme.theme === 'dark' ? 'vs-dark' : 'vs-light';
 
     // Initialize editor once per component instance
     useEffect(() => {
         const run = async () => {
-            if (!editorRef.current || monacoInstanceRef.current) return;
+            if (!editorRef.current || init.current) return;
+            init.current = true;
 
-            // load this from real file that is also accessible to backend
             const res = await fetch('/mirror-types.txt');
 
             const text = await res.text();
@@ -71,12 +72,10 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
         };
 
         run();
-
         return () => {
-            monacoInstanceRef.current?.dispose();
+            monacoInstanceRef.current?.dispose?.();
             monacoInstanceRef.current = null;
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // run once per instance
 
     // Update editor value if `code` prop changes after mount
@@ -86,6 +85,7 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
             editor.setValue(code);
         }
     }, [code]);
+
     // React to theme changes without re-creating the editor
     useEffect(() => {
         if (monacoInstanceRef.current) {
