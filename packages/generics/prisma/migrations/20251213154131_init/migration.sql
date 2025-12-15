@@ -7,6 +7,7 @@ CREATE TABLE "Account" (
     "secondFactor" TEXT,
     "password" TEXT NOT NULL,
     "accounts" JSONB NOT NULL DEFAULT '[]',
+    "deactivated" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Account_pkey" PRIMARY KEY ("id")
 );

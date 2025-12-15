@@ -9,6 +9,15 @@ import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
 
+/**
+ * What is meant by "Change to proper permission"
+ *
+ * If an account is granted access the PROTECTED.Container-Admin permission he is supposed to be able to create/edit/delete other accounts that have the same or lower permission level.
+ *
+ * Atm we only have the IsRoot guard that checks for the SigAuthRootPermissions.ROOT permission.
+ * In the future we need to implement proper permission guards that check for the required permissions based on the account's permissions.
+ */
+
 @Controller('account')
 @UseGuards(AuthGuard)
 export class AccountController {
@@ -58,5 +67,14 @@ export class AccountController {
     async setPermissions(@Body() permissionUpdateDto: PermissionSetDto) {
         const perms = await this.accountService.setPermissions(permissionUpdateDto);
         return { permissions: perms };
+    }
+
+    @Post('logout-all')
+    @UseGuards(IsRoot) // TODO Change to proper permissions
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'Signed out user successfully!' })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+    async logoutAll(@Body('accountId') accountId: string) {
+        await this.accountService.logOutAll(+accountId);
     }
 }

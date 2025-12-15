@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
 import { usePagination } from '@/lib/use-pagination';
-import { cn } from '@/lib/utils';
+import { cn, logout, request } from '@/lib/utils';
 import type { AccountWithPermissions } from '@sigauth/generics';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -31,7 +31,11 @@ import {
     FileSpreadsheetIcon,
     FileTextIcon,
     Hammer,
+    MonitorX,
     Trash,
+    User,
+    UserRoundPlus,
+    UserRoundX,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -41,11 +45,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
 import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
 import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
+import { ActivationAccountDialog } from '@/routes/accounts/ActivationAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
+import { toast } from 'sonner';
 import { LIST_DEFAULT_PAGE_SIZE } from '@/lib/constants';
 
 export const AccountsList = () => {
@@ -55,10 +62,11 @@ export const AccountsList = () => {
     const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [toggleAccountDialogOpen, setToggleAccountDialogOpen] = useState<number>(0);
 
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize });
     const [rowSelection, setRowSelection] = useState({});
-    const [data, setData] = useState<AccountWithPermissions[]>(session.accounts); // Replace with actual data fetching logic
+    const [data, setData] = useState<AccountWithPermissions[]>(session.accounts);
 
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<SortingState>([
@@ -90,7 +98,34 @@ export const AccountsList = () => {
             enableSorting: false,
         },
         { header: 'ID', accessorKey: 'id', maxSize: 1 },
-        { header: 'Name', accessorKey: 'name', cell: info => info.getValue() },
+        {
+            header: 'Name',
+            accessorKey: 'name',
+            cell: ({ row, getValue }) => {
+                const isDeactivated = row.original.deactivated;
+
+                return (
+                    <div className="flex items-center gap-2">
+                        {isDeactivated ? (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <UserRoundX className="size-4 text-destructive" aria-label="Deactivated account" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <span>Deactivated</span>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        ) : (
+                            <User className="size-4" aria-label="Account Icon" />
+                        )}
+
+                        <span>{getValue<string>()}</span>
+                    </div>
+                );
+            },
+        },
         { header: 'E-Mail', accessorKey: 'email', cell: info => info.getValue() },
         { header: 'Related Containers', accessorFn: row => new Set(row.permissions.map(p => p.containerId)).size },
         { header: 'API Access', accessorKey: 'apiAccess', cell: info => (info.getValue() ? 'Yes' : 'No') },
@@ -109,7 +144,6 @@ export const AccountsList = () => {
                                     <FileTextIcon className="mr-2 size-4" />
                                     Copy API Key
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
                             </>
                         )}
                         <DropdownMenuItem
@@ -130,6 +164,29 @@ export const AccountsList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
+                                toast.promise(logOutAll(row.original.id), {
+                                    position: 'bottom-right',
+                                    loading: 'Signing out everywhere...',
+                                    success: 'Signed out everywhere successfully',
+                                    error: 'Failed to sign out everywhere',
+                                });
+                            }}
+                        >
+                            <MonitorX className="mr-2 size-4" />
+                            Sign out everywhere
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => {
+                                setToggleAccountDialogOpen(row.original.id);
+                            }}
+                        >
+                            {row.original.deactivated ? <UserRoundPlus className="mr-2 size-4" /> : <UserRoundX className="mr-2 size-4" />}
+                            {row.original.deactivated ? 'Activate' : 'Deactivate'}
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                            onClick={() => {
                                 setDeleteDialogOpen(true);
                             }}
                         >
@@ -141,6 +198,15 @@ export const AccountsList = () => {
             ),
         },
     ];
+
+    const logOutAll = async (accountId: number) => {
+        const res = await request('POST', `/api/account/logout-all`, { accountId });
+        if (!res.ok) throw new Error('Failed to sign out everywhere');
+        if (accountId === session.account.id) {
+            logout();
+            window.location.reload();
+        }
+    };
 
     const exportToCSV = () => {
         const selectedRows = table.getSelectedRowModel().rows;
@@ -247,6 +313,7 @@ export const AccountsList = () => {
                         <CreateAccountDialog />
                         <DeleteAccountDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} accountIds={selectedAccountIds} />
                         <EditAccountDialog setOpen={setEditDialogOpen} open={editDialogOpen} accountIds={selectedAccountIds} />
+                        <ActivationAccountDialog open={toggleAccountDialogOpen} setOpen={setToggleAccountDialogOpen} />
                         <PermissionSetAccountDialog
                             open={permissionDialogOpen}
                             setOpen={setPermissionDialogOpen}
