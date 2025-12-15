@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/common/prisma/prisma.service';
+import { PROTECTED } from '@sigauth/generics/protected';
 
 export interface HealthCheckResult {
     id: number;
@@ -48,7 +49,7 @@ export class HealthService {
         this.refreshPromise = (async () => {
             try {
                 const apps = await this.prisma.app.findMany({
-                    where: { id: { not: 1 } },
+                    where: { name: { not: PROTECTED.App.name } },
                     select: { id: true, name: true, url: true },
                 });
 
