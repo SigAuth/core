@@ -19,7 +19,6 @@ import {
     useReactTable,
     type ColumnDef,
     getFilteredRowModel,
-    selectRowsFn,
 } from '@tanstack/react-table';
 import {
     ChevronDownIcon,
