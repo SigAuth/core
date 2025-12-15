@@ -12,7 +12,7 @@
         "declaration": true,
         "removeComments": true,
         "emitDecoratorMetadata": true,
-        "target": "ES2024",
+        "target": "es2024",
         "baseUrl": ".",
         "outDir": "./dist",
         "sourceMap": true,
