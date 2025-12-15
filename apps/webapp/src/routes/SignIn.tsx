@@ -3,6 +3,7 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { request } from '@/lib/utils';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 const SignInPage = () => {
@@ -23,6 +24,17 @@ const SignInPage = () => {
             toast.error('Login failed. Please check your credentials.');
         }
     };
+
+    useEffect(() => {
+        const handleKeyPress = e => {
+            if (e.key === 'Enter') handleSubmit();
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => {
+            window.removeEventListener('keydown', handleKeyPress);
+        };
+    }, []);
 
     return (
         <main className="flex items-center justify-center min-h-screen bg-muted">
@@ -56,9 +68,6 @@ const SignInPage = () => {
                 <CardFooter className="flex-col gap-2">
                     <Button type="submit" onClick={handleSubmit} className="w-full">
                         Login
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                        Login with Google
                     </Button>
                 </CardFooter>
             </Card>

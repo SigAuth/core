@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
@@ -49,6 +50,17 @@ export const OIDCSignInPage = () => {
         }
     };
 
+    useEffect(() => {
+        const handleKeyPress = e => {
+            if (e.key === 'Enter' && ranAuthenticate) handleSubmit();
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => {
+            window.removeEventListener('keydown', handleKeyPress);
+        };
+    }, []);
+
     return (
         <main className="flex items-center justify-center min-h-screen bg-muted">
             <Card className="w-full max-w-sm">
@@ -81,9 +93,6 @@ export const OIDCSignInPage = () => {
                 <CardFooter className="flex-col gap-2">
                     <Button type="submit" onClick={handleSubmit} className="w-full">
                         Login
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                        Login with Google
                     </Button>
                 </CardFooter>
             </Card>

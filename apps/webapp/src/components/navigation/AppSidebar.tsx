@@ -164,7 +164,7 @@ export function AppSidebar() {
                     <ThemeToggle />
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button className="w-full">Logout</Button>
+                            <Button className="w-full">Sign Out</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader className="items-center">
@@ -173,7 +173,7 @@ export function AppSidebar() {
                                 </div>
                                 <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
                                 <AlertDialogDescription className="text-center">
-                                    This will log you out of your current session and all apps you are currently authenticated with.
+                                    This will sign you out of your current session and all apps you are currently authenticated with.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -183,7 +183,7 @@ export function AppSidebar() {
                                         className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
                                         onClick={logout}
                                     >
-                                        Log Out
+                                        Sign Out
                                     </Button>
                                 </AlertDialogAction>
                             </AlertDialogFooter>
