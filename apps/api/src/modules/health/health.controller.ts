@@ -1,5 +1,5 @@
 import { Controller, ForbiddenException, Get, HttpCode, HttpStatus, ParseBoolPipe, Query, UseGuards } from '@nestjs/common';
-import { ApiForbiddenResponse, ApiHeader, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiForbiddenResponse, ApiHeader, ApiOkResponse, ApiQuery, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { HealthService } from '@/modules/health/health.service';
 import { ApiTokenGuard } from '@/modules/auth/guards/api-token.guard';
 
@@ -7,12 +7,12 @@ import { ApiTokenGuard } from '@/modules/auth/guards/api-token.guard';
 export class HealthController {
     constructor(private readonly healthService: HealthService) {}
 
-    @UseGuards(ApiTokenGuard)
     @Get()
+    @UseGuards(ApiTokenGuard)
     @HttpCode(HttpStatus.OK)
     @ApiHeader({
-        name: 'x-api-key',
-        description: 'Your API token. You can also provide it as query parameter `apiKey`.',
+        name: 'Authorization',
+        description: 'Your API token. Provide it in the Authorization header as "Token <token>"',
         required: true,
     })
     @ApiQuery({
@@ -66,6 +66,7 @@ export class HealthController {
         },
     })
     @ApiForbiddenResponse({ description: 'Health endpoint is disabled' })
+    @ApiUnauthorizedResponse({ description: 'Invalid or missing API token' })
     async getHealth(@Query('apps', new ParseBoolPipe({ optional: true })) includeApps = false) {
         if (process.env.EXPOSE_HEALTH_ENDPOINT === 'false') {
             throw new ForbiddenException('Health endpoint is disabled');
