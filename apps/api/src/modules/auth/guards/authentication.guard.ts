@@ -9,6 +9,8 @@ export class AuthGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest<Request>();
+        request.authMethod = 'session';
+
         const sid = (request.cookies as Record<string, string>)?.['sid'];
 
         if (!sid) {

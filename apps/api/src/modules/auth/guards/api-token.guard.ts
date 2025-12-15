@@ -14,6 +14,7 @@ export class ApiTokenGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest<Request>();
         const authHeader = request.headers['authorization'];
+        request.authMethod = 'api-token';
 
         if (!authHeader?.startsWith(TOKEN_PREFIX)) {
             this.logger.warn(`Unauthorized request: missing or invalid Authorization header`);
