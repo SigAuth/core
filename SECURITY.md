@@ -15,7 +15,7 @@ Unmaintained versions do **not** receive security fixes. Upgrade is mandatory.
 
 If you discover a security vulnerability, report it **privately**.
 
-- 📧 Contact: security@sigauth.org
+- 📧 Contact: info@sigasoft.de
 - 🔐 Do **not** open public issues or discussions.
 - 🧪 Include a minimal reproducible example or PoC if possible.
 
