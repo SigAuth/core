@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/common/prisma/prisma.service';
 
+export interface HealthCheckResult {
+    id: number;
+    name: string;
+    status: 'healthy' | 'unhealthy';
+}
+
 @Injectable()
 export class HealthService {
-    private cache: any[] = [];
+    private cache: HealthCheckResult[] = [];
     private lastFetch = 0;
-    private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 Minuten
+    private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
     constructor(private readonly prisma: PrismaService) {}
 

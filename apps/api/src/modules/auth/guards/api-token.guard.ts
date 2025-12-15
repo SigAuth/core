@@ -10,7 +10,7 @@ export class ApiTokenGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest<Request>();
 
-        const apiToken = request.headers['x-api-key'] as string || request.query['apiKey'] as string;
+        const apiToken = request.headers['x-api-key'] as string;
 
         if (!apiToken) {
             throw new UnauthorizedException('No API token provided');
