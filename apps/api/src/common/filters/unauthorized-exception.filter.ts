@@ -7,14 +7,17 @@ export class UnauthorizedExceptionFilter implements ExceptionFilter {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse<Response>();
         const request = ctx.getRequest<Request>();
+        const authMethod = request.authMethod;
 
-        // remove sid cookie if exists
-        response.clearCookie('sid', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 1,
-        });
+        if (authMethod === 'session') {
+            // remove sid cookie if exists
+            response.clearCookie('sid', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 1,
+            });
+        }
 
         const status = exception.getStatus();
         const message = exception.getResponse();

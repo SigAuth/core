@@ -11,6 +11,8 @@ export class IsRoot implements CanActivate {
 
     canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest<Request>();
+        request.authMethod = 'session';
+
         if (!request.account) throw new UnauthorizedException('No account found');
 
         const account: AccountWithPermissions = request.account as AccountWithPermissions;

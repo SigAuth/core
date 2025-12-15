@@ -14,6 +14,7 @@ import { join } from 'path';
 import { WellKnownModule } from './modules/well-known/well-known.module';
 import { MirrorModule } from '@/modules/mirror/mirror.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { HealthModule } from '@/modules/health/health.module';
 
 const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
 
@@ -38,6 +39,7 @@ const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
         AuthModule,
         MirrorModule,
         WellKnownModule,
+        HealthModule,
     ],
     providers: [PrismaService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
