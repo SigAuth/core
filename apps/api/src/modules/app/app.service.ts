@@ -17,8 +17,8 @@ import { PROTECTED } from '@sigauth/generics/protected';
 import dayjs from 'dayjs';
 import { firstValueFrom, retry, timeout } from 'rxjs';
 
-const APP_FETCH_ROUTE = '/connect-config.json';
-const APP_NUDGE_ROUTE = '/api/connect/nudge';
+const APP_FETCH_ROUTE = '/sigauth-config.json';
+const APP_NUDGE_ROUTE = '/api/sigauth/nudge';
 
 @Injectable()
 export class AppsService {
@@ -162,7 +162,8 @@ export class AppsService {
                 asset: perms.asset,
             };
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (error) {
+        } catch (error: any) {
+            this.logger.error(error.message);
             this.logger.error(url + " wasn't reachable couldn't update permissions");
             throw new RequestTimeoutException('App unreachable');
         }

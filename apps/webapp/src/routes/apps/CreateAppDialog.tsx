@@ -17,7 +17,7 @@ import { z } from 'zod';
 const formSchema = z.object({
     name: z.string().min(4, 'Name must be at least 4 characters long'),
     url: z.string().url('Invalid URL'),
-    oidcAuthCodeUrl: z.string().url('Invalid OIDC Authorization Code URL').optional(),
+    oidcAuthCodeUrl: z.union([z.literal(''), z.string().trim().url('Invalid OIDC Authorization Code URL')]),
     permissions: z.object({
         asset: z.array(z.string().min(3, 'Asset permission must be at least 3 characters long')),
         container: z.array(z.string().min(3, 'Container permission must be at least 3 characters long')),
@@ -34,7 +34,10 @@ export const CreateAppDialog = () => {
     const [permissionField, setPermissionField] = useState<string>('');
 
     const submitToApi = async (values: z.infer<typeof formSchema>) => {
-        const res = await request('POST', '/api/app/create', values);
+        const res = await request('POST', '/api/app/create', {
+            ...values,
+            oidcAuthCodeUrl: values.oidcAuthCodeUrl.trim() === '' ? undefined : values.oidcAuthCodeUrl.trim(),
+        });
 
         if (res.ok) {
             const data = await res.json();
@@ -51,6 +54,7 @@ export const CreateAppDialog = () => {
             name: '',
             url: '',
             webFetchEnabled: false,
+            oidcAuthCodeUrl: '',
             permissions: {
                 asset: [] as string[],
                 container: [] as string[],

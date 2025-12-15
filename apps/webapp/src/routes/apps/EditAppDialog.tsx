@@ -18,7 +18,7 @@ import { z } from 'zod';
 const formSchema = z.object({
     name: z.string().min(4, 'Name must be at least 4 characters long'),
     url: z.string().url('Invalid URL'),
-    oidcAuthCodeUrl: z.string().url('Invalid OIDC Authorization Code URL').optional(),
+    oidcAuthCodeUrl: z.union([z.literal(''), z.string().trim().url('Invalid OIDC Authorization Code URL')]),
     permissions: z.object({
         asset: z.array(z.string().min(3, 'Asset permission must be at least 3 characters long')),
         container: z.array(z.string().min(3, 'Container permission must be at least 3 characters long')),
@@ -41,7 +41,11 @@ export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; ope
 
     const submitToApi = async (values: z.infer<typeof formSchema>) => {
         if (!app) return;
-        const res = await request('POST', '/api/app/edit', { id: app.id, ...values });
+        const res = await request('POST', '/api/app/edit', {
+            id: app.id,
+            ...values,
+            oidcAuthCodeUrl: values.oidcAuthCodeUrl.trim() === '' ? undefined : values.oidcAuthCodeUrl.trim(),
+        });
 
         if (res.ok) {
             const data = await res.json();
