@@ -136,7 +136,7 @@ export const AppsList = () => {
                             {info.getValue<AppWebFetch>().success ? (
                                 <Badge className="ml-2 bg-green-700 dark:bg-green-400">Success</Badge>
                             ) : (
-                                <Badge variant="destructive">Failed</Badge>
+                                <Badge className="ml-2" variant="destructive">Failed</Badge>
                             )}
                         </>
                     ) : (
