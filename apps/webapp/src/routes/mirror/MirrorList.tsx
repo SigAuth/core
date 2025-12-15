@@ -130,6 +130,7 @@ export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -138,6 +139,7 @@ export const MirrorList = ({ openCodeEditor }: { openCodeEditor: (mirror: Mirror
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setDeleteDialogOpen(true);
                             }}
                         >
