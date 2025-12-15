@@ -22,21 +22,47 @@ export class HealthController {
         description: 'Include app/dependency health checks',
     })
     @ApiOkResponse({
-        description: 'Health check without app checks',
-        example: {
-            timestamp: '2025-12-15T09:45:12.123Z',
-            status: 'ok',
+        description: 'Health check. The `apps` property is included only if the `apps` query parameter is set to true.',
+        schema: {
+            type: 'object',
+            properties: {
+                timestamp: { type: 'string', format: 'date-time' },
+                status: { type: 'string', example: 'ok' },
+                apps: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'number', example: 1 },
+                            name: { type: 'string', example: 'auth' },
+                            status: { type: 'string', example: 'healthy' },
+                        },
+                    },
+                    description: 'List of app/dependency health checks (present only if `apps` query parameter is true)',
+                },
+            },
+            required: ['timestamp', 'status'],
+            additionalProperties: false,
         },
-    })
-    @ApiOkResponse({
-        description: 'Health check including app/dependency checks',
-        example: {
-            timestamp: '2025-12-15T09:45:12.123Z',
-            status: 'ok',
-            apps: [
-                { id: 1, name: 'auth', status: 'healthy' },
-                { id: 2, name: 'database', status: 'healthy' },
-            ],
+        examples: {
+            withoutApps: {
+                summary: 'Health check without app checks',
+                value: {
+                    timestamp: '2025-12-15T09:45:12.123Z',
+                    status: 'ok',
+                },
+            },
+            withApps: {
+                summary: 'Health check including app/dependency checks',
+                value: {
+                    timestamp: '2025-12-15T09:45:12.123Z',
+                    status: 'ok',
+                    apps: [
+                        { id: 1, name: 'auth', status: 'healthy' },
+                        { id: 2, name: 'database', status: 'healthy' },
+                    ],
+                },
+            },
         },
     })
     @ApiForbiddenResponse({ description: 'Health endpoint is disabled' })
