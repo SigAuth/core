@@ -129,7 +129,7 @@ export const AppsList = () => {
             header: 'Web Fetch',
             accessorKey: 'webFetch',
             cell: info => (
-                <div className="flex ">
+                <div className="flex">
                     {info.getValue<AppWebFetch>().enabled ? (
                         <>
                             <Badge className="bg-green-700 dark:bg-green-400">Enabled</Badge>
