@@ -26,7 +26,7 @@ const SignInPage = () => {
     };
 
     useEffect(() => {
-        const handleKeyPress = e => {
+        const handleKeyPress = (e: KeyboardEvent) => {
             if (e.key === 'Enter') handleSubmit();
         };
 
