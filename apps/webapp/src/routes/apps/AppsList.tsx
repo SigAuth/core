@@ -128,8 +128,22 @@ export const AppsList = () => {
         {
             header: 'Web Fetch',
             accessorKey: 'webFetch',
-            cell: info =>
-                info.getValue<AppWebFetch>().enabled ? <Badge color="green">Enabled</Badge> : <Badge variant="destructive">Disabled</Badge>,
+            cell: info => (
+                <div className="flex ">
+                    {info.getValue<AppWebFetch>().enabled ? (
+                        <>
+                            <Badge className="bg-green-700 dark:bg-green-400">Enabled</Badge>
+                            {info.getValue<AppWebFetch>().success ? (
+                                <Badge className="ml-2 bg-green-700 dark:bg-green-400">Success</Badge>
+                            ) : (
+                                <Badge variant="destructive">Failed</Badge>
+                            )}
+                        </>
+                    ) : (
+                        <Badge variant="outline">Disabled</Badge>
+                    )}
+                </div>
+            ),
         },
         {
             header: 'Containers',
