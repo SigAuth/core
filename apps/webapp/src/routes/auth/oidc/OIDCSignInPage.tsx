@@ -51,7 +51,7 @@ export const OIDCSignInPage = () => {
     };
 
     useEffect(() => {
-        const handleKeyPress = e => {
+        const handleKeyPress = (e: KeyboardEvent) => {
             if (e.key === 'Enter' && ranAuthenticate) handleSubmit();
         };
 
