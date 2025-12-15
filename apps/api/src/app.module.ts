@@ -14,6 +14,7 @@ import { join } from 'path';
 import { WellKnownModule } from './modules/well-known/well-known.module';
 import { MirrorModule } from '@/modules/mirror/mirror.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { HealthModule } from '@/modules/health/health.module';
 
 @Module({
     imports: [
@@ -36,6 +37,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         AuthModule,
         MirrorModule,
         WellKnownModule,
+        HealthModule,
     ],
     providers: [PrismaService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
