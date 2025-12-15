@@ -49,7 +49,7 @@ export class HealthController {
             timestamp: new Date(),
             status: 'ok',
             ...(includeApps && {
-                apps: await this.healthService.getHealthApps(),
+                apps: await this.healthService.getAppsHealthStatus(),
             }),
         };
     }
