@@ -17,7 +17,7 @@ export const CodeEditor = ({ code, setCode }: { code: string; setCode: (code: st
     useEffect(() => {
         const run = async () => {
             if (!editorRef.current || init.current) return;
-            console.log('Initializing Monaco Editor');
+            
             init.current = true;
 
             const res = await fetch('/mirror-types.txt');
