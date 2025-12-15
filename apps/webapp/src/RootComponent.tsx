@@ -45,7 +45,7 @@ const RootComponent: React.FC = () => {
         <BrowserRouter>
             <StrictMode>
                 <ThemeProvider storageKey="ui-theme" defaultTheme="system">
-                    <Toaster position="bottom-center" />
+                    <Toaster position="bottom-right" />
                     {!init ? (
                         <main className="flex items-center justify-center h-screen">
                             <LoadingSpinner className="w-12 h-12" />

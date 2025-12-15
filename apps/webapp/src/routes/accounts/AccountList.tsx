@@ -141,7 +141,10 @@ export const AccountsList = () => {
                                 <TooltipTrigger asChild>
                                     <Button
                                         variant="outline"
-                                        onClick={() => navigator.clipboard.writeText(info.getValue<string>())}
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(info.getValue<string>());
+                                            toast.success('API Key copied to clipboard');
+                                        }}
                                         className="ring-offset-background hover:ring-primary/90 transition-all duration-300 hover:ring-2 ml-3 hover:ring-offset-2"
                                         size="icon-sm"
                                     >
