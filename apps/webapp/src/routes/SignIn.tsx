@@ -3,26 +3,58 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { request } from '@/lib/utils';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 const SignInPage = () => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
+
     const handleSubmit = async () => {
+        // Prevent double-submit (Enter + click, fast re-press, etc.)
+        if (isSubmittingRef.current) return;
+
         const username = (document.getElementById('username') as HTMLInputElement).value.trim();
         const password = (document.getElementById('password') as HTMLInputElement).value.trim();
 
         // TODO add 2FA
         if (username.length < 3 || password.length < 3) return toast.warning('Please enter longer credentials.');
-        const res = await request('POST', `/api/auth/login`, { username, password });
 
-        if (res.ok) {
-            toast.success('Login successful!');
-            window.location.reload();
-        } else if (res.status === 429) {
-            toast.error('Too many requests. Please wait a moment and try again.');
-        } else {
-            toast.error('Login failed. Please check your credentials.');
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+
+        try {
+            const res = await request('POST', `/api/auth/login`, { username, password });
+
+            if (res.ok) {
+                toast.success('Login successful!');
+                window.location.reload();
+            } else if (res.status === 429) {
+                toast.error('Too many requests. Please wait a moment and try again.');
+            } else {
+                toast.error('Login failed. Please check your credentials.');
+            }
+        } finally {
+            isSubmittingRef.current = false;
+            setIsSubmitting(false);
         }
     };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== 'Enter') return;
+
+            // Ignore OS key-repeat when holding Enter
+            if (e.repeat) return;
+
+            void handleSubmit();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     return (
         <main className="flex items-center justify-center min-h-screen bg-muted">
@@ -54,11 +86,8 @@ const SignInPage = () => {
                     </div>
                 </CardContent>
                 <CardFooter className="flex-col gap-2">
-                    <Button type="submit" onClick={handleSubmit} className="w-full">
+                    <Button type="submit" onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
                         Login
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                        Login with Google
                     </Button>
                 </CardFooter>
             </Card>
