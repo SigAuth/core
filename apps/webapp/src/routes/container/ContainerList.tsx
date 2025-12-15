@@ -120,6 +120,7 @@ export const ContainerList = () => {
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setEditDialogOpen(true);
                             }}
                             disabled={row.original.id === PROTECTED.Container.id}
@@ -129,6 +130,7 @@ export const ContainerList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setDeleteDialogOpen(true);
                             }}
                             disabled={row.original.id === PROTECTED.Container.id}
