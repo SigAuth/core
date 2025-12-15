@@ -32,4 +32,8 @@ export class EditAccountDto {
         description: 'Whether the account should have API access via a token or not',
     })
     apiAccess?: boolean;
+
+    @IsBoolean()
+    @ApiProperty({ example: true, type: 'boolean', description: 'Whether the account is activated or not' })
+    deactivated?: boolean;
 }

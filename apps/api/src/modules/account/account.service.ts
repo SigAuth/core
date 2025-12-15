@@ -9,7 +9,6 @@ import { AppPermission } from '@sigauth/generics/json-types';
 import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { Account, PermissionInstance, Prisma, PrismaClient } from '@sigauth/generics/prisma-client';
 import bcrypt from 'bcryptjs';
-import { ToggleActivationDto } from '@/modules/account/dto/toggleActivation.dto';
 
 @Injectable()
 export class AccountService {
@@ -42,6 +41,11 @@ export class AccountService {
 
     async editAccount(editAccountDto: EditAccountDto): Promise<AccountWithPermissions> {
         // Check for unique values (Name/Email)
+        let account = await this.prisma.account.findUnique({
+            where: { id: editAccountDto.id },
+            include: { permissions: true },
+        });
+        if (!account) throw new NotFoundException('Account does not exist');
         if (editAccountDto.name || editAccountDto.email) {
             const orConditions: Prisma.AccountWhereInput[] = [];
             if (editAccountDto.name) orConditions.push({ name: editAccountDto.name });
@@ -51,6 +55,7 @@ export class AccountService {
                 where: {
                     OR: orConditions,
                 },
+                include: { permissions: true },
             });
 
             if (existing && existing.id !== editAccountDto.id) {
@@ -59,20 +64,26 @@ export class AccountService {
         }
 
         // Dynamically build update object
-        const data: { name?: string; email?: string; password?: string; api?: string | null } = {};
+        const data: { name?: string; email?: string; password?: string; api?: string | null; deactivated?: boolean } = {};
         if (editAccountDto.name) data.name = editAccountDto.name;
         if (editAccountDto.email) data.email = editAccountDto.email;
         if (editAccountDto.password) data.password = bcrypt.hashSync(editAccountDto.password, 10);
+        if (editAccountDto.deactivated !== undefined) data.deactivated = editAccountDto.deactivated;
         if (editAccountDto.apiAccess !== undefined) {
             data.api = editAccountDto.apiAccess ? Utils.generateToken(32) : null;
         }
 
-        const account = await this.prisma.account.update({
+        // when deativated is toggled to true log out all sessions
+        if (editAccountDto.deactivated && !account.deactivated) {
+            await this.logOutAll(editAccountDto.id);
+        }
+
+        const updated = await this.prisma.account.update({
             where: { id: editAccountDto.id },
             data,
         });
 
-        return { ...account, permissions: [] };
+        return { ...updated, permissions: account.permissions || [] };
     }
 
     async deleteAccount(deleteAccountDto: DeleteAccountDto) {
@@ -83,19 +94,6 @@ export class AccountService {
         await this.prisma.account.deleteMany({
             where: { id: { in: deleteAccountDto.accountIds } },
         });
-    }
-
-    async updateAccountActivation(toggleActivationAccount: ToggleActivationDto) {
-        const isDeactivating = toggleActivationAccount.action === 'deactivate';
-
-        const updatedAccount = await this.prisma.account.updateMany({
-            data: { deactivated: isDeactivating },
-            where: { id:  toggleActivationAccount.accountId },
-        });
-
-        if (isDeactivating && updatedAccount) {
-            await this.logOutAll(toggleActivationAccount.accountId.toString());
-        }
     }
 
     async setPermissions(permissionSetDto: PermissionSetDto) {
@@ -179,9 +177,9 @@ export class AccountService {
         return maintained;
     }
 
-    async logOutAll(accountId: string) {
+    async logOutAll(accountId: number) {
         await this.prisma.session.deleteMany({
-            where: { subject: +accountId },
+            where: { subject: accountId },
         });
     }
 }

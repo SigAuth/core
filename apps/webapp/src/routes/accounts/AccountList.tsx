@@ -33,6 +33,7 @@ import {
     Hammer,
     MonitorX,
     Trash,
+    User,
     UserRoundPlus,
     UserRoundX,
 } from 'lucide-react';
@@ -49,7 +50,7 @@ import { Input } from '@/components/ui/input';
 import { CreateAccountDialog } from '@/routes/accounts/CreateAccountDialog';
 import { DeleteAccountDialog } from '@/routes/accounts/DeleteAccountDialog';
 import { EditAccountDialog } from '@/routes/accounts/EditAccountDialog';
-import { ToggleAccountDialog } from '@/routes/accounts/ToggleAccountDialog';
+import { ActivationAccountDialog } from '@/routes/accounts/ActivationAccountDialog';
 import { PermissionSetAccountDialog } from '@/routes/accounts/PermissionSetAccountDialog';
 import { toast } from 'sonner';
 import { LIST_DEFAULT_PAGE_SIZE } from '@/lib/constants';
@@ -61,8 +62,7 @@ export const AccountsList = () => {
     const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [toggleAccountDialogOpen, setToggleAccountDialogOpen] = useState(false);
-    const [toggleAccountAction, setToggleAccountAction] = useState<'activate' | 'deactivate'>('deactivate');
+    const [toggleAccountDialogOpen, setToggleAccountDialogOpen] = useState<number>(0);
 
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize });
     const [rowSelection, setRowSelection] = useState({});
@@ -106,9 +106,7 @@ export const AccountsList = () => {
 
                 return (
                     <div className="flex items-center gap-2">
-                        <span>{getValue<string>()}</span>
-
-                        {isDeactivated && (
+                        {isDeactivated ? (
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -119,7 +117,11 @@ export const AccountsList = () => {
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
+                        ) : (
+                            <User className="size-4" aria-label="Account Icon" />
                         )}
+
+                        <span>{getValue<string>()}</span>
                     </div>
                 );
             },
@@ -176,8 +178,7 @@ export const AccountsList = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={() => {
-                                setToggleAccountAction(row.original.deactivated ? 'activate' : 'deactivate');
-                                setToggleAccountDialogOpen(true);
+                                setToggleAccountDialogOpen(row.original.id);
                             }}
                         >
                             {row.original.deactivated ? <UserRoundPlus className="mr-2 size-4" /> : <UserRoundX className="mr-2 size-4" />}
@@ -312,12 +313,7 @@ export const AccountsList = () => {
                         <CreateAccountDialog />
                         <DeleteAccountDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} accountIds={selectedAccountIds} />
                         <EditAccountDialog setOpen={setEditDialogOpen} open={editDialogOpen} accountIds={selectedAccountIds} />
-                        <ToggleAccountDialog
-                            open={toggleAccountDialogOpen}
-                            setOpen={setToggleAccountDialogOpen}
-                            accountId={selectedAccountIds[0]}
-                            action={toggleAccountAction}
-                        />
+                        <ActivationAccountDialog open={toggleAccountDialogOpen} setOpen={setToggleAccountDialogOpen} />
                         <PermissionSetAccountDialog
                             open={permissionDialogOpen}
                             setOpen={setPermissionDialogOpen}

@@ -8,7 +8,15 @@ import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Account } from '@sigauth/generics/prisma-client';
-import { ToggleActivationDto } from '@/modules/account/dto/toggleActivation.dto';
+
+/**
+ * What is meant by "Change to proper permission"
+ *
+ * If an account is granted access the PROTECTED.Container-Admin permission he is supposed to be able to create/edit/delete other accounts that have the same or lower permission level.
+ *
+ * Atm we only have the IsRoot guard that checks for the SigAuthRootPermissions.ROOT permission.
+ * In the future we need to implement proper permission guards that check for the required permissions based on the account's permissions.
+ */
 
 @Controller('account')
 @UseGuards(AuthGuard)
@@ -50,14 +58,6 @@ export class AccountController {
         await this.accountService.deleteAccount(deleteAccountDto);
     }
 
-    @Post('toggleActivation')
-    @UseGuards(IsRoot) // TODO Change to proper permission
-    @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiNotFoundResponse({ description: 'Not all accounts found or invalid ids provided' })
-    async toggleActivation(@Body() toggleActivationAccount: ToggleActivationDto): Promise<void> {
-        await this.accountService.updateAccountActivation(toggleActivationAccount);
-    }
-
     @Post('permissions/set')
     @UseGuards(IsRoot) // TODO Change to proper permissions
     @ApiOkResponse({ description: 'Updated permissions successfully!' })
@@ -75,6 +75,6 @@ export class AccountController {
     @ApiOkResponse({ description: 'Signed out user successfully!' })
     @ApiUnauthorizedResponse({ description: 'Unauthorized' })
     async logoutAll(@Body('accountId') accountId: string) {
-        await this.accountService.logOutAll(accountId);
+        await this.accountService.logOutAll(+accountId);
     }
 }
