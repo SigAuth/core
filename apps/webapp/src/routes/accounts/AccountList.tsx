@@ -25,6 +25,7 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     ChevronUpIcon,
+    Copy,
     DownloadCloudIcon,
     Edit,
     EllipsisVertical,
@@ -128,7 +129,38 @@ export const AccountsList = () => {
         },
         { header: 'E-Mail', accessorKey: 'email', cell: info => info.getValue() },
         { header: 'Related Containers', accessorFn: row => new Set(row.permissions.map(p => p.containerId)).size },
-        { header: 'API Access', accessorKey: 'apiAccess', cell: info => (info.getValue() ? 'Yes' : 'No') },
+        {
+            header: 'API Access',
+            accessorKey: 'api',
+            cell: info =>
+                info.getValue() ? (
+                    <>
+                        Yes{' '}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(info.getValue<string>());
+                                            toast.success('API Key copied to clipboard');
+                                        }}
+                                        className="ring-offset-background hover:ring-primary/90 transition-all duration-300 hover:ring-2 ml-3 hover:ring-offset-2"
+                                        size="icon-sm"
+                                    >
+                                        <Copy />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <span>Copy API Key</span>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </>
+                ) : (
+                    'No'
+                ),
+        },
         {
             header: 'Actions',
             id: 'actions',
@@ -149,6 +181,7 @@ export const AccountsList = () => {
                         <DropdownMenuItem
                             onClick={() => {
                                 setPermissionDialogOpen(true);
+                                setRowSelection({ [row.index]: true });
                             }}
                         >
                             <Hammer className="mr-2 size-4" />
@@ -156,6 +189,7 @@ export const AccountsList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -187,6 +221,7 @@ export const AccountsList = () => {
 
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setDeleteDialogOpen(true);
                             }}
                         >

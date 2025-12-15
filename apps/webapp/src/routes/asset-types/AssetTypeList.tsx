@@ -120,6 +120,7 @@ export const AssetTypeList = () => {
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setEditDialogOpen(true);
                             }}
                             disabled={row.original.id === PROTECTED.AssetType.id}
@@ -129,6 +130,7 @@ export const AssetTypeList = () => {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setDeleteDialogOpen(true);
                             }}
                             disabled={row.original.id === PROTECTED.AssetType.id}

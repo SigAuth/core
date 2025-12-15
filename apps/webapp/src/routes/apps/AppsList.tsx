@@ -137,7 +137,9 @@ export const AppsList = () => {
                             {info.getValue<AppWebFetch>().success ? (
                                 <Badge className="ml-2 bg-green-700 dark:bg-green-400">Success</Badge>
                             ) : (
-                                <Badge className="ml-2" variant="destructive">Failed</Badge>
+                                <Badge className="ml-2" variant="destructive">
+                                    Failed
+                                </Badge>
                             )}
                         </>
                     ) : (
@@ -174,6 +176,7 @@ export const AppsList = () => {
                         <DropdownMenuItem
                             disabled={row.original.id === PROTECTED.App.id}
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setEditDialogOpen(true);
                             }}
                         >
@@ -183,6 +186,7 @@ export const AppsList = () => {
                         <DropdownMenuItem
                             disabled={row.original.id === PROTECTED.App.id}
                             onClick={() => {
+                                setRowSelection({ [row.index]: true });
                                 setDeleteDialogOpen(true);
                             }}
                         >
