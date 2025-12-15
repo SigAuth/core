@@ -2,6 +2,7 @@ import { AuthService } from '@/modules/auth/auth.service';
 import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
+import { ApiAppGuard } from '@/modules/auth/guards/api-app.guard';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {
@@ -30,6 +31,7 @@ export class AuthController {
 
     @Get('oidc/exchange')
     @HttpCode(HttpStatus.OK)
+    @UseGuards(ApiAppGuard)
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
         description: 'Access and refresh tokens issued successfully.',
@@ -39,19 +41,20 @@ export class AuthController {
             redirectUri: 'https://myapp.com/redirect',
         },
     })
-    async exchangeOIDC(@Query('code') code: string, @Query('app-token') appToken: string, @Query('redirect-uri') redirectUri: string) {
-        return await this.authService.exchangeOIDCToken(code, appToken, redirectUri);
+    async exchangeOIDC(@Query('code') code: string, @Query('redirect-uri') redirectUri: string, @Req() req: Request) {
+        return await this.authService.exchangeOIDCToken(code, req.sigauthApp!, redirectUri);
     }
 
     @Get('oidc/refresh')
     @HttpCode(HttpStatus.OK)
+    @UseGuards(ApiAppGuard)
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
         description: 'Access and refresh tokens refreshed successfully.',
         example: { accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi', refreshToken: 't5468gfd486wef486fsd846v864' },
     })
-    async refreshOIDC(@Query('refreshToken') refreshToken: string, @Query('app-token') appToken: string) {
-        return await this.authService.refreshOIDCToken(refreshToken, appToken);
+    async refreshOIDC(@Query('refreshToken') refreshToken: string, @Req() req: Request) {
+        return await this.authService.refreshOIDCToken(refreshToken, req.sigauthApp!);
     }
 
     /**
@@ -90,6 +93,7 @@ export class AuthController {
 
     @Get('/oidc/has-permission')
     @HttpCode(HttpStatus.OK)
+    @UseGuards(ApiAppGuard)
     @ApiOkResponse({
         description: 'Permission check result.',
         example: 'OK',
@@ -102,6 +106,7 @@ export class AuthController {
 
     @Get('/oidc/user-info')
     @HttpCode(HttpStatus.OK)
+    @UseGuards(ApiAppGuard)
     @ApiOkResponse({
         description: 'Provides User general info and lists which containers and directly correlate to the user.',
         example: {
@@ -110,8 +115,8 @@ export class AuthController {
             roots: ['app-administrator'],
         },
     })
-    async getUserInfo(@Req() req: Request, @Query('accessToken') accessToken: string, @Query('appToken') appToken: string) {
-        return await this.authService.getUserInfo(accessToken, appToken);
+    async getUserInfo(@Req() req: Request, @Query('accessToken') accessToken: string) {
+        return await this.authService.getUserInfo(accessToken, req.sigauthApp!);
     }
 
     @Get('init')

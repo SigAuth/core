@@ -6,8 +6,8 @@ import { AccountWithPermissions } from '@sigauth/generics';
 const TOKEN_PREFIX = 'Token ';
 
 @Injectable()
-export class ApiTokenGuard implements CanActivate {
-    private readonly logger = new Logger(ApiTokenGuard.name);
+export class ApiAccountGuard implements CanActivate {
+    private readonly logger = new Logger(ApiAccountGuard.name);
 
     constructor(private readonly prisma: PrismaService) {}
 
@@ -22,7 +22,7 @@ export class ApiTokenGuard implements CanActivate {
         }
 
         const apiToken = authHeader.slice(TOKEN_PREFIX.length).trim();
-        if (!apiToken) {
+        if (!apiToken || apiToken.length === 0) {
             this.logger.warn(`Unauthorized request: empty API token`);
             throw new UnauthorizedException('API token is empty');
         }
