@@ -11,9 +11,7 @@ export class AppWebFetchCron {
     constructor(
         private readonly prisma: PrismaService,
         private readonly appService: AppsService,
-    ) {
-        this.tick();
-    }
+    ) {}
 
     @Cron('0 0 * * *') // Every day at midnight
     async tick() {
