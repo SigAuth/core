@@ -15,7 +15,7 @@ export class AppWebFetchCron {
         this.tick();
     }
 
-    @Cron('0 0 * * *') // Every day at midnights
+    @Cron('0 0 * * *') // Every day at midnight
     async tick() {
         const apps = await this.prisma.app.findMany({ where: { webFetch: { path: ['enabled'], equals: true } } });
         for (const app of apps) {
