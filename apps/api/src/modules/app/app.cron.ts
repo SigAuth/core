@@ -59,6 +59,17 @@ export class AppWebFetchCron {
                 });
             } catch (error: any) {
                 this.logger.error(`Failed to fetch permissions for app ${app.name} (${app.id}): ${error.message}`);
+                // Update webFetch.success to false and lastFetch to now
+                await this.prisma.app.update({
+                    where: { id: app.id },
+                    data: {
+                        webFetch: {
+                            ...app.webFetch,
+                            success: false,
+                            lastFetch: new Date(),
+                        },
+                    },
+                });
                 // Update webFetch fields to indicate failure
                 await this.prisma.app.update({
                     where: { id: app.id },
