@@ -1,7 +1,6 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
-import { Observable } from 'rxjs';
 
 const TOKEN_PREFIX = 'Token ';
 
