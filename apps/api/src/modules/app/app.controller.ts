@@ -5,7 +5,7 @@ import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
 import { ApiAppGuard } from '@/modules/auth/guards/api-app.guard';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
@@ -14,7 +14,6 @@ import {
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiRequestTimeoutResponse,
-    ApiUnauthorizedResponse,
     ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { App } from '@sigauth/generics/prisma-client';
