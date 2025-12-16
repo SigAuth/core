@@ -9,6 +9,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, UseGuard
 import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
+    ApiHeader,
     ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOkResponse,

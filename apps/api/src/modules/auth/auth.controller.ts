@@ -9,6 +9,7 @@ import {
     ApiAcceptedResponse,
     ApiBadRequestResponse,
     ApiForbiddenResponse,
+    ApiHeader,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiUnauthorizedResponse,
@@ -32,6 +33,7 @@ export class AuthController {
     @Get('oidc/exchange')
     @HttpCode(HttpStatus.OK)
     @UseGuards(ApiAppGuard)
+    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
         description: 'Access and refresh tokens issued successfully.',
@@ -48,6 +50,7 @@ export class AuthController {
     @Get('oidc/refresh')
     @HttpCode(HttpStatus.OK)
     @UseGuards(ApiAppGuard)
+    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
         description: 'Access and refresh tokens refreshed successfully.',
@@ -94,6 +97,7 @@ export class AuthController {
     @Get('/oidc/has-permission')
     @HttpCode(HttpStatus.OK)
     @UseGuards(ApiAppGuard)
+    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiOkResponse({
         description: 'Permission check result.',
         example: 'OK',
@@ -107,6 +111,7 @@ export class AuthController {
     @Get('/oidc/user-info')
     @HttpCode(HttpStatus.OK)
     @UseGuards(ApiAppGuard)
+    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiOkResponse({
         description: 'Provides User general info and lists which containers and directly correlate to the user.',
         example: {
