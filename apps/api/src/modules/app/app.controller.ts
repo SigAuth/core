@@ -102,6 +102,7 @@ export class AppsController {
     @Get('info')
     @HttpCode(HttpStatus.OK)
     @UseGuards(ApiAppGuard)
+    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiNotFoundResponse({ description: 'Invalid App Token' })
     @ApiOkResponse({
         description: 'App related assets, containers and accounts fetched successfully',
