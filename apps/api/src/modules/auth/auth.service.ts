@@ -3,7 +3,8 @@ import { Utils } from '@/common/utils';
 import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { Account, App, Asset, AssetType, Container, Mirror, Session } from '@sigauth/generics/prisma-client';
+import { UserInfo } from '@sigauth/generics/json-types';
+import { App, Asset, AssetType, Container, Mirror, Session } from '@sigauth/generics/prisma-client';
 import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
 import { PROTECTED, SigAuthRootPermissions } from '@sigauth/generics/protected';
 import * as bycrypt from 'bcryptjs';
@@ -14,7 +15,6 @@ import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } fro
 import * as process from 'node:process';
 import * as speakeasy from 'speakeasy';
 import { OIDCAuthenticateDto } from './dto/oidc-authenticate.dto';
-import { UserInfo } from '@sigauth/generics/json-types';
 
 @Injectable()
 export class AuthService {
@@ -172,6 +172,7 @@ export class AuthService {
 
         const app = await this.prisma.app.findUnique({ where: { id: +data.appId } });
         if (!app) throw new NotFoundException("Couldn't resolve app");
+        if (!app.oidcAuthCodeUrl) throw new BadRequestException('App does not support OIDC authorization code flow');
 
         const authorizationCode = Utils.generateToken(64);
         const challenge = await this.prisma.authorizationChallenge.create({
@@ -186,7 +187,7 @@ export class AuthService {
         return `${app.oidcAuthCodeUrl}?code=${challenge.authorizationCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}&redirectUri=${data.redirectUri}`;
     }
 
-    async exchangeOIDCToken(code: string, appToken: string, redirectUri: string) {
+    async exchangeOIDCToken(code: string, app: App, redirectUri: string) {
         const authChallenge = await this.prisma.authorizationChallenge.findUnique({
             where: { authorizationCode: code, redirectUri },
             include: { session: { include: { account: true } } },
@@ -208,9 +209,6 @@ export class AuthService {
             await this.prisma.session.delete({ where: { id: authChallenge.sessionId } });
             throw new UnauthorizedException('Session expired');
         }
-
-        const app = await this.prisma.app.findUnique({ where: { id: authChallenge.appId } });
-        if (!app || app.token !== appToken) throw new UnauthorizedException("Couldn't resolve app or invalid app token");
 
         const payload = {
             name: authChallenge.session.account.name,
@@ -247,7 +245,7 @@ export class AuthService {
         };
     }
 
-    async refreshOIDCToken(refreshToken: string, appToken: string) {
+    async refreshOIDCToken(refreshToken: string, app: App) {
         const instance = await this.prisma.authorizationInstance.findUnique({
             where: { refreshToken },
             include: { session: { include: { account: true } } },
@@ -264,9 +262,6 @@ export class AuthService {
             await this.prisma.session.delete({ where: { id: instance.sessionId } });
             throw new UnauthorizedException('Session expired');
         }
-
-        const app = await this.prisma.app.findUnique({ where: { id: instance.appId } });
-        if (!app || app.token !== appToken) throw new UnauthorizedException("Couldn't resolve app or invalid app token");
 
         const payload = {
             name: instance.session.account.name,
@@ -341,12 +336,7 @@ export class AuthService {
         }
     }
 
-    public async getUserInfo(accessToken: string, appToken: string): Promise<UserInfo> {
-        const app = await this.prisma.app.findFirst({ where: { token: appToken } });
-        if (!app || app.token !== appToken) {
-            throw new NotFoundException("Couldn't resolve app");
-        }
-
+    public async getUserInfo(accessToken: string, app: App): Promise<UserInfo> {
         const decoded = await jwtVerify(accessToken, this.publicKey!, {
             audience: app.name,
             issuer: process.env.FRONTEND_URL || 'No issuer provided in env',

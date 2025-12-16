@@ -2,20 +2,22 @@ import { AppsService } from '@/modules/app/app.service';
 import { CreateAppDto } from '@/modules/app/dto/create-app.dto';
 import { DeleteAppDto } from '@/modules/app/dto/delete-app.dto';
 import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
+import { ApiAppGuard } from '@/modules/auth/guards/api-app.guard';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
+    ApiHeader,
     ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
     ApiRequestTimeoutResponse,
-    ApiUnauthorizedResponse,
     ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { App } from '@sigauth/generics/prisma-client';
+import { type Request } from 'express';
 
 @Controller('app')
 export class AppsController {
@@ -99,6 +101,8 @@ export class AppsController {
 
     @Get('info')
     @HttpCode(HttpStatus.OK)
+    @UseGuards(ApiAppGuard)
+    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiNotFoundResponse({ description: 'Invalid App Token' })
     @ApiOkResponse({
         description: 'App related assets, containers and accounts fetched successfully',
@@ -209,7 +213,7 @@ export class AppsController {
             },
         },
     })
-    async getAppInfo(@Query('appToken') appToken: string) {
-        return await this.appsService.getAppInfo(appToken);
+    async getAppInfo(@Req() req: Request) {
+        return await this.appsService.getAppInfo(req.sigauthApp!);
     }
 }

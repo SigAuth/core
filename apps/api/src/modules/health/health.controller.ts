@@ -1,14 +1,14 @@
 import { Controller, ForbiddenException, Get, HttpCode, HttpStatus, ParseBoolPipe, Query, UseGuards } from '@nestjs/common';
 import { ApiForbiddenResponse, ApiHeader, ApiOkResponse, ApiQuery, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { HealthService } from '@/modules/health/health.service';
-import { ApiTokenGuard } from '@/modules/auth/guards/api-token.guard';
+import { ApiAccountGuard } from '@/modules/auth/guards/api-account.guard';
 
 @Controller('health')
 export class HealthController {
     constructor(private readonly healthService: HealthService) {}
 
     @Get()
-    @UseGuards(ApiTokenGuard)
+    @UseGuards(ApiAccountGuard)
     @HttpCode(HttpStatus.OK)
     @ApiHeader({
         name: 'Authorization',

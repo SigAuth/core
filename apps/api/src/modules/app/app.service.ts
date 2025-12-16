@@ -177,10 +177,7 @@ export class AppsService {
         }
     }
 
-    async getAppInfo(appToken: string): Promise<AppInfo> {
-        const app = await this.prisma.app.findFirst({ where: { token: appToken } });
-        if (!app) throw new NotFoundException("Couldn't resolve app");
-
+    async getAppInfo(app: App): Promise<AppInfo> {
         const accounts = await this.prisma.account.findMany({
             where: {
                 permissions: {
@@ -224,7 +221,6 @@ export class AppsService {
         });
 
         const containerIds = containers.map(c => c.id);
-
         const containerAssets = await this.prisma.asset.findMany({
             where: {
                 typeId: PROTECTED.AssetType.id,
