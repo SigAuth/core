@@ -227,6 +227,7 @@ export type AppWhereInput = {
   PermissionInstance?: Prisma.PermissionInstanceListRelationFilter
   AuthorizationChallenge?: Prisma.AuthorizationChallengeListRelationFilter
   AuthorizationInstance?: Prisma.AuthorizationInstanceListRelationFilter
+  assetToApps?: Prisma.AssetToAppListRelationFilter
 }
 
 export type AppOrderByWithRelationInput = {
@@ -240,6 +241,7 @@ export type AppOrderByWithRelationInput = {
   PermissionInstance?: Prisma.PermissionInstanceOrderByRelationAggregateInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeOrderByRelationAggregateInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceOrderByRelationAggregateInput
+  assetToApps?: Prisma.AssetToAppOrderByRelationAggregateInput
 }
 
 export type AppWhereUniqueInput = Prisma.AtLeast<{
@@ -256,6 +258,7 @@ export type AppWhereUniqueInput = Prisma.AtLeast<{
   PermissionInstance?: Prisma.PermissionInstanceListRelationFilter
   AuthorizationChallenge?: Prisma.AuthorizationChallengeListRelationFilter
   AuthorizationInstance?: Prisma.AuthorizationInstanceListRelationFilter
+  assetToApps?: Prisma.AssetToAppListRelationFilter
 }, "id" | "token">
 
 export type AppOrderByWithAggregationInput = {
@@ -296,6 +299,7 @@ export type AppCreateInput = {
   PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAppInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeCreateNestedManyWithoutAppInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAppInput
 }
 
 export type AppUncheckedCreateInput = {
@@ -309,6 +313,7 @@ export type AppUncheckedCreateInput = {
   PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAppInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedCreateNestedManyWithoutAppInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAppInput
 }
 
 export type AppUpdateInput = {
@@ -321,6 +326,7 @@ export type AppUpdateInput = {
   PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAppNestedInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUpdateManyWithoutAppNestedInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAppNestedInput
 }
 
 export type AppUncheckedUpdateInput = {
@@ -334,6 +340,7 @@ export type AppUncheckedUpdateInput = {
   PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAppNestedInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedUpdateManyWithoutAppNestedInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAppNestedInput
 }
 
 export type AppCreateManyInput = {
@@ -446,6 +453,20 @@ export type AppUpdateOneRequiredWithoutPermissionInstanceNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUpdateToOneWithWhereWithoutPermissionInstanceInput, Prisma.AppUpdateWithoutPermissionInstanceInput>, Prisma.AppUncheckedUpdateWithoutPermissionInstanceInput>
 }
 
+export type AppCreateNestedOneWithoutAssetToAppsInput = {
+  create?: Prisma.XOR<Prisma.AppCreateWithoutAssetToAppsInput, Prisma.AppUncheckedCreateWithoutAssetToAppsInput>
+  connectOrCreate?: Prisma.AppCreateOrConnectWithoutAssetToAppsInput
+  connect?: Prisma.AppWhereUniqueInput
+}
+
+export type AppUpdateOneRequiredWithoutAssetToAppsNestedInput = {
+  create?: Prisma.XOR<Prisma.AppCreateWithoutAssetToAppsInput, Prisma.AppUncheckedCreateWithoutAssetToAppsInput>
+  connectOrCreate?: Prisma.AppCreateOrConnectWithoutAssetToAppsInput
+  upsert?: Prisma.AppUpsertWithoutAssetToAppsInput
+  connect?: Prisma.AppWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUpdateToOneWithWhereWithoutAssetToAppsInput, Prisma.AppUpdateWithoutAssetToAppsInput>, Prisma.AppUncheckedUpdateWithoutAssetToAppsInput>
+}
+
 export type AppCreateWithoutAuthorizationInstanceInput = {
   name: string
   url: string
@@ -455,6 +476,7 @@ export type AppCreateWithoutAuthorizationInstanceInput = {
   webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAppInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAppInput
 }
 
 export type AppUncheckedCreateWithoutAuthorizationInstanceInput = {
@@ -467,6 +489,7 @@ export type AppUncheckedCreateWithoutAuthorizationInstanceInput = {
   webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAppInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAppInput
 }
 
 export type AppCreateOrConnectWithoutAuthorizationInstanceInput = {
@@ -494,6 +517,7 @@ export type AppUpdateWithoutAuthorizationInstanceInput = {
   webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAppNestedInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAppNestedInput
 }
 
 export type AppUncheckedUpdateWithoutAuthorizationInstanceInput = {
@@ -506,6 +530,7 @@ export type AppUncheckedUpdateWithoutAuthorizationInstanceInput = {
   webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAppNestedInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAppNestedInput
 }
 
 export type AppCreateWithoutAuthorizationChallengeInput = {
@@ -517,6 +542,7 @@ export type AppCreateWithoutAuthorizationChallengeInput = {
   webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAppInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAppInput
 }
 
 export type AppUncheckedCreateWithoutAuthorizationChallengeInput = {
@@ -529,6 +555,7 @@ export type AppUncheckedCreateWithoutAuthorizationChallengeInput = {
   webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAppInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAppInput
 }
 
 export type AppCreateOrConnectWithoutAuthorizationChallengeInput = {
@@ -556,6 +583,7 @@ export type AppUpdateWithoutAuthorizationChallengeInput = {
   webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAppNestedInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAppNestedInput
 }
 
 export type AppUncheckedUpdateWithoutAuthorizationChallengeInput = {
@@ -568,6 +596,7 @@ export type AppUncheckedUpdateWithoutAuthorizationChallengeInput = {
   webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAppNestedInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAppNestedInput
 }
 
 export type AppCreateWithoutPermissionInstanceInput = {
@@ -579,6 +608,7 @@ export type AppCreateWithoutPermissionInstanceInput = {
   webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
   AuthorizationChallenge?: Prisma.AuthorizationChallengeCreateNestedManyWithoutAppInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAppInput
 }
 
 export type AppUncheckedCreateWithoutPermissionInstanceInput = {
@@ -591,6 +621,7 @@ export type AppUncheckedCreateWithoutPermissionInstanceInput = {
   webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedCreateNestedManyWithoutAppInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedCreateNestedManyWithoutAppInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAppInput
 }
 
 export type AppCreateOrConnectWithoutPermissionInstanceInput = {
@@ -618,6 +649,7 @@ export type AppUpdateWithoutPermissionInstanceInput = {
   webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUpdateManyWithoutAppNestedInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAppNestedInput
 }
 
 export type AppUncheckedUpdateWithoutPermissionInstanceInput = {
@@ -628,6 +660,73 @@ export type AppUncheckedUpdateWithoutPermissionInstanceInput = {
   token?: Prisma.StringFieldUpdateOperationsInput | string
   permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedUpdateManyWithoutAppNestedInput
+  AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedUpdateManyWithoutAppNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAppNestedInput
+}
+
+export type AppCreateWithoutAssetToAppsInput = {
+  name: string
+  url: string
+  oidcAuthCodeUrl?: string | null
+  token: string
+  permissions: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAppInput
+  AuthorizationChallenge?: Prisma.AuthorizationChallengeCreateNestedManyWithoutAppInput
+  AuthorizationInstance?: Prisma.AuthorizationInstanceCreateNestedManyWithoutAppInput
+}
+
+export type AppUncheckedCreateWithoutAssetToAppsInput = {
+  id?: number
+  name: string
+  url: string
+  oidcAuthCodeUrl?: string | null
+  token: string
+  permissions: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  webFetch: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAppInput
+  AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedCreateNestedManyWithoutAppInput
+  AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedCreateNestedManyWithoutAppInput
+}
+
+export type AppCreateOrConnectWithoutAssetToAppsInput = {
+  where: Prisma.AppWhereUniqueInput
+  create: Prisma.XOR<Prisma.AppCreateWithoutAssetToAppsInput, Prisma.AppUncheckedCreateWithoutAssetToAppsInput>
+}
+
+export type AppUpsertWithoutAssetToAppsInput = {
+  update: Prisma.XOR<Prisma.AppUpdateWithoutAssetToAppsInput, Prisma.AppUncheckedUpdateWithoutAssetToAppsInput>
+  create: Prisma.XOR<Prisma.AppCreateWithoutAssetToAppsInput, Prisma.AppUncheckedCreateWithoutAssetToAppsInput>
+  where?: Prisma.AppWhereInput
+}
+
+export type AppUpdateToOneWithWhereWithoutAssetToAppsInput = {
+  where?: Prisma.AppWhereInput
+  data: Prisma.XOR<Prisma.AppUpdateWithoutAssetToAppsInput, Prisma.AppUncheckedUpdateWithoutAssetToAppsInput>
+}
+
+export type AppUpdateWithoutAssetToAppsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
+  oidcAuthCodeUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAppNestedInput
+  AuthorizationChallenge?: Prisma.AuthorizationChallengeUpdateManyWithoutAppNestedInput
+  AuthorizationInstance?: Prisma.AuthorizationInstanceUpdateManyWithoutAppNestedInput
+}
+
+export type AppUncheckedUpdateWithoutAssetToAppsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
+  oidcAuthCodeUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  permissions?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  webFetch?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAppNestedInput
   AuthorizationChallenge?: Prisma.AuthorizationChallengeUncheckedUpdateManyWithoutAppNestedInput
   AuthorizationInstance?: Prisma.AuthorizationInstanceUncheckedUpdateManyWithoutAppNestedInput
 }
@@ -641,12 +740,14 @@ export type AppCountOutputType = {
   PermissionInstance: number
   AuthorizationChallenge: number
   AuthorizationInstance: number
+  assetToApps: number
 }
 
 export type AppCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   PermissionInstance?: boolean | AppCountOutputTypeCountPermissionInstanceArgs
   AuthorizationChallenge?: boolean | AppCountOutputTypeCountAuthorizationChallengeArgs
   AuthorizationInstance?: boolean | AppCountOutputTypeCountAuthorizationInstanceArgs
+  assetToApps?: boolean | AppCountOutputTypeCountAssetToAppsArgs
 }
 
 /**
@@ -680,6 +781,13 @@ export type AppCountOutputTypeCountAuthorizationInstanceArgs<ExtArgs extends run
   where?: Prisma.AuthorizationInstanceWhereInput
 }
 
+/**
+ * AppCountOutputType without action
+ */
+export type AppCountOutputTypeCountAssetToAppsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AssetToAppWhereInput
+}
+
 
 export type AppSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -692,6 +800,7 @@ export type AppSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
   PermissionInstance?: boolean | Prisma.App$PermissionInstanceArgs<ExtArgs>
   AuthorizationChallenge?: boolean | Prisma.App$AuthorizationChallengeArgs<ExtArgs>
   AuthorizationInstance?: boolean | Prisma.App$AuthorizationInstanceArgs<ExtArgs>
+  assetToApps?: boolean | Prisma.App$assetToAppsArgs<ExtArgs>
   _count?: boolean | Prisma.AppCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["app"]>
 
@@ -730,6 +839,7 @@ export type AppInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   PermissionInstance?: boolean | Prisma.App$PermissionInstanceArgs<ExtArgs>
   AuthorizationChallenge?: boolean | Prisma.App$AuthorizationChallengeArgs<ExtArgs>
   AuthorizationInstance?: boolean | Prisma.App$AuthorizationInstanceArgs<ExtArgs>
+  assetToApps?: boolean | Prisma.App$assetToAppsArgs<ExtArgs>
   _count?: boolean | Prisma.AppCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AppIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -741,6 +851,7 @@ export type $AppPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
     PermissionInstance: Prisma.$PermissionInstancePayload<ExtArgs>[]
     AuthorizationChallenge: Prisma.$AuthorizationChallengePayload<ExtArgs>[]
     AuthorizationInstance: Prisma.$AuthorizationInstancePayload<ExtArgs>[]
+    assetToApps: Prisma.$AssetToAppPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1147,6 +1258,7 @@ export interface Prisma__AppClient<T, Null = never, ExtArgs extends runtime.Type
   PermissionInstance<T extends Prisma.App$PermissionInstanceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.App$PermissionInstanceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PermissionInstancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   AuthorizationChallenge<T extends Prisma.App$AuthorizationChallengeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.App$AuthorizationChallengeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuthorizationChallengePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   AuthorizationInstance<T extends Prisma.App$AuthorizationInstanceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.App$AuthorizationInstanceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuthorizationInstancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assetToApps<T extends Prisma.App$assetToAppsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.App$assetToAppsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetToAppPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1640,6 +1752,30 @@ export type App$AuthorizationInstanceArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.AuthorizationInstanceScalarFieldEnum | Prisma.AuthorizationInstanceScalarFieldEnum[]
+}
+
+/**
+ * App.assetToApps
+ */
+export type App$assetToAppsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AssetToApp
+   */
+  select?: Prisma.AssetToAppSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AssetToApp
+   */
+  omit?: Prisma.AssetToAppOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AssetToAppInclude<ExtArgs> | null
+  where?: Prisma.AssetToAppWhereInput
+  orderBy?: Prisma.AssetToAppOrderByWithRelationInput | Prisma.AssetToAppOrderByWithRelationInput[]
+  cursor?: Prisma.AssetToAppWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AssetToAppScalarFieldEnum | Prisma.AssetToAppScalarFieldEnum[]
 }
 
 /**

@@ -1,26 +1,44 @@
 import { PrismaService } from '@/common/prisma/prisma.service';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
+import { AssetService } from '@/modules/asset/asset.service';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AssetFieldType, AssetTypeField } from '@sigauth/generics/json-types';
+import { AssetFieldType } from '@sigauth/generics/json-types';
 import { AssetType } from '@sigauth/generics/prisma-client';
 import { PROTECTED } from '@sigauth/generics/protected';
 
 @Injectable()
 export class AssetTypeService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly assetSevice: AssetService,
+    ) {}
 
     async createAssetType(createAssetTypeDto: CreateAssetTypeDto): Promise<AssetType> {
         const normalizedFields = createAssetTypeDto.fields.map((f, i) => {
-            f.id = i;
+            f.fieldId = i;
             return f;
         });
 
-        return this.prisma.assetType.create({
-            data: {
-                name: createAssetTypeDto.name,
-                fields: normalizedFields,
-            },
-        });
+        // check if asset type in asset relation field exists
+        for (const field of normalizedFields) {
+            if (field.) {
+                const assetType = await this.prisma.assetType.findFirst({ where: { id:  } });
+                if (!assetType)
+                    throw new NotFoundException(
+                        'Asset type with id ' + field.assetTypeId + ' for relation field ' + field.name + ' does not exist',
+                    );
+            }
+        }
+
+        const assetType = await this.prisma.assetType.create({ data: { name: createAssetTypeDto.name } });
+        for (const field of normalizedFields) {
+            await this.prisma.assetTypeField.create({
+                data: {
+                    ...field,
+                    assetTypeId: assetType.id,
+                },
+            });
+        }
     }
 
     /*
@@ -50,6 +68,20 @@ export class AssetTypeService {
             }
 
             newFields.push(newField);
+        }
+
+        // check if asset type in asset relation field exists
+        for (const field of newFields) {
+            if (field.type === AssetFieldType.ASSET) {
+                const assetTypeId = (field.options as AssetFieldRelationOption).assetTypeId;
+                if (assetTypeId) {
+                    const assetType = await this.prisma.assetType.findFirst({ where: { id: assetTypeId } });
+                    if (!assetType)
+                        throw new NotFoundException(
+                            'Asset type with id ' + assetTypeId + ' for relation field ' + field.name + ' does not exist',
+                        );
+                }
+            }
         }
 
         const updatedAssetType = await this.prisma.assetType.update({
@@ -113,23 +145,10 @@ export class AssetTypeService {
         if (assetTypes.length == 0 || assetTypes.length != ids.length)
             throw new NotFoundException('Not all asset types found or invalid ids provided');
 
-        const containers = await this.prisma.container.findMany({ where: {} });
         for (const type of assetTypes) {
             const assets = await this.prisma.asset.findMany({ where: { typeId: type.id } });
-            for (const container of containers) {
-                container.assets = container.assets.filter(id => !assets.find(a => a.id === id));
-            }
 
-            await this.prisma.permissionInstance.deleteMany({
-                where: {
-                    assetId: { in: assets.map(a => a.id) },
-                },
-            });
-            await this.prisma.asset.deleteMany({ where: { typeId: type.id } });
-        }
-
-        for (const c of containers) {
-            await this.prisma.container.update({ where: { id: c.id }, data: { assets: c.assets || [] } });
+            this.assetSevice.deleteAssets(assets.map(a => a.id));
         }
         await this.prisma.assetType.deleteMany({ where: { id: { in: ids } } });
     }

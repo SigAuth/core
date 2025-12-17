@@ -1,4 +1,4 @@
-import { Asset, AssetType, Container } from './prisma-generated/browser.js';
+import { Asset, AssetType } from './prisma-generated/browser.js';
 
 export abstract class MirrorExecutor {
     abstract init(cb: Callback): Promise<void>;
@@ -12,18 +12,7 @@ export type DataUtils = {
     editAsset: (id: number, name: string, fields: Record<number, string | number>) => Promise<Asset>;
     deleteAssets: (ids: number[]) => Promise<void>;
 
-    createContainer: (
-        customId: string,
-        name: string,
-        assets: number[],
-        apps: number[],
-    ) => Promise<{ container: Container; containerAsset: Asset }>;
-    editContainer: (id: number, customId: string, name: string, assets: number[], apps: number[]) => Promise<Container>;
-    deleteContainers: (ids: number[]) => Promise<void>;
-
     getAssets: (ids: number[]) => Promise<Asset[]>;
     getAssetsByFilter: (filter: any) => Promise<Asset[]>;
     getAssetType: (id: number) => Promise<AssetType | null>;
-    getContainers: (ids: number[]) => Promise<Container[]>;
-    getContainersByFilter: (filter: any) => Promise<Container[]>;
 };

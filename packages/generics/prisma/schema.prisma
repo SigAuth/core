@@ -28,7 +28,8 @@ model Account {
   accounts     Json      @default("[]") // number[]
   deactivated  Boolean   @default(false)
 
-  permissions PermissionInstance[]
+  permissions     PermissionInstance[]
+  assetToAccounts AssetToAccount[]
 }
 
 // login session for the main idp
@@ -74,19 +75,17 @@ model AuthorizationChallenge {
 }
 
 model PermissionInstance {
-  id          Int    @id @default(autoincrement()) // this is only because an prim key is required but we can't form a consitent prim key from the fields below
-  accountId   Int
-  containerId Int? // nullable for root permissions
-  appId       Int
-  identifier  String
-  assetId     Int? // null for container permission
+  id         Int    @id @default(autoincrement()) // this is only because an prim key is required but we can't form a consitent prim key from the fields below
+  accountId  Int
+  appId      Int
+  identifier String
+  assetId    Int? // null for container permission
 
-  app       App        @relation(fields: [appId], references: [id])
-  account   Account    @relation(fields: [accountId], references: [id])
-  asset     Asset?     @relation(fields: [assetId], references: [id])
-  container Container? @relation(fields: [containerId], references: [id])
+  app     App     @relation(fields: [appId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+  asset   Asset?  @relation(fields: [assetId], references: [id])
 
-  @@unique([accountId, appId, identifier, containerId, assetId])
+  @@unique([accountId, appId, identifier, assetId])
   // todo find our which indexes make the most sense
   @@index([accountId])
   @@index([accountId, appId])
@@ -96,11 +95,53 @@ model PermissionInstance {
 
 // todo add roles and mirrors
 
+enum ReferentialIntegrityStrategy {
+  CASCADE
+  RESTRICT
+  SET_NULL
+  INVALIDATE
+}
+
 model AssetType {
   id     Int     @id @default(autoincrement())
   name   String
-  fields Json
   assets Asset[]
+
+  assetTypeField AssetTypeField[]
+  foreignFields  ReferencedFieldOnAssetType[]
+}
+
+model AssetTypeField {
+  assetTypeId Int
+  fieldId     Int @db.SmallInt()
+  fieldTypeId Int @db.SmallInt()
+
+  required Boolean @default(false)
+  name     String
+
+  // selector
+  items String[]
+
+  // relationships
+  referentialIntegrityStrategy ReferentialIntegrityStrategy? @default(RESTRICT)
+  allowMultipleRelations       Boolean                       @default(true)
+  allowedAssetTypes            ReferencedFieldOnAssetType[]
+
+  assetType AssetType? @relation(fields: [assetTypeId], references: [id])
+
+  @@id([assetTypeId, fieldId])
+}
+
+model ReferencedFieldOnAssetType {
+  assetTypeId Int
+  fieldId     Int
+
+  referencedAssetTypeId Int
+
+  referencedAssetType AssetType      @relation(fields: [referencedAssetTypeId], references: [id])
+  field               AssetTypeField @relation(fields: [assetTypeId, fieldId], references: [assetTypeId, fieldId])
+
+  @@id([assetTypeId, fieldId, referencedAssetTypeId])
 }
 
 model Asset {
@@ -111,16 +152,49 @@ model Asset {
   type   AssetType @relation(fields: [typeId], references: [id])
 
   PermissionInstance PermissionInstance[]
+  fromAssetToAssets  AssetToAsset[]       @relation("FromAsset")
+  toAssetToAssets    AssetToAsset[]       @relation("ToAsset")
+  assetToApps        AssetToApp[]
+  assetToAccounts    AssetToAccount[]
 }
 
-// TODO add a relation table for container-apps and container-assets to simply mainting the integrity of the database
-model Container {
-  id                 Int                  @id @default(autoincrement())
-  customId           String?              @unique
-  name               String
-  assets             Int[]                @default([])
-  apps               Int[]                @default([])
-  PermissionInstance PermissionInstance[]
+model AssetToAsset {
+  fromAssetId Int
+  toAssetId   Int
+  fieldId     Int
+
+  fromAsset Asset @relation("FromAsset", fields: [fromAssetId], references: [id])
+  toAsset   Asset @relation("ToAsset", fields: [toAssetId], references: [id])
+
+  @@id([fromAssetId, toAssetId, fieldId])
+  @@index([fromAssetId])
+  @@index([toAssetId])
+}
+
+model AssetToApp {
+  assetId Int
+  appId   Int
+  fieldId Int
+
+  asset Asset @relation(fields: [assetId], references: [id])
+  app   App   @relation(fields: [appId], references: [id])
+
+  @@id([assetId, appId, fieldId])
+  @@index([assetId])
+  @@index([appId])
+}
+
+model AssetToAccount {
+  assetId   Int
+  accountId Int
+  fieldId   Int
+
+  asset   Asset   @relation(fields: [assetId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@id([assetId, accountId, fieldId])
+  @@index([assetId])
+  @@index([accountId])
 }
 
 model Mirror {
@@ -146,4 +220,5 @@ model App {
   PermissionInstance     PermissionInstance[]
   AuthorizationChallenge AuthorizationChallenge[]
   AuthorizationInstance  AuthorizationInstance[]
+  assetToApps            AssetToApp[]
 }

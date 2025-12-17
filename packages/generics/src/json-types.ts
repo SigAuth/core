@@ -1,4 +1,4 @@
-import { Account, Asset, AssetType, Container, PermissionInstance } from 'src/prisma-generated/browser.js';
+import { Account, Asset, AssetType, PermissionInstance } from 'src/prisma-generated/browser.js';
 
 export type JSONSerializable = string | number | boolean | null | { [key: string]: JSONSerializable } | JSONSerializable[];
 
@@ -14,21 +14,13 @@ export type AppWebFetch = {
     lastFetch: number;
 };
 
-export type AssetTypeField = {
-    id: number;
-    type: AssetFieldType;
-    name: string;
-    required: boolean;
-    options?: string[];
-};
-
 export enum AssetFieldType {
     TEXT = 1,
     NUMBER = 2,
     CHECKFIELD = 3,
-    // SELECTION = 4,
-    // ASSET = 5,
-    // ACCOUNT = 6,
+    ASSET = 5,
+    ACCOUNT = 6,
+    APP = 7,
 }
 
 export type AppInfo = {
@@ -37,12 +29,9 @@ export type AppInfo = {
     accounts: Account[];
     assets: Asset[];
     assetTypes: AssetType[];
-    containers: Container[];
     containerAssets: Asset[];
 };
 
 export type UserInfo = {
-    containers: PermissionInstance[];
-    assets: PermissionInstance[];
-    root: string[];
+    permissions: PermissionInstance[];
 };

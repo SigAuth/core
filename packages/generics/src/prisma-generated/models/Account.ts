@@ -238,6 +238,7 @@ export type AccountWhereInput = {
   deactivated?: Prisma.BoolFilter<"Account"> | boolean
   sessions?: Prisma.SessionListRelationFilter
   permissions?: Prisma.PermissionInstanceListRelationFilter
+  assetToAccounts?: Prisma.AssetToAccountListRelationFilter
 }
 
 export type AccountOrderByWithRelationInput = {
@@ -251,6 +252,7 @@ export type AccountOrderByWithRelationInput = {
   deactivated?: Prisma.SortOrder
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   permissions?: Prisma.PermissionInstanceOrderByRelationAggregateInput
+  assetToAccounts?: Prisma.AssetToAccountOrderByRelationAggregateInput
 }
 
 export type AccountWhereUniqueInput = Prisma.AtLeast<{
@@ -267,6 +269,7 @@ export type AccountWhereUniqueInput = Prisma.AtLeast<{
   deactivated?: Prisma.BoolFilter<"Account"> | boolean
   sessions?: Prisma.SessionListRelationFilter
   permissions?: Prisma.PermissionInstanceListRelationFilter
+  assetToAccounts?: Prisma.AssetToAccountListRelationFilter
 }, "id" | "email" | "name" | "api" | "secondFactor">
 
 export type AccountOrderByWithAggregationInput = {
@@ -309,6 +312,7 @@ export type AccountCreateInput = {
   deactivated?: boolean
   sessions?: Prisma.SessionCreateNestedManyWithoutAccountInput
   permissions?: Prisma.PermissionInstanceCreateNestedManyWithoutAccountInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateInput = {
@@ -322,6 +326,7 @@ export type AccountUncheckedCreateInput = {
   deactivated?: boolean
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutAccountInput
   permissions?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAccountInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUpdateInput = {
@@ -334,6 +339,7 @@ export type AccountUpdateInput = {
   deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUpdateManyWithoutAccountNestedInput
   permissions?: Prisma.PermissionInstanceUpdateManyWithoutAccountNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateInput = {
@@ -347,6 +353,7 @@ export type AccountUncheckedUpdateInput = {
   deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutAccountNestedInput
   permissions?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAccountNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountCreateManyInput = {
@@ -473,6 +480,20 @@ export type AccountUpdateOneRequiredWithoutPermissionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AccountUpdateToOneWithWhereWithoutPermissionsInput, Prisma.AccountUpdateWithoutPermissionsInput>, Prisma.AccountUncheckedUpdateWithoutPermissionsInput>
 }
 
+export type AccountCreateNestedOneWithoutAssetToAccountsInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutAssetToAccountsInput, Prisma.AccountUncheckedCreateWithoutAssetToAccountsInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutAssetToAccountsInput
+  connect?: Prisma.AccountWhereUniqueInput
+}
+
+export type AccountUpdateOneRequiredWithoutAssetToAccountsNestedInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutAssetToAccountsInput, Prisma.AccountUncheckedCreateWithoutAssetToAccountsInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutAssetToAccountsInput
+  upsert?: Prisma.AccountUpsertWithoutAssetToAccountsInput
+  connect?: Prisma.AccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AccountUpdateToOneWithWhereWithoutAssetToAccountsInput, Prisma.AccountUpdateWithoutAssetToAccountsInput>, Prisma.AccountUncheckedUpdateWithoutAssetToAccountsInput>
+}
+
 export type AccountCreateWithoutSessionsInput = {
   email?: string | null
   name: string
@@ -482,6 +503,7 @@ export type AccountCreateWithoutSessionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: boolean
   permissions?: Prisma.PermissionInstanceCreateNestedManyWithoutAccountInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateWithoutSessionsInput = {
@@ -494,6 +516,7 @@ export type AccountUncheckedCreateWithoutSessionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: boolean
   permissions?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAccountInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountCreateOrConnectWithoutSessionsInput = {
@@ -521,6 +544,7 @@ export type AccountUpdateWithoutSessionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.PermissionInstanceUpdateManyWithoutAccountNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutSessionsInput = {
@@ -533,6 +557,7 @@ export type AccountUncheckedUpdateWithoutSessionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   permissions?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAccountNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountCreateWithoutPermissionsInput = {
@@ -544,6 +569,7 @@ export type AccountCreateWithoutPermissionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: boolean
   sessions?: Prisma.SessionCreateNestedManyWithoutAccountInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAccountInput
 }
 
 export type AccountUncheckedCreateWithoutPermissionsInput = {
@@ -556,6 +582,7 @@ export type AccountUncheckedCreateWithoutPermissionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: boolean
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutAccountInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAccountInput
 }
 
 export type AccountCreateOrConnectWithoutPermissionsInput = {
@@ -583,6 +610,7 @@ export type AccountUpdateWithoutPermissionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUpdateManyWithoutAccountNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAccountNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutPermissionsInput = {
@@ -595,6 +623,73 @@ export type AccountUncheckedUpdateWithoutPermissionsInput = {
   accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutAccountNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAccountNestedInput
+}
+
+export type AccountCreateWithoutAssetToAccountsInput = {
+  email?: string | null
+  name: string
+  api?: string | null
+  secondFactor?: string | null
+  password: string
+  accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
+  sessions?: Prisma.SessionCreateNestedManyWithoutAccountInput
+  permissions?: Prisma.PermissionInstanceCreateNestedManyWithoutAccountInput
+}
+
+export type AccountUncheckedCreateWithoutAssetToAccountsInput = {
+  id?: number
+  email?: string | null
+  name: string
+  api?: string | null
+  secondFactor?: string | null
+  password: string
+  accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: boolean
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutAccountInput
+  permissions?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAccountInput
+}
+
+export type AccountCreateOrConnectWithoutAssetToAccountsInput = {
+  where: Prisma.AccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.AccountCreateWithoutAssetToAccountsInput, Prisma.AccountUncheckedCreateWithoutAssetToAccountsInput>
+}
+
+export type AccountUpsertWithoutAssetToAccountsInput = {
+  update: Prisma.XOR<Prisma.AccountUpdateWithoutAssetToAccountsInput, Prisma.AccountUncheckedUpdateWithoutAssetToAccountsInput>
+  create: Prisma.XOR<Prisma.AccountCreateWithoutAssetToAccountsInput, Prisma.AccountUncheckedCreateWithoutAssetToAccountsInput>
+  where?: Prisma.AccountWhereInput
+}
+
+export type AccountUpdateToOneWithWhereWithoutAssetToAccountsInput = {
+  where?: Prisma.AccountWhereInput
+  data: Prisma.XOR<Prisma.AccountUpdateWithoutAssetToAccountsInput, Prisma.AccountUncheckedUpdateWithoutAssetToAccountsInput>
+}
+
+export type AccountUpdateWithoutAssetToAccountsInput = {
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  api?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sessions?: Prisma.SessionUpdateManyWithoutAccountNestedInput
+  permissions?: Prisma.PermissionInstanceUpdateManyWithoutAccountNestedInput
+}
+
+export type AccountUncheckedUpdateWithoutAssetToAccountsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  api?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  secondFactor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  accounts?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deactivated?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutAccountNestedInput
+  permissions?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAccountNestedInput
 }
 
 
@@ -605,11 +700,13 @@ export type AccountUncheckedUpdateWithoutPermissionsInput = {
 export type AccountCountOutputType = {
   sessions: number
   permissions: number
+  assetToAccounts: number
 }
 
 export type AccountCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | AccountCountOutputTypeCountSessionsArgs
   permissions?: boolean | AccountCountOutputTypeCountPermissionsArgs
+  assetToAccounts?: boolean | AccountCountOutputTypeCountAssetToAccountsArgs
 }
 
 /**
@@ -636,6 +733,13 @@ export type AccountCountOutputTypeCountPermissionsArgs<ExtArgs extends runtime.T
   where?: Prisma.PermissionInstanceWhereInput
 }
 
+/**
+ * AccountCountOutputType without action
+ */
+export type AccountCountOutputTypeCountAssetToAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AssetToAccountWhereInput
+}
+
 
 export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -648,6 +752,7 @@ export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   deactivated?: boolean
   sessions?: boolean | Prisma.Account$sessionsArgs<ExtArgs>
   permissions?: boolean | Prisma.Account$permissionsArgs<ExtArgs>
+  assetToAccounts?: boolean | Prisma.Account$assetToAccountsArgs<ExtArgs>
   _count?: boolean | Prisma.AccountCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["account"]>
 
@@ -688,6 +793,7 @@ export type AccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type AccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.Account$sessionsArgs<ExtArgs>
   permissions?: boolean | Prisma.Account$permissionsArgs<ExtArgs>
+  assetToAccounts?: boolean | Prisma.Account$assetToAccountsArgs<ExtArgs>
   _count?: boolean | Prisma.AccountCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AccountIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -698,6 +804,7 @@ export type $AccountPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   objects: {
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     permissions: Prisma.$PermissionInstancePayload<ExtArgs>[]
+    assetToAccounts: Prisma.$AssetToAccountPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1104,6 +1211,7 @@ export interface Prisma__AccountClient<T, Null = never, ExtArgs extends runtime.
   readonly [Symbol.toStringTag]: "PrismaPromise"
   sessions<T extends Prisma.Account$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   permissions<T extends Prisma.Account$permissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$permissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PermissionInstancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assetToAccounts<T extends Prisma.Account$assetToAccountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$assetToAccountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetToAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1574,6 +1682,30 @@ export type Account$permissionsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.PermissionInstanceScalarFieldEnum | Prisma.PermissionInstanceScalarFieldEnum[]
+}
+
+/**
+ * Account.assetToAccounts
+ */
+export type Account$assetToAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AssetToAccount
+   */
+  select?: Prisma.AssetToAccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AssetToAccount
+   */
+  omit?: Prisma.AssetToAccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AssetToAccountInclude<ExtArgs> | null
+  where?: Prisma.AssetToAccountWhereInput
+  orderBy?: Prisma.AssetToAccountOrderByWithRelationInput | Prisma.AssetToAccountOrderByWithRelationInput[]
+  cursor?: Prisma.AssetToAccountWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AssetToAccountScalarFieldEnum | Prisma.AssetToAccountScalarFieldEnum[]
 }
 
 /**

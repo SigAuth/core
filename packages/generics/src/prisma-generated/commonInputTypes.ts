@@ -228,6 +228,23 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
+export type EnumReferentialIntegrityStrategyNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.ReferentialIntegrityStrategy | Prisma.EnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumReferentialIntegrityStrategyNullableFilter<$PrismaModel> | $Enums.ReferentialIntegrityStrategy | null
+}
+
+export type EnumReferentialIntegrityStrategyNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ReferentialIntegrityStrategy | Prisma.EnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumReferentialIntegrityStrategyNullableWithAggregatesFilter<$PrismaModel> | $Enums.ReferentialIntegrityStrategy | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumReferentialIntegrityStrategyNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumReferentialIntegrityStrategyNullableFilter<$PrismaModel>
+}
+
 export type DateTimeNullableFilter<$PrismaModel = never> = {
   equals?: Date | string | Prisma.DateTimeFieldRefInput<$PrismaModel> | null
   in?: Date[] | string[] | Prisma.ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -451,6 +468,23 @@ export type NestedFloatNullableFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatNullableFilter<$PrismaModel> | number | null
+}
+
+export type NestedEnumReferentialIntegrityStrategyNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.ReferentialIntegrityStrategy | Prisma.EnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumReferentialIntegrityStrategyNullableFilter<$PrismaModel> | $Enums.ReferentialIntegrityStrategy | null
+}
+
+export type NestedEnumReferentialIntegrityStrategyNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ReferentialIntegrityStrategy | Prisma.EnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.ReferentialIntegrityStrategy[] | Prisma.ListEnumReferentialIntegrityStrategyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumReferentialIntegrityStrategyNullableWithAggregatesFilter<$PrismaModel> | $Enums.ReferentialIntegrityStrategy | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumReferentialIntegrityStrategyNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumReferentialIntegrityStrategyNullableFilter<$PrismaModel>
 }
 
 export type NestedDateTimeNullableFilter<$PrismaModel = never> = {

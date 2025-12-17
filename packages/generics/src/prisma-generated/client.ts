@@ -70,15 +70,35 @@ export type PermissionInstance = Prisma.PermissionInstanceModel
  */
 export type AssetType = Prisma.AssetTypeModel
 /**
+ * Model AssetTypeField
+ * 
+ */
+export type AssetTypeField = Prisma.AssetTypeFieldModel
+/**
+ * Model ReferencedFieldOnAssetType
+ * 
+ */
+export type ReferencedFieldOnAssetType = Prisma.ReferencedFieldOnAssetTypeModel
+/**
  * Model Asset
  * 
  */
 export type Asset = Prisma.AssetModel
 /**
- * Model Container
+ * Model AssetToAsset
  * 
  */
-export type Container = Prisma.ContainerModel
+export type AssetToAsset = Prisma.AssetToAssetModel
+/**
+ * Model AssetToApp
+ * 
+ */
+export type AssetToApp = Prisma.AssetToAppModel
+/**
+ * Model AssetToAccount
+ * 
+ */
+export type AssetToAccount = Prisma.AssetToAccountModel
 /**
  * Model Mirror
  * 

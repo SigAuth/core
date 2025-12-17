@@ -9,7 +9,11 @@
 * 🟢 You can import this file directly.
 */
 
+export const ReferentialIntegrityStrategy = {
+  CASCADE: 'CASCADE',
+  RESTRICT: 'RESTRICT',
+  SET_NULL: 'SET_NULL',
+  INVALIDATE: 'INVALIDATE'
+} as const
 
-
-// This file is empty because there are no enums in the schema.
-export {}
+export type ReferentialIntegrityStrategy = (typeof ReferentialIntegrityStrategy)[keyof typeof ReferentialIntegrityStrategy]

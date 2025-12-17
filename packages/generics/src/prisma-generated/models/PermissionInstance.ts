@@ -29,7 +29,6 @@ export type AggregatePermissionInstance = {
 export type PermissionInstanceAvgAggregateOutputType = {
   id: number | null
   accountId: number | null
-  containerId: number | null
   appId: number | null
   assetId: number | null
 }
@@ -37,7 +36,6 @@ export type PermissionInstanceAvgAggregateOutputType = {
 export type PermissionInstanceSumAggregateOutputType = {
   id: number | null
   accountId: number | null
-  containerId: number | null
   appId: number | null
   assetId: number | null
 }
@@ -45,7 +43,6 @@ export type PermissionInstanceSumAggregateOutputType = {
 export type PermissionInstanceMinAggregateOutputType = {
   id: number | null
   accountId: number | null
-  containerId: number | null
   appId: number | null
   identifier: string | null
   assetId: number | null
@@ -54,7 +51,6 @@ export type PermissionInstanceMinAggregateOutputType = {
 export type PermissionInstanceMaxAggregateOutputType = {
   id: number | null
   accountId: number | null
-  containerId: number | null
   appId: number | null
   identifier: string | null
   assetId: number | null
@@ -63,7 +59,6 @@ export type PermissionInstanceMaxAggregateOutputType = {
 export type PermissionInstanceCountAggregateOutputType = {
   id: number
   accountId: number
-  containerId: number
   appId: number
   identifier: number
   assetId: number
@@ -74,7 +69,6 @@ export type PermissionInstanceCountAggregateOutputType = {
 export type PermissionInstanceAvgAggregateInputType = {
   id?: true
   accountId?: true
-  containerId?: true
   appId?: true
   assetId?: true
 }
@@ -82,7 +76,6 @@ export type PermissionInstanceAvgAggregateInputType = {
 export type PermissionInstanceSumAggregateInputType = {
   id?: true
   accountId?: true
-  containerId?: true
   appId?: true
   assetId?: true
 }
@@ -90,7 +83,6 @@ export type PermissionInstanceSumAggregateInputType = {
 export type PermissionInstanceMinAggregateInputType = {
   id?: true
   accountId?: true
-  containerId?: true
   appId?: true
   identifier?: true
   assetId?: true
@@ -99,7 +91,6 @@ export type PermissionInstanceMinAggregateInputType = {
 export type PermissionInstanceMaxAggregateInputType = {
   id?: true
   accountId?: true
-  containerId?: true
   appId?: true
   identifier?: true
   assetId?: true
@@ -108,7 +99,6 @@ export type PermissionInstanceMaxAggregateInputType = {
 export type PermissionInstanceCountAggregateInputType = {
   id?: true
   accountId?: true
-  containerId?: true
   appId?: true
   identifier?: true
   assetId?: true
@@ -204,7 +194,6 @@ export type PermissionInstanceGroupByArgs<ExtArgs extends runtime.Types.Extensio
 export type PermissionInstanceGroupByOutputType = {
   id: number
   accountId: number
-  containerId: number | null
   appId: number
   identifier: string
   assetId: number | null
@@ -236,50 +225,43 @@ export type PermissionInstanceWhereInput = {
   NOT?: Prisma.PermissionInstanceWhereInput | Prisma.PermissionInstanceWhereInput[]
   id?: Prisma.IntFilter<"PermissionInstance"> | number
   accountId?: Prisma.IntFilter<"PermissionInstance"> | number
-  containerId?: Prisma.IntNullableFilter<"PermissionInstance"> | number | null
   appId?: Prisma.IntFilter<"PermissionInstance"> | number
   identifier?: Prisma.StringFilter<"PermissionInstance"> | string
   assetId?: Prisma.IntNullableFilter<"PermissionInstance"> | number | null
   app?: Prisma.XOR<Prisma.AppScalarRelationFilter, Prisma.AppWhereInput>
   account?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
   asset?: Prisma.XOR<Prisma.AssetNullableScalarRelationFilter, Prisma.AssetWhereInput> | null
-  container?: Prisma.XOR<Prisma.ContainerNullableScalarRelationFilter, Prisma.ContainerWhereInput> | null
 }
 
 export type PermissionInstanceOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
-  containerId?: Prisma.SortOrderInput | Prisma.SortOrder
   appId?: Prisma.SortOrder
   identifier?: Prisma.SortOrder
   assetId?: Prisma.SortOrderInput | Prisma.SortOrder
   app?: Prisma.AppOrderByWithRelationInput
   account?: Prisma.AccountOrderByWithRelationInput
   asset?: Prisma.AssetOrderByWithRelationInput
-  container?: Prisma.ContainerOrderByWithRelationInput
 }
 
 export type PermissionInstanceWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  accountId_appId_identifier_containerId_assetId?: Prisma.PermissionInstanceAccountIdAppIdIdentifierContainerIdAssetIdCompoundUniqueInput
+  accountId_appId_identifier_assetId?: Prisma.PermissionInstanceAccountIdAppIdIdentifierAssetIdCompoundUniqueInput
   AND?: Prisma.PermissionInstanceWhereInput | Prisma.PermissionInstanceWhereInput[]
   OR?: Prisma.PermissionInstanceWhereInput[]
   NOT?: Prisma.PermissionInstanceWhereInput | Prisma.PermissionInstanceWhereInput[]
   accountId?: Prisma.IntFilter<"PermissionInstance"> | number
-  containerId?: Prisma.IntNullableFilter<"PermissionInstance"> | number | null
   appId?: Prisma.IntFilter<"PermissionInstance"> | number
   identifier?: Prisma.StringFilter<"PermissionInstance"> | string
   assetId?: Prisma.IntNullableFilter<"PermissionInstance"> | number | null
   app?: Prisma.XOR<Prisma.AppScalarRelationFilter, Prisma.AppWhereInput>
   account?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
   asset?: Prisma.XOR<Prisma.AssetNullableScalarRelationFilter, Prisma.AssetWhereInput> | null
-  container?: Prisma.XOR<Prisma.ContainerNullableScalarRelationFilter, Prisma.ContainerWhereInput> | null
-}, "id" | "accountId_appId_identifier_containerId_assetId">
+}, "id" | "accountId_appId_identifier_assetId">
 
 export type PermissionInstanceOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
-  containerId?: Prisma.SortOrderInput | Prisma.SortOrder
   appId?: Prisma.SortOrder
   identifier?: Prisma.SortOrder
   assetId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -296,7 +278,6 @@ export type PermissionInstanceScalarWhereWithAggregatesInput = {
   NOT?: Prisma.PermissionInstanceScalarWhereWithAggregatesInput | Prisma.PermissionInstanceScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"PermissionInstance"> | number
   accountId?: Prisma.IntWithAggregatesFilter<"PermissionInstance"> | number
-  containerId?: Prisma.IntNullableWithAggregatesFilter<"PermissionInstance"> | number | null
   appId?: Prisma.IntWithAggregatesFilter<"PermissionInstance"> | number
   identifier?: Prisma.StringWithAggregatesFilter<"PermissionInstance"> | string
   assetId?: Prisma.IntNullableWithAggregatesFilter<"PermissionInstance"> | number | null
@@ -307,13 +288,11 @@ export type PermissionInstanceCreateInput = {
   app: Prisma.AppCreateNestedOneWithoutPermissionInstanceInput
   account: Prisma.AccountCreateNestedOneWithoutPermissionsInput
   asset?: Prisma.AssetCreateNestedOneWithoutPermissionInstanceInput
-  container?: Prisma.ContainerCreateNestedOneWithoutPermissionInstanceInput
 }
 
 export type PermissionInstanceUncheckedCreateInput = {
   id?: number
   accountId: number
-  containerId?: number | null
   appId: number
   identifier: string
   assetId?: number | null
@@ -324,13 +303,11 @@ export type PermissionInstanceUpdateInput = {
   app?: Prisma.AppUpdateOneRequiredWithoutPermissionInstanceNestedInput
   account?: Prisma.AccountUpdateOneRequiredWithoutPermissionsNestedInput
   asset?: Prisma.AssetUpdateOneWithoutPermissionInstanceNestedInput
-  container?: Prisma.ContainerUpdateOneWithoutPermissionInstanceNestedInput
 }
 
 export type PermissionInstanceUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -339,7 +316,6 @@ export type PermissionInstanceUncheckedUpdateInput = {
 export type PermissionInstanceCreateManyInput = {
   id?: number
   accountId: number
-  containerId?: number | null
   appId: number
   identifier: string
   assetId?: number | null
@@ -352,7 +328,6 @@ export type PermissionInstanceUpdateManyMutationInput = {
 export type PermissionInstanceUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -368,18 +343,16 @@ export type PermissionInstanceOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type PermissionInstanceAccountIdAppIdIdentifierContainerIdAssetIdCompoundUniqueInput = {
+export type PermissionInstanceAccountIdAppIdIdentifierAssetIdCompoundUniqueInput = {
   accountId: number
   appId: number
   identifier: string
-  containerId: number
   assetId: number
 }
 
 export type PermissionInstanceCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
-  containerId?: Prisma.SortOrder
   appId?: Prisma.SortOrder
   identifier?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
@@ -388,7 +361,6 @@ export type PermissionInstanceCountOrderByAggregateInput = {
 export type PermissionInstanceAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
-  containerId?: Prisma.SortOrder
   appId?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
 }
@@ -396,7 +368,6 @@ export type PermissionInstanceAvgOrderByAggregateInput = {
 export type PermissionInstanceMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
-  containerId?: Prisma.SortOrder
   appId?: Prisma.SortOrder
   identifier?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
@@ -405,7 +376,6 @@ export type PermissionInstanceMaxOrderByAggregateInput = {
 export type PermissionInstanceMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
-  containerId?: Prisma.SortOrder
   appId?: Prisma.SortOrder
   identifier?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
@@ -414,7 +384,6 @@ export type PermissionInstanceMinOrderByAggregateInput = {
 export type PermissionInstanceSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
-  containerId?: Prisma.SortOrder
   appId?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
 }
@@ -511,48 +480,6 @@ export type PermissionInstanceUncheckedUpdateManyWithoutAssetNestedInput = {
   deleteMany?: Prisma.PermissionInstanceScalarWhereInput | Prisma.PermissionInstanceScalarWhereInput[]
 }
 
-export type PermissionInstanceCreateNestedManyWithoutContainerInput = {
-  create?: Prisma.XOR<Prisma.PermissionInstanceCreateWithoutContainerInput, Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput> | Prisma.PermissionInstanceCreateWithoutContainerInput[] | Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput[]
-  connectOrCreate?: Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput | Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput[]
-  createMany?: Prisma.PermissionInstanceCreateManyContainerInputEnvelope
-  connect?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-}
-
-export type PermissionInstanceUncheckedCreateNestedManyWithoutContainerInput = {
-  create?: Prisma.XOR<Prisma.PermissionInstanceCreateWithoutContainerInput, Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput> | Prisma.PermissionInstanceCreateWithoutContainerInput[] | Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput[]
-  connectOrCreate?: Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput | Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput[]
-  createMany?: Prisma.PermissionInstanceCreateManyContainerInputEnvelope
-  connect?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-}
-
-export type PermissionInstanceUpdateManyWithoutContainerNestedInput = {
-  create?: Prisma.XOR<Prisma.PermissionInstanceCreateWithoutContainerInput, Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput> | Prisma.PermissionInstanceCreateWithoutContainerInput[] | Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput[]
-  connectOrCreate?: Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput | Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput[]
-  upsert?: Prisma.PermissionInstanceUpsertWithWhereUniqueWithoutContainerInput | Prisma.PermissionInstanceUpsertWithWhereUniqueWithoutContainerInput[]
-  createMany?: Prisma.PermissionInstanceCreateManyContainerInputEnvelope
-  set?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  disconnect?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  delete?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  connect?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  update?: Prisma.PermissionInstanceUpdateWithWhereUniqueWithoutContainerInput | Prisma.PermissionInstanceUpdateWithWhereUniqueWithoutContainerInput[]
-  updateMany?: Prisma.PermissionInstanceUpdateManyWithWhereWithoutContainerInput | Prisma.PermissionInstanceUpdateManyWithWhereWithoutContainerInput[]
-  deleteMany?: Prisma.PermissionInstanceScalarWhereInput | Prisma.PermissionInstanceScalarWhereInput[]
-}
-
-export type PermissionInstanceUncheckedUpdateManyWithoutContainerNestedInput = {
-  create?: Prisma.XOR<Prisma.PermissionInstanceCreateWithoutContainerInput, Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput> | Prisma.PermissionInstanceCreateWithoutContainerInput[] | Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput[]
-  connectOrCreate?: Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput | Prisma.PermissionInstanceCreateOrConnectWithoutContainerInput[]
-  upsert?: Prisma.PermissionInstanceUpsertWithWhereUniqueWithoutContainerInput | Prisma.PermissionInstanceUpsertWithWhereUniqueWithoutContainerInput[]
-  createMany?: Prisma.PermissionInstanceCreateManyContainerInputEnvelope
-  set?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  disconnect?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  delete?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  connect?: Prisma.PermissionInstanceWhereUniqueInput | Prisma.PermissionInstanceWhereUniqueInput[]
-  update?: Prisma.PermissionInstanceUpdateWithWhereUniqueWithoutContainerInput | Prisma.PermissionInstanceUpdateWithWhereUniqueWithoutContainerInput[]
-  updateMany?: Prisma.PermissionInstanceUpdateManyWithWhereWithoutContainerInput | Prisma.PermissionInstanceUpdateManyWithWhereWithoutContainerInput[]
-  deleteMany?: Prisma.PermissionInstanceScalarWhereInput | Prisma.PermissionInstanceScalarWhereInput[]
-}
-
 export type PermissionInstanceCreateNestedManyWithoutAppInput = {
   create?: Prisma.XOR<Prisma.PermissionInstanceCreateWithoutAppInput, Prisma.PermissionInstanceUncheckedCreateWithoutAppInput> | Prisma.PermissionInstanceCreateWithoutAppInput[] | Prisma.PermissionInstanceUncheckedCreateWithoutAppInput[]
   connectOrCreate?: Prisma.PermissionInstanceCreateOrConnectWithoutAppInput | Prisma.PermissionInstanceCreateOrConnectWithoutAppInput[]
@@ -599,12 +526,10 @@ export type PermissionInstanceCreateWithoutAccountInput = {
   identifier: string
   app: Prisma.AppCreateNestedOneWithoutPermissionInstanceInput
   asset?: Prisma.AssetCreateNestedOneWithoutPermissionInstanceInput
-  container?: Prisma.ContainerCreateNestedOneWithoutPermissionInstanceInput
 }
 
 export type PermissionInstanceUncheckedCreateWithoutAccountInput = {
   id?: number
-  containerId?: number | null
   appId: number
   identifier: string
   assetId?: number | null
@@ -642,7 +567,6 @@ export type PermissionInstanceScalarWhereInput = {
   NOT?: Prisma.PermissionInstanceScalarWhereInput | Prisma.PermissionInstanceScalarWhereInput[]
   id?: Prisma.IntFilter<"PermissionInstance"> | number
   accountId?: Prisma.IntFilter<"PermissionInstance"> | number
-  containerId?: Prisma.IntNullableFilter<"PermissionInstance"> | number | null
   appId?: Prisma.IntFilter<"PermissionInstance"> | number
   identifier?: Prisma.StringFilter<"PermissionInstance"> | string
   assetId?: Prisma.IntNullableFilter<"PermissionInstance"> | number | null
@@ -652,13 +576,11 @@ export type PermissionInstanceCreateWithoutAssetInput = {
   identifier: string
   app: Prisma.AppCreateNestedOneWithoutPermissionInstanceInput
   account: Prisma.AccountCreateNestedOneWithoutPermissionsInput
-  container?: Prisma.ContainerCreateNestedOneWithoutPermissionInstanceInput
 }
 
 export type PermissionInstanceUncheckedCreateWithoutAssetInput = {
   id?: number
   accountId: number
-  containerId?: number | null
   appId: number
   identifier: string
 }
@@ -689,58 +611,15 @@ export type PermissionInstanceUpdateManyWithWhereWithoutAssetInput = {
   data: Prisma.XOR<Prisma.PermissionInstanceUpdateManyMutationInput, Prisma.PermissionInstanceUncheckedUpdateManyWithoutAssetInput>
 }
 
-export type PermissionInstanceCreateWithoutContainerInput = {
-  identifier: string
-  app: Prisma.AppCreateNestedOneWithoutPermissionInstanceInput
-  account: Prisma.AccountCreateNestedOneWithoutPermissionsInput
-  asset?: Prisma.AssetCreateNestedOneWithoutPermissionInstanceInput
-}
-
-export type PermissionInstanceUncheckedCreateWithoutContainerInput = {
-  id?: number
-  accountId: number
-  appId: number
-  identifier: string
-  assetId?: number | null
-}
-
-export type PermissionInstanceCreateOrConnectWithoutContainerInput = {
-  where: Prisma.PermissionInstanceWhereUniqueInput
-  create: Prisma.XOR<Prisma.PermissionInstanceCreateWithoutContainerInput, Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput>
-}
-
-export type PermissionInstanceCreateManyContainerInputEnvelope = {
-  data: Prisma.PermissionInstanceCreateManyContainerInput | Prisma.PermissionInstanceCreateManyContainerInput[]
-  skipDuplicates?: boolean
-}
-
-export type PermissionInstanceUpsertWithWhereUniqueWithoutContainerInput = {
-  where: Prisma.PermissionInstanceWhereUniqueInput
-  update: Prisma.XOR<Prisma.PermissionInstanceUpdateWithoutContainerInput, Prisma.PermissionInstanceUncheckedUpdateWithoutContainerInput>
-  create: Prisma.XOR<Prisma.PermissionInstanceCreateWithoutContainerInput, Prisma.PermissionInstanceUncheckedCreateWithoutContainerInput>
-}
-
-export type PermissionInstanceUpdateWithWhereUniqueWithoutContainerInput = {
-  where: Prisma.PermissionInstanceWhereUniqueInput
-  data: Prisma.XOR<Prisma.PermissionInstanceUpdateWithoutContainerInput, Prisma.PermissionInstanceUncheckedUpdateWithoutContainerInput>
-}
-
-export type PermissionInstanceUpdateManyWithWhereWithoutContainerInput = {
-  where: Prisma.PermissionInstanceScalarWhereInput
-  data: Prisma.XOR<Prisma.PermissionInstanceUpdateManyMutationInput, Prisma.PermissionInstanceUncheckedUpdateManyWithoutContainerInput>
-}
-
 export type PermissionInstanceCreateWithoutAppInput = {
   identifier: string
   account: Prisma.AccountCreateNestedOneWithoutPermissionsInput
   asset?: Prisma.AssetCreateNestedOneWithoutPermissionInstanceInput
-  container?: Prisma.ContainerCreateNestedOneWithoutPermissionInstanceInput
 }
 
 export type PermissionInstanceUncheckedCreateWithoutAppInput = {
   id?: number
   accountId: number
-  containerId?: number | null
   identifier: string
   assetId?: number | null
 }
@@ -773,7 +652,6 @@ export type PermissionInstanceUpdateManyWithWhereWithoutAppInput = {
 
 export type PermissionInstanceCreateManyAccountInput = {
   id?: number
-  containerId?: number | null
   appId: number
   identifier: string
   assetId?: number | null
@@ -783,12 +661,10 @@ export type PermissionInstanceUpdateWithoutAccountInput = {
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   app?: Prisma.AppUpdateOneRequiredWithoutPermissionInstanceNestedInput
   asset?: Prisma.AssetUpdateOneWithoutPermissionInstanceNestedInput
-  container?: Prisma.ContainerUpdateOneWithoutPermissionInstanceNestedInput
 }
 
 export type PermissionInstanceUncheckedUpdateWithoutAccountInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -796,7 +672,6 @@ export type PermissionInstanceUncheckedUpdateWithoutAccountInput = {
 
 export type PermissionInstanceUncheckedUpdateManyWithoutAccountInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -805,7 +680,6 @@ export type PermissionInstanceUncheckedUpdateManyWithoutAccountInput = {
 export type PermissionInstanceCreateManyAssetInput = {
   id?: number
   accountId: number
-  containerId?: number | null
   appId: number
   identifier: string
 }
@@ -814,13 +688,11 @@ export type PermissionInstanceUpdateWithoutAssetInput = {
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   app?: Prisma.AppUpdateOneRequiredWithoutPermissionInstanceNestedInput
   account?: Prisma.AccountUpdateOneRequiredWithoutPermissionsNestedInput
-  container?: Prisma.ContainerUpdateOneWithoutPermissionInstanceNestedInput
 }
 
 export type PermissionInstanceUncheckedUpdateWithoutAssetInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
 }
@@ -828,46 +700,13 @@ export type PermissionInstanceUncheckedUpdateWithoutAssetInput = {
 export type PermissionInstanceUncheckedUpdateManyWithoutAssetInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   appId?: Prisma.IntFieldUpdateOperationsInput | number
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
-}
-
-export type PermissionInstanceCreateManyContainerInput = {
-  id?: number
-  accountId: number
-  appId: number
-  identifier: string
-  assetId?: number | null
-}
-
-export type PermissionInstanceUpdateWithoutContainerInput = {
-  identifier?: Prisma.StringFieldUpdateOperationsInput | string
-  app?: Prisma.AppUpdateOneRequiredWithoutPermissionInstanceNestedInput
-  account?: Prisma.AccountUpdateOneRequiredWithoutPermissionsNestedInput
-  asset?: Prisma.AssetUpdateOneWithoutPermissionInstanceNestedInput
-}
-
-export type PermissionInstanceUncheckedUpdateWithoutContainerInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  appId?: Prisma.IntFieldUpdateOperationsInput | number
-  identifier?: Prisma.StringFieldUpdateOperationsInput | string
-  assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-}
-
-export type PermissionInstanceUncheckedUpdateManyWithoutContainerInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  appId?: Prisma.IntFieldUpdateOperationsInput | number
-  identifier?: Prisma.StringFieldUpdateOperationsInput | string
-  assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type PermissionInstanceCreateManyAppInput = {
   id?: number
   accountId: number
-  containerId?: number | null
   identifier: string
   assetId?: number | null
 }
@@ -876,13 +715,11 @@ export type PermissionInstanceUpdateWithoutAppInput = {
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   account?: Prisma.AccountUpdateOneRequiredWithoutPermissionsNestedInput
   asset?: Prisma.AssetUpdateOneWithoutPermissionInstanceNestedInput
-  container?: Prisma.ContainerUpdateOneWithoutPermissionInstanceNestedInput
 }
 
 export type PermissionInstanceUncheckedUpdateWithoutAppInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
@@ -890,7 +727,6 @@ export type PermissionInstanceUncheckedUpdateWithoutAppInput = {
 export type PermissionInstanceUncheckedUpdateManyWithoutAppInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  containerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   identifier?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
@@ -900,69 +736,59 @@ export type PermissionInstanceUncheckedUpdateManyWithoutAppInput = {
 export type PermissionInstanceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   accountId?: boolean
-  containerId?: boolean
   appId?: boolean
   identifier?: boolean
   assetId?: boolean
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.PermissionInstance$assetArgs<ExtArgs>
-  container?: boolean | Prisma.PermissionInstance$containerArgs<ExtArgs>
 }, ExtArgs["result"]["permissionInstance"]>
 
 export type PermissionInstanceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   accountId?: boolean
-  containerId?: boolean
   appId?: boolean
   identifier?: boolean
   assetId?: boolean
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.PermissionInstance$assetArgs<ExtArgs>
-  container?: boolean | Prisma.PermissionInstance$containerArgs<ExtArgs>
 }, ExtArgs["result"]["permissionInstance"]>
 
 export type PermissionInstanceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   accountId?: boolean
-  containerId?: boolean
   appId?: boolean
   identifier?: boolean
   assetId?: boolean
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.PermissionInstance$assetArgs<ExtArgs>
-  container?: boolean | Prisma.PermissionInstance$containerArgs<ExtArgs>
 }, ExtArgs["result"]["permissionInstance"]>
 
 export type PermissionInstanceSelectScalar = {
   id?: boolean
   accountId?: boolean
-  containerId?: boolean
   appId?: boolean
   identifier?: boolean
   assetId?: boolean
 }
 
-export type PermissionInstanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "accountId" | "containerId" | "appId" | "identifier" | "assetId", ExtArgs["result"]["permissionInstance"]>
+export type PermissionInstanceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "accountId" | "appId" | "identifier" | "assetId", ExtArgs["result"]["permissionInstance"]>
 export type PermissionInstanceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.PermissionInstance$assetArgs<ExtArgs>
-  container?: boolean | Prisma.PermissionInstance$containerArgs<ExtArgs>
 }
 export type PermissionInstanceIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.PermissionInstance$assetArgs<ExtArgs>
-  container?: boolean | Prisma.PermissionInstance$containerArgs<ExtArgs>
 }
 export type PermissionInstanceIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   app?: boolean | Prisma.AppDefaultArgs<ExtArgs>
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.PermissionInstance$assetArgs<ExtArgs>
-  container?: boolean | Prisma.PermissionInstance$containerArgs<ExtArgs>
 }
 
 export type $PermissionInstancePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -971,12 +797,10 @@ export type $PermissionInstancePayload<ExtArgs extends runtime.Types.Extensions.
     app: Prisma.$AppPayload<ExtArgs>
     account: Prisma.$AccountPayload<ExtArgs>
     asset: Prisma.$AssetPayload<ExtArgs> | null
-    container: Prisma.$ContainerPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     accountId: number
-    containerId: number | null
     appId: number
     identifier: string
     assetId: number | null
@@ -1377,7 +1201,6 @@ export interface Prisma__PermissionInstanceClient<T, Null = never, ExtArgs exten
   app<T extends Prisma.AppDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppDefaultArgs<ExtArgs>>): Prisma.Prisma__AppClient<runtime.Types.Result.GetResult<Prisma.$AppPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   account<T extends Prisma.AccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AccountDefaultArgs<ExtArgs>>): Prisma.Prisma__AccountClient<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   asset<T extends Prisma.PermissionInstance$assetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PermissionInstance$assetArgs<ExtArgs>>): Prisma.Prisma__AssetClient<runtime.Types.Result.GetResult<Prisma.$AssetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  container<T extends Prisma.PermissionInstance$containerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PermissionInstance$containerArgs<ExtArgs>>): Prisma.Prisma__ContainerClient<runtime.Types.Result.GetResult<Prisma.$ContainerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1409,7 +1232,6 @@ export interface Prisma__PermissionInstanceClient<T, Null = never, ExtArgs exten
 export interface PermissionInstanceFieldRefs {
   readonly id: Prisma.FieldRef<"PermissionInstance", 'Int'>
   readonly accountId: Prisma.FieldRef<"PermissionInstance", 'Int'>
-  readonly containerId: Prisma.FieldRef<"PermissionInstance", 'Int'>
   readonly appId: Prisma.FieldRef<"PermissionInstance", 'Int'>
   readonly identifier: Prisma.FieldRef<"PermissionInstance", 'String'>
   readonly assetId: Prisma.FieldRef<"PermissionInstance", 'Int'>
@@ -1825,25 +1647,6 @@ export type PermissionInstance$assetArgs<ExtArgs extends runtime.Types.Extension
    */
   include?: Prisma.AssetInclude<ExtArgs> | null
   where?: Prisma.AssetWhereInput
-}
-
-/**
- * PermissionInstance.container
- */
-export type PermissionInstance$containerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Container
-   */
-  select?: Prisma.ContainerSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Container
-   */
-  omit?: Prisma.ContainerOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ContainerInclude<ExtArgs> | null
-  where?: Prisma.ContainerWhereInput
 }
 
 /**

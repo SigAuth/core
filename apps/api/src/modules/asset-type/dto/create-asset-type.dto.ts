@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AssetTypeField } from '@sigauth/generics/json-types';
+import { AssetTypeField } from '@sigauth/generics/prisma-client';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Max, Min, MinLength, ValidateNested } from 'class-validator';
 
@@ -39,13 +39,13 @@ export class AssetTypeFieldDto {
     @IsOptional()
     @IsNumber()
     @ApiProperty({ example: 1, type: 'number' })
-    id!: number;
+    fieldId!: number;
 
     @IsNumber()
     @Min(1)
-    @Max(5)
-    @ApiProperty({ example: 1, enum: [1, 2, 3, 4, 5] })
-    type!: number;
+    @Max(7)
+    @ApiProperty({ example: 1, enum: [1, 2, 3, 4, 5, 6, 7] })
+    fieldTypeId!: number;
 
     @IsString()
     @MinLength(4)
@@ -56,9 +56,23 @@ export class AssetTypeFieldDto {
     @ApiProperty({ example: true, type: 'boolean' })
     required!: boolean;
 
-    @IsArray()
-    @IsString({ each: true })
     @IsOptional()
-    @ApiProperty({ example: ['Office', 'Family', 'Block', 'Hotel'], type: [String] })
-    options?: string[];
+    @IsString({ each: true })
+    @ApiProperty({ example: ['Option 1', 'Option 2', 'Option 3'], type: [String] })
+    items?: string[];
+
+    @IsString()
+    @IsOptional()
+    @ApiProperty({ example: 'CASCADE', enum: ['CASCADE', 'SET-NULL', 'RESTRICT', 'INVALIDATE'] })
+    referentialIntegrityStrategy?: 'CASCADE' | 'SET-NULL' | 'RESTRICT' | 'INVALIDATE';
+
+    @IsBoolean()
+    @IsOptional()
+    @ApiProperty({ example: true, type: 'boolean' })
+    allowMultiple?: boolean;
+
+    @IsOptional()
+    @IsNumber({}, { each: true })
+    @ApiProperty({ example: 2, type: 'number', description: 'The asset type IDs this relation can refer to' })
+    referencedAssetTypes?: number[];
 }

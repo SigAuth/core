@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "ReferentialIntegrityStrategy" AS ENUM ('CASCADE', 'RESTRICT', 'SET_NULL', 'INVALIDATE');
+
 -- CreateTable
 CREATE TABLE "Account" (
     "id" SERIAL NOT NULL,
@@ -50,7 +53,6 @@ CREATE TABLE "AuthorizationChallenge" (
 CREATE TABLE "PermissionInstance" (
     "id" SERIAL NOT NULL,
     "accountId" INTEGER NOT NULL,
-    "containerId" INTEGER,
     "appId" INTEGER NOT NULL,
     "identifier" TEXT NOT NULL,
     "assetId" INTEGER,
@@ -62,9 +64,31 @@ CREATE TABLE "PermissionInstance" (
 CREATE TABLE "AssetType" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
-    "fields" JSONB NOT NULL,
 
     CONSTRAINT "AssetType_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AssetTypeField" (
+    "assetTypeId" INTEGER NOT NULL,
+    "fieldId" SMALLINT NOT NULL,
+    "fieldTypeId" SMALLINT NOT NULL,
+    "required" BOOLEAN NOT NULL DEFAULT false,
+    "name" TEXT NOT NULL,
+    "items" TEXT[],
+    "referentialIntegrityStrategy" "ReferentialIntegrityStrategy" DEFAULT 'RESTRICT',
+    "allowMultipleRelations" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "AssetTypeField_pkey" PRIMARY KEY ("assetTypeId","fieldId")
+);
+
+-- CreateTable
+CREATE TABLE "ReferencedFieldOnAssetType" (
+    "assetTypeId" INTEGER NOT NULL,
+    "fieldId" INTEGER NOT NULL,
+    "referencedAssetTypeId" INTEGER NOT NULL,
+
+    CONSTRAINT "ReferencedFieldOnAssetType_pkey" PRIMARY KEY ("assetTypeId","fieldId","referencedAssetTypeId")
 );
 
 -- CreateTable
@@ -78,14 +102,30 @@ CREATE TABLE "Asset" (
 );
 
 -- CreateTable
-CREATE TABLE "Container" (
-    "id" SERIAL NOT NULL,
-    "customId" TEXT,
-    "name" TEXT NOT NULL,
-    "assets" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
-    "apps" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+CREATE TABLE "AssetToAsset" (
+    "fromAssetId" INTEGER NOT NULL,
+    "toAssetId" INTEGER NOT NULL,
+    "fieldId" INTEGER NOT NULL,
 
-    CONSTRAINT "Container_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "AssetToAsset_pkey" PRIMARY KEY ("fromAssetId","toAssetId","fieldId")
+);
+
+-- CreateTable
+CREATE TABLE "AssetToApp" (
+    "assetId" INTEGER NOT NULL,
+    "appId" INTEGER NOT NULL,
+    "fieldId" INTEGER NOT NULL,
+
+    CONSTRAINT "AssetToApp_pkey" PRIMARY KEY ("assetId","appId","fieldId")
+);
+
+-- CreateTable
+CREATE TABLE "AssetToAccount" (
+    "assetId" INTEGER NOT NULL,
+    "accountId" INTEGER NOT NULL,
+    "fieldId" INTEGER NOT NULL,
+
+    CONSTRAINT "AssetToAccount_pkey" PRIMARY KEY ("assetId","accountId","fieldId")
 );
 
 -- CreateTable
@@ -151,10 +191,25 @@ CREATE INDEX "PermissionInstance_accountId_assetId_idx" ON "PermissionInstance"(
 CREATE INDEX "PermissionInstance_accountId_identifier_idx" ON "PermissionInstance"("accountId", "identifier");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PermissionInstance_accountId_appId_identifier_containerId_a_key" ON "PermissionInstance"("accountId", "appId", "identifier", "containerId", "assetId");
+CREATE UNIQUE INDEX "PermissionInstance_accountId_appId_identifier_assetId_key" ON "PermissionInstance"("accountId", "appId", "identifier", "assetId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Container_customId_key" ON "Container"("customId");
+CREATE INDEX "AssetToAsset_fromAssetId_idx" ON "AssetToAsset"("fromAssetId");
+
+-- CreateIndex
+CREATE INDEX "AssetToAsset_toAssetId_idx" ON "AssetToAsset"("toAssetId");
+
+-- CreateIndex
+CREATE INDEX "AssetToApp_assetId_idx" ON "AssetToApp"("assetId");
+
+-- CreateIndex
+CREATE INDEX "AssetToApp_appId_idx" ON "AssetToApp"("appId");
+
+-- CreateIndex
+CREATE INDEX "AssetToAccount_assetId_idx" ON "AssetToAccount"("assetId");
+
+-- CreateIndex
+CREATE INDEX "AssetToAccount_accountId_idx" ON "AssetToAccount"("accountId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "App_token_key" ON "App"("token");
@@ -184,7 +239,31 @@ ALTER TABLE "PermissionInstance" ADD CONSTRAINT "PermissionInstance_accountId_fk
 ALTER TABLE "PermissionInstance" ADD CONSTRAINT "PermissionInstance_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PermissionInstance" ADD CONSTRAINT "PermissionInstance_containerId_fkey" FOREIGN KEY ("containerId") REFERENCES "Container"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "AssetTypeField" ADD CONSTRAINT "AssetTypeField_assetTypeId_fkey" FOREIGN KEY ("assetTypeId") REFERENCES "AssetType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReferencedFieldOnAssetType" ADD CONSTRAINT "ReferencedFieldOnAssetType_referencedAssetTypeId_fkey" FOREIGN KEY ("referencedAssetTypeId") REFERENCES "AssetType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReferencedFieldOnAssetType" ADD CONSTRAINT "ReferencedFieldOnAssetType_assetTypeId_fieldId_fkey" FOREIGN KEY ("assetTypeId", "fieldId") REFERENCES "AssetTypeField"("assetTypeId", "fieldId") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Asset" ADD CONSTRAINT "Asset_typeId_fkey" FOREIGN KEY ("typeId") REFERENCES "AssetType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetToAsset" ADD CONSTRAINT "AssetToAsset_fromAssetId_fkey" FOREIGN KEY ("fromAssetId") REFERENCES "Asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetToAsset" ADD CONSTRAINT "AssetToAsset_toAssetId_fkey" FOREIGN KEY ("toAssetId") REFERENCES "Asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetToApp" ADD CONSTRAINT "AssetToApp_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetToApp" ADD CONSTRAINT "AssetToApp_appId_fkey" FOREIGN KEY ("appId") REFERENCES "App"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetToAccount" ADD CONSTRAINT "AssetToAccount_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetToAccount" ADD CONSTRAINT "AssetToAccount_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "Account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

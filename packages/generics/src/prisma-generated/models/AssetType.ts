@@ -47,7 +47,6 @@ export type AssetTypeMaxAggregateOutputType = {
 export type AssetTypeCountAggregateOutputType = {
   id: number
   name: number
-  fields: number
   _all: number
 }
 
@@ -73,7 +72,6 @@ export type AssetTypeMaxAggregateInputType = {
 export type AssetTypeCountAggregateInputType = {
   id?: true
   name?: true
-  fields?: true
   _all?: true
 }
 
@@ -166,7 +164,6 @@ export type AssetTypeGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 export type AssetTypeGroupByOutputType = {
   id: number
   name: string
-  fields: runtime.JsonValue
   _count: AssetTypeCountAggregateOutputType | null
   _avg: AssetTypeAvgAggregateOutputType | null
   _sum: AssetTypeSumAggregateOutputType | null
@@ -195,15 +192,17 @@ export type AssetTypeWhereInput = {
   NOT?: Prisma.AssetTypeWhereInput | Prisma.AssetTypeWhereInput[]
   id?: Prisma.IntFilter<"AssetType"> | number
   name?: Prisma.StringFilter<"AssetType"> | string
-  fields?: Prisma.JsonFilter<"AssetType">
   assets?: Prisma.AssetListRelationFilter
+  assetTypeField?: Prisma.AssetTypeFieldListRelationFilter
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeListRelationFilter
 }
 
 export type AssetTypeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  fields?: Prisma.SortOrder
   assets?: Prisma.AssetOrderByRelationAggregateInput
+  assetTypeField?: Prisma.AssetTypeFieldOrderByRelationAggregateInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeOrderByRelationAggregateInput
 }
 
 export type AssetTypeWhereUniqueInput = Prisma.AtLeast<{
@@ -212,14 +211,14 @@ export type AssetTypeWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AssetTypeWhereInput[]
   NOT?: Prisma.AssetTypeWhereInput | Prisma.AssetTypeWhereInput[]
   name?: Prisma.StringFilter<"AssetType"> | string
-  fields?: Prisma.JsonFilter<"AssetType">
   assets?: Prisma.AssetListRelationFilter
+  assetTypeField?: Prisma.AssetTypeFieldListRelationFilter
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeListRelationFilter
 }, "id">
 
 export type AssetTypeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  fields?: Prisma.SortOrder
   _count?: Prisma.AssetTypeCountOrderByAggregateInput
   _avg?: Prisma.AssetTypeAvgOrderByAggregateInput
   _max?: Prisma.AssetTypeMaxOrderByAggregateInput
@@ -233,56 +232,55 @@ export type AssetTypeScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AssetTypeScalarWhereWithAggregatesInput | Prisma.AssetTypeScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"AssetType"> | number
   name?: Prisma.StringWithAggregatesFilter<"AssetType"> | string
-  fields?: Prisma.JsonWithAggregatesFilter<"AssetType">
 }
 
 export type AssetTypeCreateInput = {
   name: string
-  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
   assets?: Prisma.AssetCreateNestedManyWithoutTypeInput
+  assetTypeField?: Prisma.AssetTypeFieldCreateNestedManyWithoutAssetTypeInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeCreateNestedManyWithoutReferencedAssetTypeInput
 }
 
 export type AssetTypeUncheckedCreateInput = {
   id?: number
   name: string
-  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
   assets?: Prisma.AssetUncheckedCreateNestedManyWithoutTypeInput
+  assetTypeField?: Prisma.AssetTypeFieldUncheckedCreateNestedManyWithoutAssetTypeInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUncheckedCreateNestedManyWithoutReferencedAssetTypeInput
 }
 
 export type AssetTypeUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   assets?: Prisma.AssetUpdateManyWithoutTypeNestedInput
+  assetTypeField?: Prisma.AssetTypeFieldUpdateManyWithoutAssetTypeNestedInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUpdateManyWithoutReferencedAssetTypeNestedInput
 }
 
 export type AssetTypeUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   assets?: Prisma.AssetUncheckedUpdateManyWithoutTypeNestedInput
+  assetTypeField?: Prisma.AssetTypeFieldUncheckedUpdateManyWithoutAssetTypeNestedInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUncheckedUpdateManyWithoutReferencedAssetTypeNestedInput
 }
 
 export type AssetTypeCreateManyInput = {
   id?: number
   name: string
-  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AssetTypeUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AssetTypeUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
 }
 
 export type AssetTypeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  fields?: Prisma.SortOrder
 }
 
 export type AssetTypeAvgOrderByAggregateInput = {
@@ -303,9 +301,44 @@ export type AssetTypeSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
 }
 
+export type AssetTypeNullableScalarRelationFilter = {
+  is?: Prisma.AssetTypeWhereInput | null
+  isNot?: Prisma.AssetTypeWhereInput | null
+}
+
 export type AssetTypeScalarRelationFilter = {
   is?: Prisma.AssetTypeWhereInput
   isNot?: Prisma.AssetTypeWhereInput
+}
+
+export type AssetTypeCreateNestedOneWithoutAssetTypeFieldInput = {
+  create?: Prisma.XOR<Prisma.AssetTypeCreateWithoutAssetTypeFieldInput, Prisma.AssetTypeUncheckedCreateWithoutAssetTypeFieldInput>
+  connectOrCreate?: Prisma.AssetTypeCreateOrConnectWithoutAssetTypeFieldInput
+  connect?: Prisma.AssetTypeWhereUniqueInput
+}
+
+export type AssetTypeUpdateOneWithoutAssetTypeFieldNestedInput = {
+  create?: Prisma.XOR<Prisma.AssetTypeCreateWithoutAssetTypeFieldInput, Prisma.AssetTypeUncheckedCreateWithoutAssetTypeFieldInput>
+  connectOrCreate?: Prisma.AssetTypeCreateOrConnectWithoutAssetTypeFieldInput
+  upsert?: Prisma.AssetTypeUpsertWithoutAssetTypeFieldInput
+  disconnect?: Prisma.AssetTypeWhereInput | boolean
+  delete?: Prisma.AssetTypeWhereInput | boolean
+  connect?: Prisma.AssetTypeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AssetTypeUpdateToOneWithWhereWithoutAssetTypeFieldInput, Prisma.AssetTypeUpdateWithoutAssetTypeFieldInput>, Prisma.AssetTypeUncheckedUpdateWithoutAssetTypeFieldInput>
+}
+
+export type AssetTypeCreateNestedOneWithoutForeignFieldsInput = {
+  create?: Prisma.XOR<Prisma.AssetTypeCreateWithoutForeignFieldsInput, Prisma.AssetTypeUncheckedCreateWithoutForeignFieldsInput>
+  connectOrCreate?: Prisma.AssetTypeCreateOrConnectWithoutForeignFieldsInput
+  connect?: Prisma.AssetTypeWhereUniqueInput
+}
+
+export type AssetTypeUpdateOneRequiredWithoutForeignFieldsNestedInput = {
+  create?: Prisma.XOR<Prisma.AssetTypeCreateWithoutForeignFieldsInput, Prisma.AssetTypeUncheckedCreateWithoutForeignFieldsInput>
+  connectOrCreate?: Prisma.AssetTypeCreateOrConnectWithoutForeignFieldsInput
+  upsert?: Prisma.AssetTypeUpsertWithoutForeignFieldsInput
+  connect?: Prisma.AssetTypeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AssetTypeUpdateToOneWithWhereWithoutForeignFieldsInput, Prisma.AssetTypeUpdateWithoutForeignFieldsInput>, Prisma.AssetTypeUncheckedUpdateWithoutForeignFieldsInput>
 }
 
 export type AssetTypeCreateNestedOneWithoutAssetsInput = {
@@ -322,15 +355,101 @@ export type AssetTypeUpdateOneRequiredWithoutAssetsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AssetTypeUpdateToOneWithWhereWithoutAssetsInput, Prisma.AssetTypeUpdateWithoutAssetsInput>, Prisma.AssetTypeUncheckedUpdateWithoutAssetsInput>
 }
 
+export type AssetTypeCreateWithoutAssetTypeFieldInput = {
+  name: string
+  assets?: Prisma.AssetCreateNestedManyWithoutTypeInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeCreateNestedManyWithoutReferencedAssetTypeInput
+}
+
+export type AssetTypeUncheckedCreateWithoutAssetTypeFieldInput = {
+  id?: number
+  name: string
+  assets?: Prisma.AssetUncheckedCreateNestedManyWithoutTypeInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUncheckedCreateNestedManyWithoutReferencedAssetTypeInput
+}
+
+export type AssetTypeCreateOrConnectWithoutAssetTypeFieldInput = {
+  where: Prisma.AssetTypeWhereUniqueInput
+  create: Prisma.XOR<Prisma.AssetTypeCreateWithoutAssetTypeFieldInput, Prisma.AssetTypeUncheckedCreateWithoutAssetTypeFieldInput>
+}
+
+export type AssetTypeUpsertWithoutAssetTypeFieldInput = {
+  update: Prisma.XOR<Prisma.AssetTypeUpdateWithoutAssetTypeFieldInput, Prisma.AssetTypeUncheckedUpdateWithoutAssetTypeFieldInput>
+  create: Prisma.XOR<Prisma.AssetTypeCreateWithoutAssetTypeFieldInput, Prisma.AssetTypeUncheckedCreateWithoutAssetTypeFieldInput>
+  where?: Prisma.AssetTypeWhereInput
+}
+
+export type AssetTypeUpdateToOneWithWhereWithoutAssetTypeFieldInput = {
+  where?: Prisma.AssetTypeWhereInput
+  data: Prisma.XOR<Prisma.AssetTypeUpdateWithoutAssetTypeFieldInput, Prisma.AssetTypeUncheckedUpdateWithoutAssetTypeFieldInput>
+}
+
+export type AssetTypeUpdateWithoutAssetTypeFieldInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  assets?: Prisma.AssetUpdateManyWithoutTypeNestedInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUpdateManyWithoutReferencedAssetTypeNestedInput
+}
+
+export type AssetTypeUncheckedUpdateWithoutAssetTypeFieldInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  assets?: Prisma.AssetUncheckedUpdateManyWithoutTypeNestedInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUncheckedUpdateManyWithoutReferencedAssetTypeNestedInput
+}
+
+export type AssetTypeCreateWithoutForeignFieldsInput = {
+  name: string
+  assets?: Prisma.AssetCreateNestedManyWithoutTypeInput
+  assetTypeField?: Prisma.AssetTypeFieldCreateNestedManyWithoutAssetTypeInput
+}
+
+export type AssetTypeUncheckedCreateWithoutForeignFieldsInput = {
+  id?: number
+  name: string
+  assets?: Prisma.AssetUncheckedCreateNestedManyWithoutTypeInput
+  assetTypeField?: Prisma.AssetTypeFieldUncheckedCreateNestedManyWithoutAssetTypeInput
+}
+
+export type AssetTypeCreateOrConnectWithoutForeignFieldsInput = {
+  where: Prisma.AssetTypeWhereUniqueInput
+  create: Prisma.XOR<Prisma.AssetTypeCreateWithoutForeignFieldsInput, Prisma.AssetTypeUncheckedCreateWithoutForeignFieldsInput>
+}
+
+export type AssetTypeUpsertWithoutForeignFieldsInput = {
+  update: Prisma.XOR<Prisma.AssetTypeUpdateWithoutForeignFieldsInput, Prisma.AssetTypeUncheckedUpdateWithoutForeignFieldsInput>
+  create: Prisma.XOR<Prisma.AssetTypeCreateWithoutForeignFieldsInput, Prisma.AssetTypeUncheckedCreateWithoutForeignFieldsInput>
+  where?: Prisma.AssetTypeWhereInput
+}
+
+export type AssetTypeUpdateToOneWithWhereWithoutForeignFieldsInput = {
+  where?: Prisma.AssetTypeWhereInput
+  data: Prisma.XOR<Prisma.AssetTypeUpdateWithoutForeignFieldsInput, Prisma.AssetTypeUncheckedUpdateWithoutForeignFieldsInput>
+}
+
+export type AssetTypeUpdateWithoutForeignFieldsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  assets?: Prisma.AssetUpdateManyWithoutTypeNestedInput
+  assetTypeField?: Prisma.AssetTypeFieldUpdateManyWithoutAssetTypeNestedInput
+}
+
+export type AssetTypeUncheckedUpdateWithoutForeignFieldsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  assets?: Prisma.AssetUncheckedUpdateManyWithoutTypeNestedInput
+  assetTypeField?: Prisma.AssetTypeFieldUncheckedUpdateManyWithoutAssetTypeNestedInput
+}
+
 export type AssetTypeCreateWithoutAssetsInput = {
   name: string
-  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  assetTypeField?: Prisma.AssetTypeFieldCreateNestedManyWithoutAssetTypeInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeCreateNestedManyWithoutReferencedAssetTypeInput
 }
 
 export type AssetTypeUncheckedCreateWithoutAssetsInput = {
   id?: number
   name: string
-  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  assetTypeField?: Prisma.AssetTypeFieldUncheckedCreateNestedManyWithoutAssetTypeInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUncheckedCreateNestedManyWithoutReferencedAssetTypeInput
 }
 
 export type AssetTypeCreateOrConnectWithoutAssetsInput = {
@@ -351,13 +470,15 @@ export type AssetTypeUpdateToOneWithWhereWithoutAssetsInput = {
 
 export type AssetTypeUpdateWithoutAssetsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  assetTypeField?: Prisma.AssetTypeFieldUpdateManyWithoutAssetTypeNestedInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUpdateManyWithoutReferencedAssetTypeNestedInput
 }
 
 export type AssetTypeUncheckedUpdateWithoutAssetsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  assetTypeField?: Prisma.AssetTypeFieldUncheckedUpdateManyWithoutAssetTypeNestedInput
+  foreignFields?: Prisma.ReferencedFieldOnAssetTypeUncheckedUpdateManyWithoutReferencedAssetTypeNestedInput
 }
 
 
@@ -367,10 +488,14 @@ export type AssetTypeUncheckedUpdateWithoutAssetsInput = {
 
 export type AssetTypeCountOutputType = {
   assets: number
+  assetTypeField: number
+  foreignFields: number
 }
 
 export type AssetTypeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assets?: boolean | AssetTypeCountOutputTypeCountAssetsArgs
+  assetTypeField?: boolean | AssetTypeCountOutputTypeCountAssetTypeFieldArgs
+  foreignFields?: boolean | AssetTypeCountOutputTypeCountForeignFieldsArgs
 }
 
 /**
@@ -390,36 +515,50 @@ export type AssetTypeCountOutputTypeCountAssetsArgs<ExtArgs extends runtime.Type
   where?: Prisma.AssetWhereInput
 }
 
+/**
+ * AssetTypeCountOutputType without action
+ */
+export type AssetTypeCountOutputTypeCountAssetTypeFieldArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AssetTypeFieldWhereInput
+}
+
+/**
+ * AssetTypeCountOutputType without action
+ */
+export type AssetTypeCountOutputTypeCountForeignFieldsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReferencedFieldOnAssetTypeWhereInput
+}
+
 
 export type AssetTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  fields?: boolean
   assets?: boolean | Prisma.AssetType$assetsArgs<ExtArgs>
+  assetTypeField?: boolean | Prisma.AssetType$assetTypeFieldArgs<ExtArgs>
+  foreignFields?: boolean | Prisma.AssetType$foreignFieldsArgs<ExtArgs>
   _count?: boolean | Prisma.AssetTypeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["assetType"]>
 
 export type AssetTypeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  fields?: boolean
 }, ExtArgs["result"]["assetType"]>
 
 export type AssetTypeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  fields?: boolean
 }, ExtArgs["result"]["assetType"]>
 
 export type AssetTypeSelectScalar = {
   id?: boolean
   name?: boolean
-  fields?: boolean
 }
 
-export type AssetTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "fields", ExtArgs["result"]["assetType"]>
+export type AssetTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name", ExtArgs["result"]["assetType"]>
 export type AssetTypeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assets?: boolean | Prisma.AssetType$assetsArgs<ExtArgs>
+  assetTypeField?: boolean | Prisma.AssetType$assetTypeFieldArgs<ExtArgs>
+  foreignFields?: boolean | Prisma.AssetType$foreignFieldsArgs<ExtArgs>
   _count?: boolean | Prisma.AssetTypeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AssetTypeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -429,11 +568,12 @@ export type $AssetTypePayload<ExtArgs extends runtime.Types.Extensions.InternalA
   name: "AssetType"
   objects: {
     assets: Prisma.$AssetPayload<ExtArgs>[]
+    assetTypeField: Prisma.$AssetTypeFieldPayload<ExtArgs>[]
+    foreignFields: Prisma.$ReferencedFieldOnAssetTypePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     name: string
-    fields: runtime.JsonValue
   }, ExtArgs["result"]["assetType"]>
   composites: {}
 }
@@ -829,6 +969,8 @@ readonly fields: AssetTypeFieldRefs;
 export interface Prisma__AssetTypeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   assets<T extends Prisma.AssetType$assetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AssetType$assetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assetTypeField<T extends Prisma.AssetType$assetTypeFieldArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AssetType$assetTypeFieldArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetTypeFieldPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  foreignFields<T extends Prisma.AssetType$foreignFieldsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AssetType$foreignFieldsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReferencedFieldOnAssetTypePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -860,7 +1002,6 @@ export interface Prisma__AssetTypeClient<T, Null = never, ExtArgs extends runtim
 export interface AssetTypeFieldRefs {
   readonly id: Prisma.FieldRef<"AssetType", 'Int'>
   readonly name: Prisma.FieldRef<"AssetType", 'String'>
-  readonly fields: Prisma.FieldRef<"AssetType", 'Json'>
 }
     
 
@@ -1270,6 +1411,54 @@ export type AssetType$assetsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.AssetScalarFieldEnum | Prisma.AssetScalarFieldEnum[]
+}
+
+/**
+ * AssetType.assetTypeField
+ */
+export type AssetType$assetTypeFieldArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AssetTypeField
+   */
+  select?: Prisma.AssetTypeFieldSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AssetTypeField
+   */
+  omit?: Prisma.AssetTypeFieldOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AssetTypeFieldInclude<ExtArgs> | null
+  where?: Prisma.AssetTypeFieldWhereInput
+  orderBy?: Prisma.AssetTypeFieldOrderByWithRelationInput | Prisma.AssetTypeFieldOrderByWithRelationInput[]
+  cursor?: Prisma.AssetTypeFieldWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AssetTypeFieldScalarFieldEnum | Prisma.AssetTypeFieldScalarFieldEnum[]
+}
+
+/**
+ * AssetType.foreignFields
+ */
+export type AssetType$foreignFieldsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReferencedFieldOnAssetType
+   */
+  select?: Prisma.ReferencedFieldOnAssetTypeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReferencedFieldOnAssetType
+   */
+  omit?: Prisma.ReferencedFieldOnAssetTypeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReferencedFieldOnAssetTypeInclude<ExtArgs> | null
+  where?: Prisma.ReferencedFieldOnAssetTypeWhereInput
+  orderBy?: Prisma.ReferencedFieldOnAssetTypeOrderByWithRelationInput | Prisma.ReferencedFieldOnAssetTypeOrderByWithRelationInput[]
+  cursor?: Prisma.ReferencedFieldOnAssetTypeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReferencedFieldOnAssetTypeScalarFieldEnum | Prisma.ReferencedFieldOnAssetTypeScalarFieldEnum[]
 }
 
 /**

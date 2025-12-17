@@ -57,8 +57,12 @@ export const ModelName = {
   AuthorizationChallenge: 'AuthorizationChallenge',
   PermissionInstance: 'PermissionInstance',
   AssetType: 'AssetType',
+  AssetTypeField: 'AssetTypeField',
+  ReferencedFieldOnAssetType: 'ReferencedFieldOnAssetType',
   Asset: 'Asset',
-  Container: 'Container',
+  AssetToAsset: 'AssetToAsset',
+  AssetToApp: 'AssetToApp',
+  AssetToAccount: 'AssetToAccount',
   Mirror: 'Mirror',
   App: 'App'
 } as const
@@ -130,7 +134,6 @@ export type AuthorizationChallengeScalarFieldEnum = (typeof AuthorizationChallen
 export const PermissionInstanceScalarFieldEnum = {
   id: 'id',
   accountId: 'accountId',
-  containerId: 'containerId',
   appId: 'appId',
   identifier: 'identifier',
   assetId: 'assetId'
@@ -141,11 +144,33 @@ export type PermissionInstanceScalarFieldEnum = (typeof PermissionInstanceScalar
 
 export const AssetTypeScalarFieldEnum = {
   id: 'id',
-  name: 'name',
-  fields: 'fields'
+  name: 'name'
 } as const
 
 export type AssetTypeScalarFieldEnum = (typeof AssetTypeScalarFieldEnum)[keyof typeof AssetTypeScalarFieldEnum]
+
+
+export const AssetTypeFieldScalarFieldEnum = {
+  assetTypeId: 'assetTypeId',
+  fieldId: 'fieldId',
+  fieldTypeId: 'fieldTypeId',
+  required: 'required',
+  name: 'name',
+  items: 'items',
+  referentialIntegrityStrategy: 'referentialIntegrityStrategy',
+  allowMultipleRelations: 'allowMultipleRelations'
+} as const
+
+export type AssetTypeFieldScalarFieldEnum = (typeof AssetTypeFieldScalarFieldEnum)[keyof typeof AssetTypeFieldScalarFieldEnum]
+
+
+export const ReferencedFieldOnAssetTypeScalarFieldEnum = {
+  assetTypeId: 'assetTypeId',
+  fieldId: 'fieldId',
+  referencedAssetTypeId: 'referencedAssetTypeId'
+} as const
+
+export type ReferencedFieldOnAssetTypeScalarFieldEnum = (typeof ReferencedFieldOnAssetTypeScalarFieldEnum)[keyof typeof ReferencedFieldOnAssetTypeScalarFieldEnum]
 
 
 export const AssetScalarFieldEnum = {
@@ -158,15 +183,31 @@ export const AssetScalarFieldEnum = {
 export type AssetScalarFieldEnum = (typeof AssetScalarFieldEnum)[keyof typeof AssetScalarFieldEnum]
 
 
-export const ContainerScalarFieldEnum = {
-  id: 'id',
-  customId: 'customId',
-  name: 'name',
-  assets: 'assets',
-  apps: 'apps'
+export const AssetToAssetScalarFieldEnum = {
+  fromAssetId: 'fromAssetId',
+  toAssetId: 'toAssetId',
+  fieldId: 'fieldId'
 } as const
 
-export type ContainerScalarFieldEnum = (typeof ContainerScalarFieldEnum)[keyof typeof ContainerScalarFieldEnum]
+export type AssetToAssetScalarFieldEnum = (typeof AssetToAssetScalarFieldEnum)[keyof typeof AssetToAssetScalarFieldEnum]
+
+
+export const AssetToAppScalarFieldEnum = {
+  assetId: 'assetId',
+  appId: 'appId',
+  fieldId: 'fieldId'
+} as const
+
+export type AssetToAppScalarFieldEnum = (typeof AssetToAppScalarFieldEnum)[keyof typeof AssetToAppScalarFieldEnum]
+
+
+export const AssetToAccountScalarFieldEnum = {
+  assetId: 'assetId',
+  accountId: 'accountId',
+  fieldId: 'fieldId'
+} as const
+
+export type AssetToAccountScalarFieldEnum = (typeof AssetToAccountScalarFieldEnum)[keyof typeof AssetToAccountScalarFieldEnum]
 
 
 export const MirrorScalarFieldEnum = {

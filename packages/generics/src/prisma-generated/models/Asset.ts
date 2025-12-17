@@ -210,6 +210,10 @@ export type AssetWhereInput = {
   fields?: Prisma.JsonFilter<"Asset">
   type?: Prisma.XOR<Prisma.AssetTypeScalarRelationFilter, Prisma.AssetTypeWhereInput>
   PermissionInstance?: Prisma.PermissionInstanceListRelationFilter
+  fromAssetToAssets?: Prisma.AssetToAssetListRelationFilter
+  toAssetToAssets?: Prisma.AssetToAssetListRelationFilter
+  assetToApps?: Prisma.AssetToAppListRelationFilter
+  assetToAccounts?: Prisma.AssetToAccountListRelationFilter
 }
 
 export type AssetOrderByWithRelationInput = {
@@ -219,6 +223,10 @@ export type AssetOrderByWithRelationInput = {
   fields?: Prisma.SortOrder
   type?: Prisma.AssetTypeOrderByWithRelationInput
   PermissionInstance?: Prisma.PermissionInstanceOrderByRelationAggregateInput
+  fromAssetToAssets?: Prisma.AssetToAssetOrderByRelationAggregateInput
+  toAssetToAssets?: Prisma.AssetToAssetOrderByRelationAggregateInput
+  assetToApps?: Prisma.AssetToAppOrderByRelationAggregateInput
+  assetToAccounts?: Prisma.AssetToAccountOrderByRelationAggregateInput
 }
 
 export type AssetWhereUniqueInput = Prisma.AtLeast<{
@@ -231,6 +239,10 @@ export type AssetWhereUniqueInput = Prisma.AtLeast<{
   fields?: Prisma.JsonFilter<"Asset">
   type?: Prisma.XOR<Prisma.AssetTypeScalarRelationFilter, Prisma.AssetTypeWhereInput>
   PermissionInstance?: Prisma.PermissionInstanceListRelationFilter
+  fromAssetToAssets?: Prisma.AssetToAssetListRelationFilter
+  toAssetToAssets?: Prisma.AssetToAssetListRelationFilter
+  assetToApps?: Prisma.AssetToAppListRelationFilter
+  assetToAccounts?: Prisma.AssetToAccountListRelationFilter
 }, "id">
 
 export type AssetOrderByWithAggregationInput = {
@@ -260,6 +272,10 @@ export type AssetCreateInput = {
   fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
   type: Prisma.AssetTypeCreateNestedOneWithoutAssetsInput
   PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAssetInput
 }
 
 export type AssetUncheckedCreateInput = {
@@ -268,6 +284,10 @@ export type AssetUncheckedCreateInput = {
   typeId: number
   fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAssetInput
 }
 
 export type AssetUpdateInput = {
@@ -275,6 +295,10 @@ export type AssetUpdateInput = {
   fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   type?: Prisma.AssetTypeUpdateOneRequiredWithoutAssetsNestedInput
   PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAssetNestedInput
 }
 
 export type AssetUncheckedUpdateInput = {
@@ -283,6 +307,10 @@ export type AssetUncheckedUpdateInput = {
   typeId?: Prisma.IntFieldUpdateOperationsInput | number
   fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAssetNestedInput
 }
 
 export type AssetCreateManyInput = {
@@ -348,6 +376,11 @@ export type AssetSumOrderByAggregateInput = {
   typeId?: Prisma.SortOrder
 }
 
+export type AssetScalarRelationFilter = {
+  is?: Prisma.AssetWhereInput
+  isNot?: Prisma.AssetWhereInput
+}
+
 export type AssetCreateNestedOneWithoutPermissionInstanceInput = {
   create?: Prisma.XOR<Prisma.AssetCreateWithoutPermissionInstanceInput, Prisma.AssetUncheckedCreateWithoutPermissionInstanceInput>
   connectOrCreate?: Prisma.AssetCreateOrConnectWithoutPermissionInstanceInput
@@ -406,10 +439,70 @@ export type AssetUncheckedUpdateManyWithoutTypeNestedInput = {
   deleteMany?: Prisma.AssetScalarWhereInput | Prisma.AssetScalarWhereInput[]
 }
 
+export type AssetCreateNestedOneWithoutFromAssetToAssetsInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutFromAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutFromAssetToAssetsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutFromAssetToAssetsInput
+  connect?: Prisma.AssetWhereUniqueInput
+}
+
+export type AssetCreateNestedOneWithoutToAssetToAssetsInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutToAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutToAssetToAssetsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutToAssetToAssetsInput
+  connect?: Prisma.AssetWhereUniqueInput
+}
+
+export type AssetUpdateOneRequiredWithoutFromAssetToAssetsNestedInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutFromAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutFromAssetToAssetsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutFromAssetToAssetsInput
+  upsert?: Prisma.AssetUpsertWithoutFromAssetToAssetsInput
+  connect?: Prisma.AssetWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AssetUpdateToOneWithWhereWithoutFromAssetToAssetsInput, Prisma.AssetUpdateWithoutFromAssetToAssetsInput>, Prisma.AssetUncheckedUpdateWithoutFromAssetToAssetsInput>
+}
+
+export type AssetUpdateOneRequiredWithoutToAssetToAssetsNestedInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutToAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutToAssetToAssetsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutToAssetToAssetsInput
+  upsert?: Prisma.AssetUpsertWithoutToAssetToAssetsInput
+  connect?: Prisma.AssetWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AssetUpdateToOneWithWhereWithoutToAssetToAssetsInput, Prisma.AssetUpdateWithoutToAssetToAssetsInput>, Prisma.AssetUncheckedUpdateWithoutToAssetToAssetsInput>
+}
+
+export type AssetCreateNestedOneWithoutAssetToAppsInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAppsInput, Prisma.AssetUncheckedCreateWithoutAssetToAppsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutAssetToAppsInput
+  connect?: Prisma.AssetWhereUniqueInput
+}
+
+export type AssetUpdateOneRequiredWithoutAssetToAppsNestedInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAppsInput, Prisma.AssetUncheckedCreateWithoutAssetToAppsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutAssetToAppsInput
+  upsert?: Prisma.AssetUpsertWithoutAssetToAppsInput
+  connect?: Prisma.AssetWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AssetUpdateToOneWithWhereWithoutAssetToAppsInput, Prisma.AssetUpdateWithoutAssetToAppsInput>, Prisma.AssetUncheckedUpdateWithoutAssetToAppsInput>
+}
+
+export type AssetCreateNestedOneWithoutAssetToAccountsInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAccountsInput, Prisma.AssetUncheckedCreateWithoutAssetToAccountsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutAssetToAccountsInput
+  connect?: Prisma.AssetWhereUniqueInput
+}
+
+export type AssetUpdateOneRequiredWithoutAssetToAccountsNestedInput = {
+  create?: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAccountsInput, Prisma.AssetUncheckedCreateWithoutAssetToAccountsInput>
+  connectOrCreate?: Prisma.AssetCreateOrConnectWithoutAssetToAccountsInput
+  upsert?: Prisma.AssetUpsertWithoutAssetToAccountsInput
+  connect?: Prisma.AssetWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AssetUpdateToOneWithWhereWithoutAssetToAccountsInput, Prisma.AssetUpdateWithoutAssetToAccountsInput>, Prisma.AssetUncheckedUpdateWithoutAssetToAccountsInput>
+}
+
 export type AssetCreateWithoutPermissionInstanceInput = {
   name: string
   fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
   type: Prisma.AssetTypeCreateNestedOneWithoutAssetsInput
+  fromAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAssetInput
 }
 
 export type AssetUncheckedCreateWithoutPermissionInstanceInput = {
@@ -417,6 +510,10 @@ export type AssetUncheckedCreateWithoutPermissionInstanceInput = {
   name: string
   typeId: number
   fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAssetInput
 }
 
 export type AssetCreateOrConnectWithoutPermissionInstanceInput = {
@@ -439,6 +536,10 @@ export type AssetUpdateWithoutPermissionInstanceInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   type?: Prisma.AssetTypeUpdateOneRequiredWithoutAssetsNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAssetNestedInput
 }
 
 export type AssetUncheckedUpdateWithoutPermissionInstanceInput = {
@@ -446,12 +547,20 @@ export type AssetUncheckedUpdateWithoutPermissionInstanceInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   typeId?: Prisma.IntFieldUpdateOperationsInput | number
   fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAssetNestedInput
 }
 
 export type AssetCreateWithoutTypeInput = {
   name: string
   fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAssetInput
 }
 
 export type AssetUncheckedCreateWithoutTypeInput = {
@@ -459,6 +568,10 @@ export type AssetUncheckedCreateWithoutTypeInput = {
   name: string
   fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAssetInput
 }
 
 export type AssetCreateOrConnectWithoutTypeInput = {
@@ -497,6 +610,238 @@ export type AssetScalarWhereInput = {
   fields?: Prisma.JsonFilter<"Asset">
 }
 
+export type AssetCreateWithoutFromAssetToAssetsInput = {
+  name: string
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type: Prisma.AssetTypeCreateNestedOneWithoutAssetsInput
+  PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAssetInput
+}
+
+export type AssetUncheckedCreateWithoutFromAssetToAssetsInput = {
+  id?: number
+  name: string
+  typeId: number
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAssetInput
+}
+
+export type AssetCreateOrConnectWithoutFromAssetToAssetsInput = {
+  where: Prisma.AssetWhereUniqueInput
+  create: Prisma.XOR<Prisma.AssetCreateWithoutFromAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutFromAssetToAssetsInput>
+}
+
+export type AssetCreateWithoutToAssetToAssetsInput = {
+  name: string
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type: Prisma.AssetTypeCreateNestedOneWithoutAssetsInput
+  PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutFromAssetInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAssetInput
+}
+
+export type AssetUncheckedCreateWithoutToAssetToAssetsInput = {
+  id?: number
+  name: string
+  typeId: number
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutFromAssetInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAssetInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAssetInput
+}
+
+export type AssetCreateOrConnectWithoutToAssetToAssetsInput = {
+  where: Prisma.AssetWhereUniqueInput
+  create: Prisma.XOR<Prisma.AssetCreateWithoutToAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutToAssetToAssetsInput>
+}
+
+export type AssetUpsertWithoutFromAssetToAssetsInput = {
+  update: Prisma.XOR<Prisma.AssetUpdateWithoutFromAssetToAssetsInput, Prisma.AssetUncheckedUpdateWithoutFromAssetToAssetsInput>
+  create: Prisma.XOR<Prisma.AssetCreateWithoutFromAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutFromAssetToAssetsInput>
+  where?: Prisma.AssetWhereInput
+}
+
+export type AssetUpdateToOneWithWhereWithoutFromAssetToAssetsInput = {
+  where?: Prisma.AssetWhereInput
+  data: Prisma.XOR<Prisma.AssetUpdateWithoutFromAssetToAssetsInput, Prisma.AssetUncheckedUpdateWithoutFromAssetToAssetsInput>
+}
+
+export type AssetUpdateWithoutFromAssetToAssetsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type?: Prisma.AssetTypeUpdateOneRequiredWithoutAssetsNestedInput
+  PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAssetNestedInput
+}
+
+export type AssetUncheckedUpdateWithoutFromAssetToAssetsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  typeId?: Prisma.IntFieldUpdateOperationsInput | number
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAssetNestedInput
+}
+
+export type AssetUpsertWithoutToAssetToAssetsInput = {
+  update: Prisma.XOR<Prisma.AssetUpdateWithoutToAssetToAssetsInput, Prisma.AssetUncheckedUpdateWithoutToAssetToAssetsInput>
+  create: Prisma.XOR<Prisma.AssetCreateWithoutToAssetToAssetsInput, Prisma.AssetUncheckedCreateWithoutToAssetToAssetsInput>
+  where?: Prisma.AssetWhereInput
+}
+
+export type AssetUpdateToOneWithWhereWithoutToAssetToAssetsInput = {
+  where?: Prisma.AssetWhereInput
+  data: Prisma.XOR<Prisma.AssetUpdateWithoutToAssetToAssetsInput, Prisma.AssetUncheckedUpdateWithoutToAssetToAssetsInput>
+}
+
+export type AssetUpdateWithoutToAssetToAssetsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type?: Prisma.AssetTypeUpdateOneRequiredWithoutAssetsNestedInput
+  PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutFromAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAssetNestedInput
+}
+
+export type AssetUncheckedUpdateWithoutToAssetToAssetsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  typeId?: Prisma.IntFieldUpdateOperationsInput | number
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutFromAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAssetNestedInput
+}
+
+export type AssetCreateWithoutAssetToAppsInput = {
+  name: string
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type: Prisma.AssetTypeCreateNestedOneWithoutAssetsInput
+  PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutToAssetInput
+  assetToAccounts?: Prisma.AssetToAccountCreateNestedManyWithoutAssetInput
+}
+
+export type AssetUncheckedCreateWithoutAssetToAppsInput = {
+  id?: number
+  name: string
+  typeId: number
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutToAssetInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedCreateNestedManyWithoutAssetInput
+}
+
+export type AssetCreateOrConnectWithoutAssetToAppsInput = {
+  where: Prisma.AssetWhereUniqueInput
+  create: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAppsInput, Prisma.AssetUncheckedCreateWithoutAssetToAppsInput>
+}
+
+export type AssetUpsertWithoutAssetToAppsInput = {
+  update: Prisma.XOR<Prisma.AssetUpdateWithoutAssetToAppsInput, Prisma.AssetUncheckedUpdateWithoutAssetToAppsInput>
+  create: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAppsInput, Prisma.AssetUncheckedCreateWithoutAssetToAppsInput>
+  where?: Prisma.AssetWhereInput
+}
+
+export type AssetUpdateToOneWithWhereWithoutAssetToAppsInput = {
+  where?: Prisma.AssetWhereInput
+  data: Prisma.XOR<Prisma.AssetUpdateWithoutAssetToAppsInput, Prisma.AssetUncheckedUpdateWithoutAssetToAppsInput>
+}
+
+export type AssetUpdateWithoutAssetToAppsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type?: Prisma.AssetTypeUpdateOneRequiredWithoutAssetsNestedInput
+  PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutToAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAssetNestedInput
+}
+
+export type AssetUncheckedUpdateWithoutAssetToAppsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  typeId?: Prisma.IntFieldUpdateOperationsInput | number
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutToAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAssetNestedInput
+}
+
+export type AssetCreateWithoutAssetToAccountsInput = {
+  name: string
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type: Prisma.AssetTypeCreateNestedOneWithoutAssetsInput
+  PermissionInstance?: Prisma.PermissionInstanceCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppCreateNestedManyWithoutAssetInput
+}
+
+export type AssetUncheckedCreateWithoutAssetToAccountsInput = {
+  id?: number
+  name: string
+  typeId: number
+  fields: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedCreateNestedManyWithoutAssetInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutFromAssetInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedCreateNestedManyWithoutToAssetInput
+  assetToApps?: Prisma.AssetToAppUncheckedCreateNestedManyWithoutAssetInput
+}
+
+export type AssetCreateOrConnectWithoutAssetToAccountsInput = {
+  where: Prisma.AssetWhereUniqueInput
+  create: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAccountsInput, Prisma.AssetUncheckedCreateWithoutAssetToAccountsInput>
+}
+
+export type AssetUpsertWithoutAssetToAccountsInput = {
+  update: Prisma.XOR<Prisma.AssetUpdateWithoutAssetToAccountsInput, Prisma.AssetUncheckedUpdateWithoutAssetToAccountsInput>
+  create: Prisma.XOR<Prisma.AssetCreateWithoutAssetToAccountsInput, Prisma.AssetUncheckedCreateWithoutAssetToAccountsInput>
+  where?: Prisma.AssetWhereInput
+}
+
+export type AssetUpdateToOneWithWhereWithoutAssetToAccountsInput = {
+  where?: Prisma.AssetWhereInput
+  data: Prisma.XOR<Prisma.AssetUpdateWithoutAssetToAccountsInput, Prisma.AssetUncheckedUpdateWithoutAssetToAccountsInput>
+}
+
+export type AssetUpdateWithoutAssetToAccountsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  type?: Prisma.AssetTypeUpdateOneRequiredWithoutAssetsNestedInput
+  PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAssetNestedInput
+}
+
+export type AssetUncheckedUpdateWithoutAssetToAccountsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  typeId?: Prisma.IntFieldUpdateOperationsInput | number
+  fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAssetNestedInput
+}
+
 export type AssetCreateManyTypeInput = {
   id?: number
   name: string
@@ -507,6 +852,10 @@ export type AssetUpdateWithoutTypeInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUpdateManyWithoutAssetNestedInput
 }
 
 export type AssetUncheckedUpdateWithoutTypeInput = {
@@ -514,6 +863,10 @@ export type AssetUncheckedUpdateWithoutTypeInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   fields?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   PermissionInstance?: Prisma.PermissionInstanceUncheckedUpdateManyWithoutAssetNestedInput
+  fromAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutFromAssetNestedInput
+  toAssetToAssets?: Prisma.AssetToAssetUncheckedUpdateManyWithoutToAssetNestedInput
+  assetToApps?: Prisma.AssetToAppUncheckedUpdateManyWithoutAssetNestedInput
+  assetToAccounts?: Prisma.AssetToAccountUncheckedUpdateManyWithoutAssetNestedInput
 }
 
 export type AssetUncheckedUpdateManyWithoutTypeInput = {
@@ -529,10 +882,18 @@ export type AssetUncheckedUpdateManyWithoutTypeInput = {
 
 export type AssetCountOutputType = {
   PermissionInstance: number
+  fromAssetToAssets: number
+  toAssetToAssets: number
+  assetToApps: number
+  assetToAccounts: number
 }
 
 export type AssetCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   PermissionInstance?: boolean | AssetCountOutputTypeCountPermissionInstanceArgs
+  fromAssetToAssets?: boolean | AssetCountOutputTypeCountFromAssetToAssetsArgs
+  toAssetToAssets?: boolean | AssetCountOutputTypeCountToAssetToAssetsArgs
+  assetToApps?: boolean | AssetCountOutputTypeCountAssetToAppsArgs
+  assetToAccounts?: boolean | AssetCountOutputTypeCountAssetToAccountsArgs
 }
 
 /**
@@ -552,6 +913,34 @@ export type AssetCountOutputTypeCountPermissionInstanceArgs<ExtArgs extends runt
   where?: Prisma.PermissionInstanceWhereInput
 }
 
+/**
+ * AssetCountOutputType without action
+ */
+export type AssetCountOutputTypeCountFromAssetToAssetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AssetToAssetWhereInput
+}
+
+/**
+ * AssetCountOutputType without action
+ */
+export type AssetCountOutputTypeCountToAssetToAssetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AssetToAssetWhereInput
+}
+
+/**
+ * AssetCountOutputType without action
+ */
+export type AssetCountOutputTypeCountAssetToAppsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AssetToAppWhereInput
+}
+
+/**
+ * AssetCountOutputType without action
+ */
+export type AssetCountOutputTypeCountAssetToAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AssetToAccountWhereInput
+}
+
 
 export type AssetSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -560,6 +949,10 @@ export type AssetSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   fields?: boolean
   type?: boolean | Prisma.AssetTypeDefaultArgs<ExtArgs>
   PermissionInstance?: boolean | Prisma.Asset$PermissionInstanceArgs<ExtArgs>
+  fromAssetToAssets?: boolean | Prisma.Asset$fromAssetToAssetsArgs<ExtArgs>
+  toAssetToAssets?: boolean | Prisma.Asset$toAssetToAssetsArgs<ExtArgs>
+  assetToApps?: boolean | Prisma.Asset$assetToAppsArgs<ExtArgs>
+  assetToAccounts?: boolean | Prisma.Asset$assetToAccountsArgs<ExtArgs>
   _count?: boolean | Prisma.AssetCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["asset"]>
 
@@ -590,6 +983,10 @@ export type AssetOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
 export type AssetInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   type?: boolean | Prisma.AssetTypeDefaultArgs<ExtArgs>
   PermissionInstance?: boolean | Prisma.Asset$PermissionInstanceArgs<ExtArgs>
+  fromAssetToAssets?: boolean | Prisma.Asset$fromAssetToAssetsArgs<ExtArgs>
+  toAssetToAssets?: boolean | Prisma.Asset$toAssetToAssetsArgs<ExtArgs>
+  assetToApps?: boolean | Prisma.Asset$assetToAppsArgs<ExtArgs>
+  assetToAccounts?: boolean | Prisma.Asset$assetToAccountsArgs<ExtArgs>
   _count?: boolean | Prisma.AssetCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AssetIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -604,6 +1001,10 @@ export type $AssetPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   objects: {
     type: Prisma.$AssetTypePayload<ExtArgs>
     PermissionInstance: Prisma.$PermissionInstancePayload<ExtArgs>[]
+    fromAssetToAssets: Prisma.$AssetToAssetPayload<ExtArgs>[]
+    toAssetToAssets: Prisma.$AssetToAssetPayload<ExtArgs>[]
+    assetToApps: Prisma.$AssetToAppPayload<ExtArgs>[]
+    assetToAccounts: Prisma.$AssetToAccountPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1006,6 +1407,10 @@ export interface Prisma__AssetClient<T, Null = never, ExtArgs extends runtime.Ty
   readonly [Symbol.toStringTag]: "PrismaPromise"
   type<T extends Prisma.AssetTypeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AssetTypeDefaultArgs<ExtArgs>>): Prisma.Prisma__AssetTypeClient<runtime.Types.Result.GetResult<Prisma.$AssetTypePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   PermissionInstance<T extends Prisma.Asset$PermissionInstanceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Asset$PermissionInstanceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PermissionInstancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  fromAssetToAssets<T extends Prisma.Asset$fromAssetToAssetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Asset$fromAssetToAssetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetToAssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  toAssetToAssets<T extends Prisma.Asset$toAssetToAssetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Asset$toAssetToAssetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetToAssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assetToApps<T extends Prisma.Asset$assetToAppsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Asset$assetToAppsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetToAppPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assetToAccounts<T extends Prisma.Asset$assetToAccountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Asset$assetToAccountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssetToAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1456,6 +1861,102 @@ export type Asset$PermissionInstanceArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.PermissionInstanceScalarFieldEnum | Prisma.PermissionInstanceScalarFieldEnum[]
+}
+
+/**
+ * Asset.fromAssetToAssets
+ */
+export type Asset$fromAssetToAssetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AssetToAsset
+   */
+  select?: Prisma.AssetToAssetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AssetToAsset
+   */
+  omit?: Prisma.AssetToAssetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AssetToAssetInclude<ExtArgs> | null
+  where?: Prisma.AssetToAssetWhereInput
+  orderBy?: Prisma.AssetToAssetOrderByWithRelationInput | Prisma.AssetToAssetOrderByWithRelationInput[]
+  cursor?: Prisma.AssetToAssetWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AssetToAssetScalarFieldEnum | Prisma.AssetToAssetScalarFieldEnum[]
+}
+
+/**
+ * Asset.toAssetToAssets
+ */
+export type Asset$toAssetToAssetsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AssetToAsset
+   */
+  select?: Prisma.AssetToAssetSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AssetToAsset
+   */
+  omit?: Prisma.AssetToAssetOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AssetToAssetInclude<ExtArgs> | null
+  where?: Prisma.AssetToAssetWhereInput
+  orderBy?: Prisma.AssetToAssetOrderByWithRelationInput | Prisma.AssetToAssetOrderByWithRelationInput[]
+  cursor?: Prisma.AssetToAssetWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AssetToAssetScalarFieldEnum | Prisma.AssetToAssetScalarFieldEnum[]
+}
+
+/**
+ * Asset.assetToApps
+ */
+export type Asset$assetToAppsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AssetToApp
+   */
+  select?: Prisma.AssetToAppSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AssetToApp
+   */
+  omit?: Prisma.AssetToAppOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AssetToAppInclude<ExtArgs> | null
+  where?: Prisma.AssetToAppWhereInput
+  orderBy?: Prisma.AssetToAppOrderByWithRelationInput | Prisma.AssetToAppOrderByWithRelationInput[]
+  cursor?: Prisma.AssetToAppWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AssetToAppScalarFieldEnum | Prisma.AssetToAppScalarFieldEnum[]
+}
+
+/**
+ * Asset.assetToAccounts
+ */
+export type Asset$assetToAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AssetToAccount
+   */
+  select?: Prisma.AssetToAccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AssetToAccount
+   */
+  omit?: Prisma.AssetToAccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AssetToAccountInclude<ExtArgs> | null
+  where?: Prisma.AssetToAccountWhereInput
+  orderBy?: Prisma.AssetToAccountOrderByWithRelationInput | Prisma.AssetToAccountOrderByWithRelationInput[]
+  cursor?: Prisma.AssetToAccountWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AssetToAccountScalarFieldEnum | Prisma.AssetToAccountScalarFieldEnum[]
 }
 
 /**
