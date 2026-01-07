@@ -25,7 +25,7 @@ services:
     environment:
       DATABASE_URL: postgresql://sigauthuser:sigauthpass@db:5432/sigauth
     command: >
-      sh -lc "pnpm -C packages/prisma-wrapper exec prisma migrate deploy"
+      sh -lc "pnpm -C packages/generics exec prisma migrate deploy"
 
   api:
     container_name: sigauth-api
@@ -39,7 +39,7 @@ services:
       PORT: 3000
       # is uses in PrismaService.init TODO check if really neccesaary
       FRONTEND_URL: http://localhost:3000
-      # Replaces .env in packages/prisma-wrapper
+      # Replaces .env in packages/generics
       DATABASE_URL: postgresql://sigauthuser:sigauthpass@db:5432/sigauth
       SESSION_EXPIRATION_OFFSET: 5
       AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET: 5
