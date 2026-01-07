@@ -8,7 +8,7 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 # only copy package json for improved caching layer
 COPY apps/api/package.json apps/api/package.json
 COPY apps/webapp/package.json apps/webapp/package.json
-COPY packages/prisma-wrapper/package.json packages/prisma-wrapper/package.json
+COPY packages/generics/package.json packages/generics/package.json
 RUN pnpm install --frozen-lockfile
 
 # build app
@@ -16,10 +16,9 @@ FROM deps AS build
 COPY . .
 
 # generate prisma client
-RUN pnpm --dir packages/prisma-wrapper exec prisma generate
-RUN bash packages/prisma-wrapper/prisma/patch-prisma-types.sh
+RUN pnpm --dir packages/generics exec prisma generate
 
-RUN pnpm --filter ./packages/prisma-wrapper run build
+RUN pnpm --filter ./packages/generics run build
 # build api and webapp
 RUN pnpm --filter ./apps/webapp run build
 RUN pnpm --filter ./apps/api run build
