@@ -1,7 +1,10 @@
-import { AssetType, AssetTypeField, AssetTypeRelationField } from '@/common/types/asset.types';
+import { Injectable } from '@nestjs/common';
+import { AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
 
-export abstract class DatabaseAdapter {
+@Injectable()
+export abstract class DatabaseGateway {
     abstract connect(): Promise<void>;
+
     abstract disconnect(): Promise<void>;
 
     abstract query<T>(queryString: string, params?: any[]): Promise<T[]>;

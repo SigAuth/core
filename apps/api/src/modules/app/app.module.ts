@@ -1,4 +1,3 @@
-import { PrismaService } from '@/common/prisma/prisma.service';
 import { AppsController } from '@/modules/app/app.controller';
 import { AppWebFetchCron } from '@/modules/app/app.cron';
 import { AppsService } from '@/modules/app/app.service';
@@ -10,6 +9,6 @@ import { Module } from '@nestjs/common';
 @Module({
     imports: [HttpModule],
     controllers: [AppsController],
-    providers: [AppsService, AuthGuard, IsRoot, PrismaService, AppWebFetchCron],
+    providers: [AppsService, AuthGuard, IsRoot, AppWebFetchCron],
 })
 export class AppsModule {}

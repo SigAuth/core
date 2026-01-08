@@ -31,24 +31,10 @@
             "import": "./dist/extended-prisma.js",
             "default": "./dist/extended-prisma.js"
         },
-        "./prisma-extended": {
-            "types": "./dist/extended-prisma.d.ts",
-            "import": "./dist/extended-prisma.js",
-            "default": "./dist/extended-prisma.js"
-        },
-        "./prisma-client": {
-            "types": "./dist/prisma-generated/client.d.ts",
-            "import": "./dist/prisma-generated/client.js",
-            "default": "./dist/prisma-generated/client.js"
-        },
-        "./prisma-types": {
-            "types": "./dist/prisma-generated/client.d.ts",
-            "default": "./dist/empty.js"
-        },
-        "./json-types": {
-            "types": "./dist/json-types.d.ts",
-            "import": "./dist/json-types.js",
-            "default": "./dist/json-types.js"
+        "./json": {
+            "types": "./dist/json.types.d.ts",
+            "import": "./dist/json.types.js",
+            "default": "./dist/json.types.js"
         },
         "./protected": {
             "types": "./dist/protected.d.ts",
@@ -56,9 +42,14 @@
             "default": "./dist/protected.js"
         },
         "./mirror": {
-            "types": "./dist/mirror-types.d.ts",
-            "import": "./dist/mirror-types.js",
-            "default": "./dist/mirror-types.js"
+            "types": "./dist/mirror.types.d.ts",
+            "import": "./dist/mirror.types.js",
+            "default": "./dist/mirror.types.js"
+        },
+        "./asset": {
+            "types": "./dist/asset.types.d.ts",
+            "import": "./dist/asset.types.js",
+            "default": "./dist/asset.types.js"
         }
     },
     "dependencies": {
@@ -71,4 +62,3 @@
         "typescript": "latest"
     }
 }
-

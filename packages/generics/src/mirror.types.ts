@@ -1,4 +1,4 @@
-import { Asset, AssetType } from './prisma-generated/browser.js';
+import { Asset, AssetType } from './asset.types.js';
 
 export abstract class MirrorExecutor {
     abstract init(cb: Callback): Promise<void>;

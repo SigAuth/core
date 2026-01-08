@@ -1,20 +1,19 @@
-import { PrismaService } from '@/common/prisma/prisma.service';
+import { DatabaseModule } from '@/common/database/database.module';
 import { AccountModule } from '@/modules/account/account.module';
 import { AppsModule } from '@/modules/app/app.module';
 import { AssetTypeModule } from '@/modules/asset-type/asset-type.module';
 import { AssetModule } from '@/modules/asset/asset.module';
 import { AuthModule } from '@/modules/auth/auth.module';
-import { ContainerModule } from '@/modules/container/container.module';
+import { HealthModule } from '@/modules/health/health.module';
+import { MirrorModule } from '@/modules/mirror/mirror.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { WellKnownModule } from './modules/well-known/well-known.module';
-import { MirrorModule } from '@/modules/mirror/mirror.module';
-import { ScheduleModule } from '@nestjs/schedule';
-import { HealthModule } from '@/modules/health/health.module';
 
 const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
 
@@ -35,12 +34,12 @@ const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
         AssetTypeModule,
         AssetModule,
         AppsModule,
-        ContainerModule,
         AuthModule,
         MirrorModule,
         WellKnownModule,
         HealthModule,
+        DatabaseModule,
     ],
-    providers: [PrismaService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+    providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
