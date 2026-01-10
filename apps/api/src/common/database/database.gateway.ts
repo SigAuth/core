@@ -9,9 +9,9 @@ export abstract class DatabaseGateway {
 
     abstract query<T>(queryString: string, params?: any[]): Promise<T[]>;
 
-    abstract createAssetType(name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<AssetType>;
+    abstract createAssetType(name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<string | undefined>;
 
-    abstract editAssetType(uuid: string, name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<AssetType>;
+    abstract editAssetType(uuid: string, name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<boolean>;
 
-    abstract deleteAssetType(uuid: string): Promise<void>;
+    abstract deleteAssetType(uuid: string): Promise<boolean>;
 }
