@@ -1,0 +1,83 @@
+{
+    "name": "@sigauth/cli",
+    "description": "CLI tool to generate sigauth typescript types",
+    "version": "0.1.0",
+    "author": "Ben Hacker",
+    "bin": {
+        "sigauth": "./bin/run.js"
+    },
+    "bugs": "https://github.com/sigauth/core/issues",
+    "dependencies": {
+        "@oclif/core": "^4",
+        "@oclif/plugin-help": "^6",
+        "@oclif/plugin-plugins": "^5",
+        "@sigauth/generics": "workspace:*",
+        "chalk": "^5.6.2",
+        "dotenv": "^17.2.3",
+        "enquirer": "^2.4.1",
+        "knex": "^3.1.0",
+        "ora": "^9.0.0",
+        "ts-morph": "^27.0.2"
+    },
+    "devDependencies": {
+        "@eslint/compat": "^1",
+        "@oclif/prettier-config": "^0.2.1",
+        "@oclif/test": "^4",
+        "@types/chai": "^4",
+        "@types/mocha": "^10",
+        "@types/node": "^18",
+        "chai": "^4",
+        "eslint": "^9",
+        "eslint-config-oclif": "^6",
+        "eslint-config-prettier": "^10",
+        "mocha": "^10",
+        "oclif": "^4",
+        "shx": "^0.3.3",
+        "ts-node": "^10",
+        "typescript": "^5"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "files": [
+        "./bin",
+        "./dist",
+        "./oclif.manifest.json"
+    ],
+    "homepage": "https://sigauth.org",
+    "keywords": [
+        "oclif",
+        "sigauth",
+        "cli",
+        "typescript",
+        "authentication"
+    ],
+    "license": "MIT",
+    "main": "dist/index.js",
+    "type": "module",
+    "oclif": {
+        "bin": "sigauth",
+        "dirname": "sigauth",
+        "commands": "./dist/commands",
+        "plugins": [
+            "@oclif/plugin-help"
+        ],
+        "topicSeparator": " ",
+        "topics": {
+            "debug": {
+                "description": "Commands for debugging database connections and queries"
+            }
+        }
+    },
+    "repository": "packages/cli",
+    "scripts": {
+        "build": "shx rm -rf dist && tsc -b",
+        "lint": "eslint",
+        "postpack": "shx rm -f oclif.manifest.json",
+        "posttest": "pnpm run lint",
+        "prepack": "oclif manifest && oclif readme",
+        "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+        "version": "oclif readme && git add README.md"
+    },
+    "types": "dist/index.d.ts"
+}

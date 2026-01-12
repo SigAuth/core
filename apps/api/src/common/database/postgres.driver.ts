@@ -1,12 +1,9 @@
 import { DatabaseGateway } from '@/common/database/database.gateway';
 import { Logger } from '@nestjs/common';
-import { AssetFieldType, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
+import { ASSET_TYPE_TABLE, AssetFieldType, AssetTypeField, AssetTypeRelationField, PERMISSION_TABLE } from '@sigauth/generics/asset';
 import knex, { Knex } from 'knex';
 
 export class PostgresDriver implements DatabaseGateway {
-    private readonly ASSET_TYPE_TABLE = 'asset_types';
-    private readonly PERMISSION_TABLE = 'permission_instances';
-
     private readonly logger = new Logger(PostgresDriver.name);
     private db?: Knex;
 
@@ -29,8 +26,8 @@ export class PostgresDriver implements DatabaseGateway {
         if (!this.db) throw new Error('Database not connected');
 
         // generate base table to maintain asset types
-        if (!(await this.db.schema.hasTable(this.ASSET_TYPE_TABLE))) {
-            await this.db.schema.createTable(this.ASSET_TYPE_TABLE, table => {
+        if (!(await this.db.schema.hasTable(ASSET_TYPE_TABLE))) {
+            await this.db.schema.createTable(ASSET_TYPE_TABLE, table => {
                 table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key
                 table.string('name').notNullable().unique();
             });
@@ -41,14 +38,20 @@ export class PostgresDriver implements DatabaseGateway {
             { name: 'username', type: AssetFieldType.VARCHAR, required: true },
             { name: 'email', type: AssetFieldType.VARCHAR, required: true },
             { name: 'api', type: AssetFieldType.VARCHAR },
-            { name: '2faCode', type: AssetFieldType.VARCHAR },
+            { name: 'twoFactorCode', type: AssetFieldType.VARCHAR },
             { name: 'deactivated', type: AssetFieldType.BOOLEAN, required: true },
             { name: 'passwordHash', type: AssetFieldType.VARCHAR, required: true },
         ]);
         if (!accountType) throw new Error('Failed to create Account asset type during initialization');
 
         const sessionType = await this.createAssetType('Session', [
-            { name: 'subject', type: AssetFieldType.RELATION, required: true, relationTypeConstraint: [accountType] },
+            {
+                name: 'subject',
+                type: AssetFieldType.RELATION,
+                required: true,
+                relationTypeConstraint: [accountType],
+                referentialIntegrityStrategy: 'CASCADE',
+            },
             { name: 'expire', type: AssetFieldType.INTEGER, required: true }, // todo is there a native way to expire rows in Postgres?
             { name: 'created', type: AssetFieldType.INTEGER, required: true },
         ]);
@@ -73,8 +76,20 @@ export class PostgresDriver implements DatabaseGateway {
         if (!appType) throw new Error('Failed to create App asset type during initialization');
 
         await this.createAssetType('AuthorizationInstance', [
-            { name: 'session', type: AssetFieldType.RELATION, required: true, relationTypeConstraint: [sessionType] },
-            { name: 'app', type: AssetFieldType.RELATION, required: true, relationTypeConstraint: [appType] },
+            {
+                name: 'session',
+                type: AssetFieldType.RELATION,
+                required: true,
+                relationTypeConstraint: [sessionType],
+                referentialIntegrityStrategy: 'CASCADE',
+            },
+            {
+                name: 'app',
+                type: AssetFieldType.RELATION,
+                required: true,
+                relationTypeConstraint: [appType],
+                referentialIntegrityStrategy: 'CASCADE',
+            },
             { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
             { name: 'accessToken', type: AssetFieldType.VARCHAR, required: true },
         ]);
@@ -88,8 +103,8 @@ export class PostgresDriver implements DatabaseGateway {
             { name: 'created', type: AssetFieldType.DATE, required: true },
         ]);
 
-        if (!(await this.db.schema.hasTable(this.PERMISSION_TABLE))) {
-            await this.db.schema.createTable(this.PERMISSION_TABLE, table => {
+        if (!(await this.db.schema.hasTable(PERMISSION_TABLE))) {
+            await this.db.schema.createTable(PERMISSION_TABLE, table => {
                 table
                     .uuid('account')
                     .notNullable()
@@ -118,7 +133,7 @@ export class PostgresDriver implements DatabaseGateway {
 
     async disconnect(): Promise<void> {}
 
-    async query<T>(queryString: string, params?: any[]): Promise<T[]> {
+    async rawQuery<T>(queryString: string, params?: any[]): Promise<T[]> {
         return [];
     }
 
@@ -128,13 +143,13 @@ export class PostgresDriver implements DatabaseGateway {
     ): Promise<string | undefined> {
         if (!this.db) throw new Error('Database not connected');
 
-        if (await this.db(this.ASSET_TYPE_TABLE).where({ name }).first()) {
+        if (await this.db(ASSET_TYPE_TABLE).where({ name }).first()) {
             this.logger.error(`Asset type "${name}" already exists, skipping creation.`);
             return undefined;
         }
 
         // add asset_type entry
-        const [{ uuid }] = await this.db(this.ASSET_TYPE_TABLE).insert({ name }).returning('uuid');
+        const [{ uuid }] = await this.db(ASSET_TYPE_TABLE).insert({ name }).returning('uuid');
         const tableName = `asset_${uuid.replace(/-/g, '_')}`;
         await this.db.schema.createTable(tableName, async table => {
             table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key
@@ -181,10 +196,13 @@ export class PostgresDriver implements DatabaseGateway {
                             switch (relField.referentialIntegrityStrategy) {
                                 case 'CASCADE':
                                     column.onDelete('CASCADE');
+                                    break;
                                 case 'SET_NULL':
                                     column.onDelete('SET NULL');
+                                    break;
                                 case 'RESTRICT':
                                     column.onDelete('RESTRICT');
+                                    break;
                                 case 'INVALIDATE':
                                     // todo no direct equivalent in Postgres, would require triggers
                                     break;
@@ -209,7 +227,7 @@ export class PostgresDriver implements DatabaseGateway {
 
     private async createJoinTable(sourceTypeUuid: string, targetTypeUuid: string): Promise<void> {
         const joinTableName = `rel_${sourceTypeUuid.replace(/-/g, '_')}_${targetTypeUuid.replace(/-/g, '_')}`;
-        await this.db!.schema.createTable(joinTableName, table => {
+        await this.db!.schema.createTableIfNotExists(joinTableName, table => {
             table
                 .uuid('source')
                 .notNullable()
@@ -222,7 +240,8 @@ export class PostgresDriver implements DatabaseGateway {
                 .references('uuid')
                 .inTable(`asset_${targetTypeUuid.replace(/-/g, '_')}`)
                 .onDelete('CASCADE');
-            table.primary(['source', 'target']);
+            table.string('field').notNullable();
+            table.primary(['source', 'target', 'field']);
         });
         this.logger.log(`Created join table for relations between "${sourceTypeUuid}" and "${targetTypeUuid}"`);
     }

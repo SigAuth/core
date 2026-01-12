@@ -12,6 +12,12 @@ out/
 .cache/
 .turbo/
 
+# CLI
+oclif.manifest.json
+*-debug.log
+*-error.log
+**/.DS_Store
+tmp/
 
 # Vite
 *.local

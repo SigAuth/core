@@ -7,7 +7,7 @@ export abstract class DatabaseGateway {
 
     abstract disconnect(): Promise<void>;
 
-    abstract query<T>(queryString: string, params?: any[]): Promise<T[]>;
+    abstract rawQuery<T>(queryString: string, params?: any[]): Promise<T[]>;
 
     abstract createAssetType(name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<string | undefined>;
 

@@ -1,3 +1,6 @@
+export const ASSET_TYPE_TABLE = 'asset_types';
+export const PERMISSION_TABLE = 'permission_instances';
+
 export type AssetType = {
     uuid: string;
     name: string;
@@ -5,7 +8,6 @@ export type AssetType = {
 };
 
 export type AssetTypeField = {
-    uuid: string;
     name: string;
     type: AssetFieldType;
     required?: boolean;
