@@ -46,7 +46,7 @@ export class PostgresDriver implements DatabaseGateway {
 
         const sessionType = await this.createAssetType('Session', [
             {
-                name: 'subject',
+                name: 'subjectUUID',
                 type: AssetFieldType.RELATION,
                 required: true,
                 relationTypeConstraint: [accountType],
@@ -77,14 +77,14 @@ export class PostgresDriver implements DatabaseGateway {
 
         await this.createAssetType('AuthorizationInstance', [
             {
-                name: 'session',
+                name: 'sessionUUID',
                 type: AssetFieldType.RELATION,
                 required: true,
                 relationTypeConstraint: [sessionType],
                 referentialIntegrityStrategy: 'CASCADE',
             },
             {
-                name: 'app',
+                name: 'appUUID',
                 type: AssetFieldType.RELATION,
                 required: true,
                 relationTypeConstraint: [appType],
@@ -154,6 +154,8 @@ export class PostgresDriver implements DatabaseGateway {
         await this.db.schema.createTable(tableName, async table => {
             table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key
             for (const field of fields) {
+                if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(field.name) == false) throw new Error(`Invalid field name: ${field.name}`);
+
                 let column;
                 switch (field.type) {
                     case AssetFieldType.VARCHAR:

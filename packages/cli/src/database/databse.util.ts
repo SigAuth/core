@@ -4,11 +4,11 @@ import { PostgresDriver } from './postgres.driver.js';
 export const DatabaseUtil = {
     DATABASE_DRIVERS: ['pg', 'neo4j'],
 
-    getDriver(flag: string): DatabaseGateway | null {
+    getDriver(connectionString: string): DatabaseGateway | null {
         let dbGateway: DatabaseGateway | null = null;
-        if (flag === 'pg') {
+        if (connectionString.startsWith('postgres://')) {
             dbGateway = new PostgresDriver();
-        } else if (flag === 'neo4j') {
+        } else if (connectionString.startsWith('neo4j://')) {
             // not implemented yet
         }
 

@@ -1,22 +1,14 @@
 import { AssetFieldType, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
-import * as dotenv from 'dotenv';
 import knex, { Knex } from 'knex';
 import { DatabaseGateway } from './databse.gateway.js';
 
 export class PostgresDriver extends DatabaseGateway {
     private db: Knex | null = null;
 
-    async connect(): Promise<boolean> {
-        dotenv.config();
-
-        const dbUrl = process.env.DATABASE_URL;
-        if (!dbUrl) {
-            throw new Error('DATABASE_URL not set in env');
-        }
-
+    async connect(connectionString: string): Promise<boolean> {
         this.db = knex({
             client: 'pg',
-            connection: dbUrl,
+            connection: connectionString,
         });
 
         await this.db.raw('select 1');

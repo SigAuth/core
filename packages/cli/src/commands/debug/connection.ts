@@ -1,5 +1,6 @@
-import { Command, Flags } from '@oclif/core';
+import { Command } from '@oclif/core';
 import chalk from 'chalk';
+import dotenv from 'dotenv';
 import ora from 'ora';
 import { DatabaseGateway } from '../../database/databse.gateway.js';
 import { DatabaseUtil } from '../../database/databse.util.js';
@@ -7,28 +8,24 @@ import { DatabaseUtil } from '../../database/databse.util.js';
 export default class DbConnect extends Command {
     static description = 'Connects to Datasource using knex and DATABASE_URL from env';
 
-    static flags = {
-        driver: Flags.string({
-            char: 'd',
-            description: 'Database driver to use (e.g., postgres, neo4j)',
-            options: DatabaseUtil.DATABASE_DRIVERS,
-            required: true,
-        }),
-    };
-
     async run(): Promise<void> {
-        const { flags } = await this.parse(DbConnect);
-
         const spinner = ora('Connecting to database…').start();
 
-        let dbGateway: DatabaseGateway | null = DatabaseUtil.getDriver(flags.driver);
+        dotenv.config();
+
+        const dbUrl = process.env.DATABASE_URL;
+        if (!dbUrl) {
+            throw new Error('DATABASE_URL not set in env');
+        }
+
+        let dbGateway: DatabaseGateway | null = DatabaseUtil.getDriver(dbUrl);
         if (dbGateway === null) {
             spinner.fail(chalk.red('Database connection failed'));
-            this.error(`Unsupported driver: ${flags.driver}`);
+            this.error(`Unsupported driver: ${dbUrl}`);
         }
 
         try {
-            await dbGateway.connect();
+            await dbGateway.connect(dbUrl);
             spinner.succeed('Database connection successful');
         } catch (error) {
             spinner.fail(chalk.red('Database connection failed'));

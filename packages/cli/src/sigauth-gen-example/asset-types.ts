@@ -1,4 +1,4 @@
-interface Account {
+export interface Account {
     deactivated: boolean;
     uuid: string;
     email: string;
@@ -6,16 +6,18 @@ interface Account {
     passwordHash: string;
     api?: string;
     username: string;
+
+    sessions: Session[];
 }
 
-interface Session {
+export interface Session {
     uuid: string;
     subject: Account;
     expire: number;
     created: number;
 }
 
-interface Mirror {
+export interface Mirror {
     autoRun: boolean;
     uuid: string;
     autoRunInterval?: number;
@@ -25,7 +27,7 @@ interface Mirror {
     lastResult?: string;
 }
 
-interface App {
+export interface App {
     uuid: string;
     name: string;
     url: string;
@@ -34,7 +36,7 @@ interface App {
     scopes?: string;
 }
 
-interface AuthorizationInstance {
+export interface AuthorizationInstance {
     uuid: string;
     session: Session;
     app: App;
@@ -42,7 +44,7 @@ interface AuthorizationInstance {
     accessToken: string;
 }
 
-interface AuthorizationChallenge {
+export interface AuthorizationChallenge {
     session: Session;
     app: App;
     created: Date;
@@ -51,3 +53,4 @@ interface AuthorizationChallenge {
     challenge: string;
     redirectUri: string;
 }
+

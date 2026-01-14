@@ -1,7 +1,7 @@
 import { AssetType } from '@sigauth/generics/asset';
 
 export abstract class DatabaseGateway {
-    abstract connect(): Promise<boolean>;
+    abstract connect(connectionString: string): Promise<boolean>;
 
     abstract disconnect(): Promise<boolean>;
 
