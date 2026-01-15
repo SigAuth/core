@@ -31,7 +31,7 @@ export interface App {
     url: string;
     oidcAuthCodeCb?: string;
     token?: string;
-    scopes?: string;
+    scopes?: string[];
     /** Reverse relation from AuthorizationInstance.appUuid */
     app_authorizationinstances?: AuthorizationInstance[];
     /** Reverse relation from AuthorizationChallenge.appUuid */
@@ -46,7 +46,7 @@ export interface Mirror {
     name: string;
     code: string;
     lastResult?: string;
-    ownerUuids?: string;
+    ownerUuids?: string[];
     /** These fields are only available when the relation is included in the query */
     owner_accounts?: Account[];
 }

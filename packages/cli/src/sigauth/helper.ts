@@ -1,5 +1,5 @@
 
-import { GlobalRealtionMap, Query } from './sigauth.client.js';
+import { GlobalRealtionMap, FindQuery } from './sigauth.client.js';
 
 export const Utils = {
     simpleQs: (obj: Record<string, any>, prefix = ''): string => {
@@ -16,7 +16,7 @@ export const Utils = {
         return parts.join('&');
     },
 
-    toSQL: (table: string, query: Query<any>, relationMap: GlobalRealtionMap) => {
+    toSQL: (table: string, query: FindQuery<any>, relationMap: GlobalRealtionMap) => {
         const conditions: string[] = [];
         const joins: string[] = [];
         const selections: string[] = [`"${table}".*`];
