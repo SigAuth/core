@@ -33,22 +33,47 @@ export const Utils = {
         const selections: string[] = [\`"\${table}".*\`];
 
         if (query.where) {
-            for (const [key, value] of Object.entries(query.where)) {
-                const col = \`"\${table}"."\${key}"\`;
+            const parseWhere = (where: any): string[] => {
+                const parts: string[] = [];
+                for (const [key, value] of Object.entries(where)) {
+                    if (key === 'OR' || key === 'AND') {
+                        if (Array.isArray(value)) {
+                            const subs = value
+                                .map((w: any) => {
+                                    const p = parseWhere(w);
+                                    if (p.length === 0) return null;
+                                    return p.length > 1 ? \`(\${p.join(' AND ')})\` : p[0];
+                                })
+                                .filter(Boolean);
 
-                if (typeof value === 'object' && value !== null) {
-                    if ('in' in value) {
-                        const val = value as { in: any[] };
-                        conditions.push(\`\${col} IN (\${val.in.map((v: any) => \`'\${v}'\`).join(',')})\`);
-                    } else if ('lt' in value || 'gt' in value) {
-                        const val = value as { lt?: any; gt?: any };
-                        if (val.lt !== undefined) conditions.push(\`\${col} < '\${val.lt}'\`);
-                        if (val.gt !== undefined) conditions.push(\`\${col} > '\${val.gt}'\`);
+                            if (subs.length > 0) {
+                                parts.push(\`(\${subs.join(\` \${key} \`)})\`);
+                            }
+                        }
+                        continue;
                     }
-                } else {
-                    conditions.push(\`\${col} = '\${value}'\`);
+
+                    const col = \`"\${table}"."\${key}"\`;
+
+                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        if ('in' in value) {
+                            const val = value as { in: any[] };
+                            parts.push(\`\${col} IN (\${val.in.map((v: any) => \`'\${v}'\`).join(',')})\`);
+                        } else if ('lt' in value || 'gt' in value) {
+                            const val = value as { lt?: any; gt?: any };
+                            if (val.lt !== undefined) parts.push(\`\${col} < '\${val.lt}'\`);
+                            if (val.gt !== undefined) parts.push(\`\${col} > '\${val.gt}'\`);
+                        } else {
+                            parts.push(\`\${col} = '\${value}'\`);
+                        }
+                    } else {
+                        parts.push(\`\${col} = '\${value}'\`);
+                    }
                 }
-            }
+                return parts;
+            };
+
+            conditions.push(...parseWhere(query.where));
         }
 
         const getShortId = (fullId: string) =>

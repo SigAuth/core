@@ -25,7 +25,7 @@ export class BaseTypeGenerator {
                     const targetType = this.assetTypes.find(t => t.uuid === relationField.targetAssetType);
 
                     if (targetType) {
-                        const fieldNameBase = field.name.replace(/(Id|UUID|Uuid|Identifier)$/i, '');
+                        const fieldNameBase = field.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '');
                         const reversePropName = `${fieldNameBase}_${type.name.toLowerCase()}s`;
 
                         if (reverseRelations[relationField.targetAssetType]) {

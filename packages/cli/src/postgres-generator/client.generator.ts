@@ -492,28 +492,51 @@ updated AS (UPDATE "\${this.tableName}" SET \${updateSet} WHERE "uuid" IN (SELEC
     }
 
     private buildWhereClause(where: any): string {
-        if (!where || Object.keys(where).length === 0) return '';
-        const conditions: string[] = [];
+        const buildConditions = (w: any): string[] => {
+            const conditions: string[] = [];
 
-        for (const [key, value] of Object.entries(where as Record<string, any>)) {
-            const col = \`"\${key}"\`;
+            if (!w || Object.keys(w).length === 0) return [];
 
-            // Check for complex operators (objects that are not Dates or Arrays)
-            if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
-                if ('in' in value) {
-                    const val = value as { in: any[] };
-                    const opts = val.in.map((v: any) => this.formatValue(v)).join(',');
-                    conditions.push(\`\${col} IN (\${opts})\`);
-                } else {
-                    const val = value as { lt?: any; gt?: any };
-                    if (val.lt !== undefined) conditions.push(\`\${col} < \${this.formatValue(val.lt)}\`);
-                    if (val.gt !== undefined) conditions.push(\`\${col} > \${this.formatValue(val.gt)}\`);
+            for (const [key, value] of Object.entries(w as Record<string, any>)) {
+                if (key === 'AND') {
+                    const subClauses = (Array.isArray(value) ? value : [value]).map((sub: any) => {
+                        const subConds = buildConditions(sub);
+                        return subConds.length > 0 ? \`(\${subConds.join(' AND ')})\` : '';
+                    }).filter((s: string) => s !== '');
+                    if (subClauses.length > 0) conditions.push(\`(\${subClauses.join(' AND ')})\`);
+                    continue;
                 }
-            } else {
-                conditions.push(\`\${col} = \${this.formatValue(value)}\`);
+                if (key === 'OR') {
+                    const subClauses = (Array.isArray(value) ? value : [value]).map((sub: any) => {
+                        const subConds = buildConditions(sub);
+                        return subConds.length > 0 ? \`(\${subConds.join(' AND ')})\` : '';
+                    }).filter((s: string) => s !== '');
+                    if (subClauses.length > 0) conditions.push(\`(\${subClauses.join(' OR ')})\`);
+                    continue;
+                }
+
+                const col = \`"\${key}"\`;
+
+                // Check for complex operators (objects that are not Dates or Arrays)
+                if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+                    if ('in' in value) {
+                        const val = value as { in: any[] };
+                        const opts = val.in.map((v: any) => this.formatValue(v)).join(',');
+                        conditions.push(\`\${col} IN (\${opts})\`);
+                    } else {
+                        const val = value as { lt?: any; gt?: any };
+                        if (val.lt !== undefined) conditions.push(\`\${col} < \${this.formatValue(val.lt)}\`);
+                        if (val.gt !== undefined) conditions.push(\`\${col} > \${this.formatValue(val.gt)}\`);
+                    }
+                } else {
+                    conditions.push(\`\${col} = \${this.formatValue(value)}\`);
+                }
             }
-        }
-        return \`WHERE \${conditions.join(' AND ')}\`;
+            return conditions;
+        };
+
+        const conditions = buildConditions(where);
+        return conditions.length > 0 ? \`WHERE \${conditions.join(' AND ')}\` : '';
     }
 
     private formatValue(value: any): string {
@@ -568,13 +591,18 @@ export type FindIncludesQuery<T> = {
           : K]?: boolean | FindIncludesQuery<NonNullable<T[K]> extends (infer U)[] ? U : NonNullable<T[K]>>; // If type is scalar, exclude key
 };
 
+export type FindWhere<T> = Partial<{ [K in keyof T]: T[K] | { in?: T[K][]; lt?: T[K]; gt?: T[K] } }> & {
+    AND?: FindWhere<T> | FindWhere<T>[];
+    OR?: FindWhere<T> | FindWhere<T>[];
+};
+
 export type FindQuery<T> = {
     authorization?: {
         userId: string;
         scopes: string[];
         recursive?: boolean;
     };
-    where?: Partial<{ [K in keyof T]: T[K] | { in?: T[K][]; lt?: T[K]; gt?: T[K] } }>;
+    where?: FindWhere<T>;
     limit?: number;
     orderBy?: Partial<Record<keyof T, 'asc' | 'desc'>>;
     includes?: FindIncludesQuery<T>;
@@ -592,21 +620,21 @@ export type CreateInput<T> = {
 export type CreateQuery<T> = Omit<Pick<T, ScalarKeys<T>>, 'uuid'>;
 
 export type UpdateInput<T> = {
-    where: Partial<T>;
+    where: FindWhere<T>;
     data: Partial<CreateQuery<T>>;
 };
 
 export type UpdateManyInput<T> = {
-    where: FindQuery<T>['where'];
+    where: FindWhere<T>;
     data: Partial<CreateQuery<T>>;
 };
 
 export type DeleteInput<T> = {
-    where: Partial<T>;
+    where: FindWhere<T>;
 };
 
 export type DeleteManyInput<T> = {
-    where: FindQuery<T>['where'];
+    where: FindWhere<T>;
 };
 `);
 
