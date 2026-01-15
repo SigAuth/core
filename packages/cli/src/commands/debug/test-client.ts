@@ -1,5 +1,5 @@
 import { Command } from '@oclif/core';
-import { SigauthClient } from '../../sigauth/sigauth.client.js';
+import { SigauthClient } from '../../sigauth-implement-update/sigauth.client.js';
 
 export default class ClientTest extends Command {
     async run(): Promise<void> {

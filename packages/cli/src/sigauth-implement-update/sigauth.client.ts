@@ -224,6 +224,8 @@ export class Model<T extends Record<string, any>> {
         return input.data as T[];
     }
 
+    
+
     private formatValue(value: any): string {
         if (value === null || value === undefined) return 'NULL';
         if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
