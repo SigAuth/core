@@ -3,7 +3,7 @@ import { SigauthClient } from '../../sigauth-gen-example/sigauth.client.js';
 
 export default class ClientTest extends Command {
     async run(): Promise<void> {
-        new SigauthClient().account.findMany({
+        const result = await new SigauthClient().account.findOne({
             authorization: {
                 userId: 'user-123',
                 scopes: ['read:account'],
@@ -15,10 +15,13 @@ export default class ClientTest extends Command {
                 passwordHash: 'dfghaslrfigdsfuzagerfzgliufg',
             },
             includes: {
-                sessions: true,
+                sessions: {
+                    subject_account: true
+                },
             },
-            limit: 10,
         });
+
+        console.log(result?.sessions[0].subject_account);
     }
 
     // Einfacher Join: Table wird ist über ein Feld mit anderem Verbunden

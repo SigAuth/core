@@ -12,9 +12,11 @@ export interface Account {
 
 export interface Session {
     uuid: string;
-    subject: Account;
+    subjectUuid: string;
     expire: number;
     created: number;
+
+    subject_account: Account; // if field doesnt have name of module in it append it
 }
 
 export interface Mirror {
@@ -34,23 +36,32 @@ export interface App {
     oidcAuthCodeCb?: string;
     token?: string;
     scopes?: string;
+
+    authorizationInstances?: AuthorizationInstance[];
+    authorizationChallenges?: AuthorizationChallenge[];
 }
 
 export interface AuthorizationInstance {
     uuid: string;
-    session: Session;
-    app: App;
+    sessionUuid: string;
+    appUuid: string;
     refreshToken: string;
     accessToken: string;
+
+    session?: Session; // if field already has name of module in it just leave it
+    app?: App;
 }
 
 export interface AuthorizationChallenge {
-    session: Session;
-    app: App;
+    sessionUuid: string;
+    appUuid: string;
     created: Date;
     uuid: string;
     authCode: string;
     challenge: string;
     redirectUri: string;
+
+    app?: App;
+    session?: Session;
 }
 

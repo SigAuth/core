@@ -1,32 +1,69 @@
 import { Account, App, AuthorizationChallenge, AuthorizationInstance, Mirror, Session } from './asset-types.js';
 import { Utils } from './helper.functions.js';
 
+type GlobalRealtionMap = Record<string, Record<string, string>>;
+
+const TableIds = {
+    Account: 'asset-46-484-6-4684245',
+    Session: 'asset-84-684-68-4684245',
+    Mirror: 'asset-486-484-64-4684245',
+    App: 'asset-486-4842-6-4684245',
+    AuthorizationInstance: 'asset-486-484-646-4684245',
+    AuthorizationChallenge: 'asset-486-484-6468-4684245',
+};
+
+const Relations: GlobalRealtionMap = {
+    [TableIds.Account]: {
+        sessions: TableIds.Session,
+    },
+    [TableIds.Session]: {
+        subject_account: TableIds.Account,
+    },
+    [TableIds.Mirror]: {},
+    [TableIds.App]: {
+        authorizationInstances: TableIds.AuthorizationInstance,
+        authorizationChallenges: TableIds.AuthorizationChallenge,
+    },
+    [TableIds.AuthorizationInstance]: {
+        session: TableIds.Session,
+        app: TableIds.App,
+    },
+    [TableIds.AuthorizationChallenge]: {
+        session: TableIds.Session,
+        app: TableIds.App,
+    },
+};
+
 export class SigauthClient {
-    account = new Model<Account>('account', '46-484-6-4684245');
-    session = new Model<Session>('session', '84-684-68-4684245');
-    mirror = new Model<Mirror>('mirror', '486-484-64-4684245');
-    app = new Model<App>('app', '486-4842-6-4684245');
-    authorizationInstance = new Model<AuthorizationInstance>('authorizationInstance', '486-484-646-4684245');
-    authorizationChallenge = new Model<AuthorizationChallenge>('authorizationChallenge', '486-484-6468-4684245');
+    account = new Model<Account>(TableIds.Account);
+    session = new Model<Session>(TableIds.Session);
+    mirror = new Model<Mirror>(TableIds.Mirror);
+    app = new Model<App>(TableIds.App);
+    authorizationInstance = new Model<AuthorizationInstance>(TableIds.AuthorizationInstance);
+    authorizationChallenge = new Model<AuthorizationChallenge>(TableIds.AuthorizationChallenge);
 }
 
 export class Model<T> {
-    constructor(
-        private tableName: string,
-        private typeUUID: string,
-    ) {}
+    constructor(private tableName: string) {}
 
     // Q muss von Query<T> erben, um Inferenz zu ermöglichen
-    findOne<Q extends Omit<Query<T>, 'limit'>>(query: Q): Payload<T, Q> | null {
+    async findOne<Q extends Omit<Query<T>, 'limit'>>(query: Q): Promise<Payload<T, Q> | null> {
         const qsString = Utils.simpleQs(this.parseQuery(query as any));
         console.log(qsString);
+
+        const sql = Utils.toSQL(this.tableName, query, Relations);
+        console.log(sql);
+
         return {} as any; // Dummy return für TypeScript
     }
 
     // Rückgabetyp ist ein Array aus dem berechneten Payload
-    findMany<Q extends Query<T>>(query: Q): Payload<T, Q>[] {
+    async findMany<Q extends Query<T>>(query: Q): Promise<Payload<T, Q>[]> {
         const qsString = Utils.simpleQs(this.parseQuery(query));
         console.log(qsString);
+
+        const sql = Utils.toSQL(this.tableName, query, Relations);
+        console.log(sql);
         // ...existing code...
         return [] as any;
     }

@@ -46,7 +46,7 @@ export class PostgresDriver implements DatabaseGateway {
 
         const sessionType = await this.createAssetType('Session', [
             {
-                name: 'subjectUUID',
+                name: 'subjectUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
                 relationTypeConstraint: [accountType],
@@ -77,14 +77,14 @@ export class PostgresDriver implements DatabaseGateway {
 
         await this.createAssetType('AuthorizationInstance', [
             {
-                name: 'sessionUUID',
+                name: 'sessionUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
                 relationTypeConstraint: [sessionType],
                 referentialIntegrityStrategy: 'CASCADE',
             },
             {
-                name: 'appUUID',
+                name: 'appUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
                 relationTypeConstraint: [appType],
@@ -95,8 +95,20 @@ export class PostgresDriver implements DatabaseGateway {
         ]);
 
         await this.createAssetType('AuthorizationChallenge', [
-            { name: 'session', type: AssetFieldType.RELATION, required: true, relationTypeConstraint: [sessionType] },
-            { name: 'app', type: AssetFieldType.RELATION, required: true, relationTypeConstraint: [appType] },
+            {
+                name: 'sessionUuid',
+                type: AssetFieldType.RELATION,
+                required: true,
+                relationTypeConstraint: [sessionType],
+                referentialIntegrityStrategy: 'CASCADE',
+            },
+            {
+                name: 'appUuid',
+                type: AssetFieldType.RELATION,
+                required: true,
+                relationTypeConstraint: [appType],
+                referentialIntegrityStrategy: 'CASCADE',
+            },
             { name: 'authCode', type: AssetFieldType.VARCHAR, required: true },
             { name: 'challenge', type: AssetFieldType.VARCHAR, required: true },
             { name: 'redirectUri', type: AssetFieldType.VARCHAR, required: true },
