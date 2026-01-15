@@ -31,24 +31,25 @@ export class TypeGenerator {
             for (const field of type.fields) {
                 if (field.type === AssetFieldType.RELATION) {
                     const relationField = field as AssetTypeRelationField;
-                    const fieldNameBase = field.name.replace(/(Id|UUID|Uuid|Identifier)$/i, '');
-                    const reversePropName = `${fieldNameBase}_${type.name.toLowerCase()}s`;
+                    const targetType = this.assetTypes.find(t => t.uuid === relationField.targetAssetType);
+                    
+                    if (targetType) {
+                        const fieldNameBase = field.name.replace(/(Id|UUID|Uuid|Identifier)$/i, '');
+                        const reversePropName = `${fieldNameBase}_${type.name.toLowerCase()}s`;
 
-                    relationField.relationTypeConstraint.forEach(targetUuid => {
-                        if (reverseRelations[targetUuid]) {
-                            reverseRelations[targetUuid].push({
+                        if (reverseRelations[relationField.targetAssetType]) {
+                            reverseRelations[relationField.targetAssetType].push({
                                 name: reversePropName,
                                 type: `${type.name}[]`,
                                 hasQuestionToken: true,
                                 docs: [`Reverse relation from ${type.name}.${field.name}`],
                             });
                         }
-                    });
+                    }
                 }
             }
         }
 
-        // todo add joinColumnNames
         for (const type of this.assetTypes) {
             const properties: OptionalKind<PropertySignatureStructure>[] = [];
             const referenceProperties: OptionalKind<PropertySignatureStructure>[] = [];
@@ -56,22 +57,24 @@ export class TypeGenerator {
             for (const field of type.fields) {
                 properties.push({
                     name: field.name,
-                    type: this.mapFieldTypeToTsType(field, this.assetTypes),
+                    type: this.mapFieldTypeToTsType(field),
                     hasQuestionToken: !field.required,
                 });
 
                 if (field.type === AssetFieldType.RELATION) {
-                    const types = this.assetTypes.filter(t => (field as AssetTypeRelationField).relationTypeConstraint.includes(t.uuid));
+                    const targetType = this.assetTypes.find(t => (field as AssetTypeRelationField).targetAssetType === t.uuid);
+                    if (!targetType) continue;
 
                     // this field is only available when table is joined
-                    let name = field.name.replace(/(Id|UUID|Uuid|Identifier)$/i, '');
-                    if (types.length === 1 && !name.toLowerCase().includes(types[0].name.toLowerCase()))
-                        name = name + '_' + types[0].name.toLowerCase();
+                    let name = field.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '');
+                    if (!name.toLowerCase().includes(targetType.name.toLowerCase())) name = name + '_' + targetType.name.toLowerCase();
                     else name = name + '_reference';
+
+                    if (field.allowMultiple) name += 's';
 
                     referenceProperties.push({
                         name,
-                        type: types.map(t => t.name).join(' | '),
+                        type: targetType.name + (field.allowMultiple ? '[]' : ''),
                         hasQuestionToken: true,
                         docs:
                             referenceProperties.length === 0
@@ -97,7 +100,7 @@ export class TypeGenerator {
         const helperFile = this.project.createSourceFile(`${this.outPath}/helper.ts`, '', { overwrite: true });
 
         helperFile.addStatements(`
-import { Query } from './sigauth.client.js';
+import { GlobalRealtionMap, Query } from './sigauth.client.js';
 
 export const Utils = {
     simpleQs: (obj: Record<string, any>, prefix = ''): string => {
@@ -114,7 +117,7 @@ export const Utils = {
         return parts.join('&');
     },
 
-    toSQL: (table: string, query: Query<any>, relationMap: Record<string, Record<string, string>>) => {
+    toSQL: (table: string, query: Query<any>, relationMap: GlobalRealtionMap) => {
         const conditions: string[] = [];
         const joins: string[] = [];
         const selections: string[] = [\`"\${table}".*\`];
@@ -138,6 +141,12 @@ export const Utils = {
             }
         }
 
+        const getShortId = (fullId: string) =>
+            fullId
+                .replace(/^asset[-_]/, '')
+                .replace(/[-_]/g, '')
+                .substring(0, 16);
+
         const processIncludes = (parentAlias: string, parentTableId: string, includes: any) => {
             for (const [relationName, options] of Object.entries(includes)) {
                 if (!options) continue;
@@ -145,21 +154,64 @@ export const Utils = {
                 const parentRelations = relationMap[parentTableId];
 
                 if (!parentRelations) {
-                    console.warn(\`Keine Relationen für Tabelle '\${parentTableId}' definiert.\`);
+                    console.warn(\`No relations found for table ID '\${parentTableId}'.\`);
                     continue;
                 }
 
-                const targetTableId = parentRelations[relationName];
-                if (!targetTableId) {
-                    console.warn(\`Relation '\${relationName}' existiert nicht in Tabelle '\${parentTableId}'.\`);
+                const relationConfig = parentRelations[relationName];
+                if (!relationConfig) {
+                    console.warn(\`Relation '\${relationName}' does not exist in table '\${parentTableId}'.\`);
                     continue;
                 }
+
+                const { table: targetTableId, joinType = 'forward', fieldName, usingJoinTable } = relationConfig;
 
                 const newAlias = parentAlias === table ? relationName : \`\${parentAlias}_\${relationName}\`;
 
-                joins.push(
-                    \`LEFT JOIN "\${targetTableId}" AS "\${newAlias}" ON "\${newAlias}"."\${parentTableId}_uuid" = "\${parentAlias}"."uuid"\`,
-                );
+                if (usingJoinTable) {
+                    // Handling N:M via Join Tables (rel_SOURCE16_TARGET16)
+                    const parentHex = getShortId(parentTableId);
+                    const targetHex = getShortId(targetTableId);
+                    const relAlias = \`rel_\${newAlias}\`;
+
+                    if (joinType === 'forward') {
+                        // Forward with JoinTable: Parent is Source, Target is Target.
+                        // Join Table Name: rel_Parent_Target
+                        // Logic: Parent.uuid -> JoinTable.source AND JoinTable.target -> Target.uuid
+                        const joinTableName = \`rel_\${parentHex}_\${targetHex}\`;
+
+                        joins.push(
+                            \`LEFT JOIN "\${joinTableName}" AS "\${relAlias}" ON "\${relAlias}"."source" = "\${parentAlias}"."uuid" AND "\${relAlias}"."field" = '\${fieldName}'\`,
+                        );
+                        joins.push(\`LEFT JOIN "\${targetTableId}" AS "\${newAlias}" ON "\${newAlias}"."uuid" = "\${relAlias}"."target"\`);
+                    } else {
+                        // Reverse with JoinTable: Parent is Target, Target (in config) is Source.
+                        // Join Table Name: rel_Target_Parent (Join table is always named Source_Target)
+                        // Logic: Parent.uuid -> JoinTable.target AND JoinTable.source -> Target.uuid
+                        const joinTableName = \`rel_\${targetHex}_\${parentHex}\`;
+
+                        joins.push(
+                            \`LEFT JOIN "\${joinTableName}" AS "\${relAlias}" ON "\${relAlias}"."target" = "\${parentAlias}"."uuid" AND "\${relAlias}"."field" = '\${fieldName}'\`,
+                        );
+                        joins.push(\`LEFT JOIN "\${targetTableId}" AS "\${newAlias}" ON "\${newAlias}"."uuid" = "\${relAlias}"."source"\`);
+                    }
+                } else {
+                    // Direct 1:N or 1:1 Join
+                    if (joinType === 'forward') {
+                        // Forward: Custom Field points to UUID (Parent.customField -> Target.uuid)
+                        // This side (Parent) holds the FK.
+                        joins.push(
+                            \`LEFT JOIN "\${targetTableId}" AS "\${newAlias}" ON "\${newAlias}"."uuid" = "\${parentAlias}"."\${fieldName}"\`,
+                        );
+                    } else {
+                        // Reverse: UUID points to Custom Field (Parent.uuid -> Target.customField)
+                        // The other side (Target) holds the FK.
+                        joins.push(
+                            \`LEFT JOIN "\${targetTableId}" AS "\${newAlias}" ON "\${newAlias}"."\${fieldName}" = "\${parentAlias}"."uuid"\`,
+                        );
+                    }
+                }
+
                 selections.push(\`"\${newAlias}".*\`);
 
                 if (typeof options === 'object') {
@@ -202,8 +254,15 @@ export const Utils = {
         clientFile.addStatements(`import { ${assetNames} } from './asset-types.js';`);
         clientFile.addStatements(`import { Utils } from './helper.js';`);
 
+        // Type Definition
+        clientFile.addStatements(`
+export type GlobalRealtionMap = Record<
+    string,
+    Record<string, { table: string; joinType?: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean }>
+>;`);
+
         // 2. TableIds Constant
-        const tableIdsProps = this.assetTypes.map(t => `${t.name}: 'asset-${t.uuid}'`);
+        const tableIdsProps = this.assetTypes.map(t => `${t.name}: 'asset_${t.uuid.replaceAll('-', '_')}'`);
         clientFile.addVariableStatement({
             declarationKind: VariableDeclarationKind.Const,
             declarations: [
@@ -215,40 +274,48 @@ export const Utils = {
         });
 
         // 3. Pre-calculate Relations Map
-        const relationsData: Record<string, Record<string, string>> = {};
+        type RelationConfig = { table: string, joinType: 'forward' | 'reverse', fieldName: string, usingJoinTable?: boolean };
+        const relationsData: Record<string, Record<string, RelationConfig>> = {};
         this.assetTypes.forEach(t => (relationsData[t.uuid] = {}));
 
         for (const type of this.assetTypes) {
             for (const field of type.fields) {
                 if (field.type === AssetFieldType.RELATION) {
                     const relationField = field as AssetTypeRelationField;
-                    const targetUuids = relationField.relationTypeConstraint;
+                    const targetUuid = relationField.targetAssetType;
+                    const targetType = this.assetTypes.find(t => targetUuid === t.uuid);
+                    if (!targetType) continue;
 
-                    // --- Forward Relations (must match generateBaseTypeFile logic) ---
-                    const types = this.assetTypes.filter(t => targetUuids.includes(t.uuid));
-                    const forwardNameBase = field.name.replace(/(Id|UUID|Uuid|Identifier)$/i, '');
+                    const isJoinTable = !!relationField.allowMultiple;
+
+                    // --- Forward Relations (On Source Type) ---
+                    const forwardNameBase = field.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '');
                     let forwardPropName = forwardNameBase;
 
-                    if (types.length === 1 && !forwardNameBase.toLowerCase().includes(types[0].name.toLowerCase())) {
-                        forwardPropName = forwardNameBase + '_' + types[0].name.toLowerCase();
-                    } else {
-                        forwardPropName = forwardNameBase + '_reference';
-                    }
+                    if (!forwardNameBase.toLowerCase().includes(targetType.name.toLowerCase()))
+                        forwardPropName = forwardNameBase + '_' + targetType.name.toLowerCase();
+                    else forwardPropName = forwardNameBase + '_reference';
+                    if (field.allowMultiple) forwardPropName += 's';
 
-                    // Map forward relation (Assuming singular target for simplicity in generated client for now)
-                    if (targetUuids.length > 0) {
-                        relationsData[type.uuid][forwardPropName] = targetUuids[0];
-                    }
+                    relationsData[type.uuid][forwardPropName] = {
+                        table: `TableIds.${targetType.name}`,
+                        joinType: 'forward',
+                        fieldName: field.name,
+                        usingJoinTable: isJoinTable || undefined,
+                    };
 
-                    // --- Reverse Relations (must match generateBaseTypeFile logic) ---
-                    const reverseNameBase = field.name.replace(/(Id|UUID|Uuid|Identifier)$/i, '');
+                    // --- Reverse Relations (On Target Type) ---
+                    const reverseNameBase = field.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '');
                     const reversePropName = `${reverseNameBase}_${type.name.toLowerCase()}s`;
 
-                    targetUuids.forEach(targetUuid => {
-                        if (relationsData[targetUuid]) {
-                            relationsData[targetUuid][reversePropName] = type.uuid;
-                        }
-                    });
+                    if (relationsData[targetUuid]) {
+                        relationsData[targetUuid][reversePropName] = {
+                            table: `TableIds.${type.name}`,
+                            joinType: 'reverse',
+                            fieldName: field.name,
+                            usingJoinTable: isJoinTable || undefined,
+                        };
+                    }
                 }
             }
         }
@@ -261,10 +328,12 @@ export const Utils = {
 
             const mappedRels = Object.entries(rels)
                 .map(([k, v]) => {
-                    const targetType = this.assetTypes.find(t => t.uuid === v);
-                    // Use TableIds constant for value if possible
-                    const targetVal = targetType ? `TableIds.${targetType.name}` : `'${v}'`;
-                    return `${k}: ${targetVal}`;
+                    const props = [];
+                    props.push(`table: ${v.table}`);
+                    props.push(`joinType: '${v.joinType}'`);
+                    props.push(`fieldName: '${v.fieldName}'`);
+                    if (v.usingJoinTable) props.push(`usingJoinTable: true`);
+                    return `${k}: { ${props.join(', ')} }`;
                 })
                 .join(',\n');
 
@@ -276,7 +345,7 @@ export const Utils = {
             declarations: [
                 {
                     name: 'Relations',
-                    type: 'Record<string, Record<string, string>>',
+                    type: 'GlobalRealtionMap',
                     initializer: `{\n${relationsEntries.join(',\n')}\n}`,
                 },
             ],
@@ -301,6 +370,7 @@ export class Model<T> {
         const qsString = Utils.simpleQs(query);
         const sql = Utils.toSQL(this.tableName, query, Relations);
 
+        console.log(sql);
         return {} as any; 
     }
 
@@ -356,7 +426,7 @@ export type Query<T> = {
         clientFile.saveSync();
     }
 
-    private mapFieldTypeToTsType(field: AssetTypeField, allTypes: AssetType[]): string {
+    private mapFieldTypeToTsType(field: AssetTypeField): string {
         switch (field.type) {
             case AssetFieldType.VARCHAR:
             case AssetFieldType.TEXT:
@@ -369,8 +439,6 @@ export type Query<T> = {
                 return 'boolean';
             case AssetFieldType.DATE:
                 return 'Date';
-            case AssetFieldType.RELATION:
-
             default:
                 return 'any';
         }

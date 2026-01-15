@@ -30,6 +30,7 @@ export class PostgresDriver implements DatabaseGateway {
             await this.db.schema.createTable(ASSET_TYPE_TABLE, table => {
                 table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key
                 table.string('name').notNullable().unique();
+                table.specificType('externalJoinKeys', 'varchar[]');
             });
         }
 
@@ -49,22 +50,13 @@ export class PostgresDriver implements DatabaseGateway {
                 name: 'subjectUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
-                relationTypeConstraint: [accountType],
+                targetAssetType: accountType,
                 referentialIntegrityStrategy: 'CASCADE',
             },
             { name: 'expire', type: AssetFieldType.INTEGER, required: true }, // todo is there a native way to expire rows in Postgres?
             { name: 'created', type: AssetFieldType.INTEGER, required: true },
         ]);
         if (!sessionType) throw new Error('Failed to create Session asset type during initialization');
-
-        await this.createAssetType('Mirror', [
-            { name: 'name', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'code', type: AssetFieldType.TEXT, required: true },
-            { name: 'autoRun', type: AssetFieldType.BOOLEAN, required: true },
-            { name: 'autoRunInterval', type: AssetFieldType.INTEGER },
-            { name: 'lastRun', type: AssetFieldType.DATE },
-            { name: 'lastResult', type: AssetFieldType.VARCHAR },
-        ]);
 
         const appType = await this.createAssetType('App', [
             { name: 'name', type: AssetFieldType.VARCHAR, required: true },
@@ -75,19 +67,35 @@ export class PostgresDriver implements DatabaseGateway {
         ]);
         if (!appType) throw new Error('Failed to create App asset type during initialization');
 
+        await this.createAssetType('Mirror', [
+            { name: 'name', type: AssetFieldType.VARCHAR, required: true },
+            { name: 'code', type: AssetFieldType.TEXT, required: true },
+            { name: 'autoRun', type: AssetFieldType.BOOLEAN, required: true },
+            { name: 'autoRunInterval', type: AssetFieldType.INTEGER },
+            { name: 'lastRun', type: AssetFieldType.DATE },
+            { name: 'lastResult', type: AssetFieldType.VARCHAR },
+            {
+                name: 'ownerUuids',
+                type: AssetFieldType.RELATION,
+                allowMultiple: true,
+                targetAssetType: accountType,
+                referentialIntegrityStrategy: 'CASCADE',
+            },
+        ]);
+
         await this.createAssetType('AuthorizationInstance', [
             {
                 name: 'sessionUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
-                relationTypeConstraint: [sessionType],
+                targetAssetType: sessionType,
                 referentialIntegrityStrategy: 'CASCADE',
             },
             {
                 name: 'appUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
-                relationTypeConstraint: [appType],
+                targetAssetType: appType,
                 referentialIntegrityStrategy: 'CASCADE',
             },
             { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
@@ -99,14 +107,14 @@ export class PostgresDriver implements DatabaseGateway {
                 name: 'sessionUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
-                relationTypeConstraint: [sessionType],
+                targetAssetType: sessionType,
                 referentialIntegrityStrategy: 'CASCADE',
             },
             {
                 name: 'appUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
-                relationTypeConstraint: [appType],
+                targetAssetType: appType,
                 referentialIntegrityStrategy: 'CASCADE',
             },
             { name: 'authCode', type: AssetFieldType.VARCHAR, required: true },
@@ -143,7 +151,13 @@ export class PostgresDriver implements DatabaseGateway {
         this.logger.log('Initialized database schema');
     }
 
-    async disconnect(): Promise<void> {}
+    async disconnect(): Promise<void> {
+        if (this.db) {
+            await this.db.destroy();
+            this.db = undefined;
+            this.logger.log('Disconnected from Postgres database');
+        }
+    }
 
     async rawQuery<T>(queryString: string, params?: any[]): Promise<T[]> {
         return [];
@@ -161,7 +175,20 @@ export class PostgresDriver implements DatabaseGateway {
         }
 
         // add asset_type entry
-        const [{ uuid }] = await this.db(ASSET_TYPE_TABLE).insert({ name }).returning('uuid');
+
+        const externalJoinKeys = fields
+            .filter((f): f is Omit<AssetTypeRelationField, 'uuid'> => f.type === AssetFieldType.RELATION && !!f.allowMultiple)
+            .map(
+                f =>
+                    f.name +
+                    '#' +
+                    f.targetAssetType.replaceAll('-', '_') +
+                    '#' +
+                    (f.required ? '1' : '0') +
+                    '#' +
+                    f.referentialIntegrityStrategy,
+            );
+        const [{ uuid }] = await this.db(ASSET_TYPE_TABLE).insert({ name, externalJoinKeys }).returning('uuid');
         const tableName = `asset_${uuid.replace(/-/g, '_')}`;
         await this.db.schema.createTable(tableName, async table => {
             table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key
@@ -202,30 +229,15 @@ export class PostgresDriver implements DatabaseGateway {
                         break;
                     case AssetFieldType.RELATION:
                         const relField = field as AssetTypeRelationField;
-                        if (!relField.allowMultiple && relField.relationTypeConstraint.length === 1) {
+                        if (!relField.allowMultiple) {
                             column = table
                                 .uuid(field.name)
                                 .references('uuid')
-                                .inTable(`asset_${relField.relationTypeConstraint[0].replace(/-/g, '_')}`);
-                            switch (relField.referentialIntegrityStrategy) {
-                                case 'CASCADE':
-                                    column.onDelete('CASCADE');
-                                    break;
-                                case 'SET_NULL':
-                                    column.onDelete('SET NULL');
-                                    break;
-                                case 'RESTRICT':
-                                    column.onDelete('RESTRICT');
-                                    break;
-                                case 'INVALIDATE':
-                                    // todo no direct equivalent in Postgres, would require triggers
-                                    break;
-                            }
+                                .inTable(`asset_${relField.targetAssetType.replace(/-/g, '_')}`);
+                            this.applyOnDeleteStrategy(column, relField);
                         } else {
                             // For multiple relations, we create join table for each relation constraint
-                            for (const targetTypeUuid of relField.relationTypeConstraint) {
-                                await this.createJoinTable(uuid, targetTypeUuid);
-                            }
+                            await this.createJoinTable(uuid, relField.targetAssetType, relField);
                         }
 
                         break;
@@ -239,21 +251,33 @@ export class PostgresDriver implements DatabaseGateway {
         return uuid;
     }
 
-    private async createJoinTable(sourceTypeUuid: string, targetTypeUuid: string): Promise<void> {
-        const joinTableName = `rel_${sourceTypeUuid.replace(/-/g, '_')}_${targetTypeUuid.replace(/-/g, '_')}`;
-        await this.db!.schema.createTableIfNotExists(joinTableName, table => {
-            table
+    private async createJoinTable(sourceTypeUuid: string, targetTypeUuid: string, field: AssetTypeRelationField): Promise<void> {
+        // Use the first 16 hex digits (high 64 bits) to keep table name within Postgres 63-byte limit.
+        // Format: rel_SOURCE16_TARGET16 (Length: 4 + 16 + 1 + 16 = 37 chars)
+        const sourcePart = sourceTypeUuid.replace(/-/g, '').substring(0, 16);
+        const targetPart = targetTypeUuid.replace(/-/g, '').substring(0, 16);
+        const joinTableName = `rel_${sourcePart}_${targetPart}`;
+
+        if (await this.db!.schema.hasTable(joinTableName)) {
+            this.logger.log(`Join table for relations ${joinTableName} already exists, skipping creation.`);
+            return;
+        }
+
+        await this.db!.schema.createTable(joinTableName, table => {
+            const sourceColumn = table
                 .uuid('source')
                 .notNullable()
                 .references('uuid')
-                .inTable(`asset_${sourceTypeUuid.replace(/-/g, '_')}`)
-                .onDelete('CASCADE');
-            table
+                .inTable(`asset_${sourceTypeUuid.replace(/-/g, '_')}`);
+            this.applyOnDeleteStrategy(sourceColumn, field);
+
+            const targetColumn = table
                 .uuid('target')
                 .notNullable()
                 .references('uuid')
-                .inTable(`asset_${targetTypeUuid.replace(/-/g, '_')}`)
-                .onDelete('CASCADE');
+                .inTable(`asset_${targetTypeUuid.replace(/-/g, '_')}`);
+            this.applyOnDeleteStrategy(targetColumn, field);
+
             table.string('field').notNullable();
             table.primary(['source', 'target', 'field']);
         });
@@ -266,5 +290,22 @@ export class PostgresDriver implements DatabaseGateway {
 
     async deleteAssetType(uuid: string): Promise<boolean> {
         return false;
+    }
+
+    private applyOnDeleteStrategy(column: Knex.ReferencingColumnBuilder, field: AssetTypeRelationField): void {
+        switch (field.referentialIntegrityStrategy) {
+            case 'CASCADE':
+                column.onDelete('CASCADE');
+                break;
+            case 'SET_NULL':
+                column.onDelete('SET NULL');
+                break;
+            case 'RESTRICT':
+                column.onDelete('RESTRICT');
+                break;
+            case 'INVALIDATE':
+                // todo no direct equivalent in Postgres, would require triggers
+                break;
+        }
     }
 }

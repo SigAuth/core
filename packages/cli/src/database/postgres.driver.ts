@@ -57,15 +57,25 @@ export class PostgresDriver extends DatabaseGateway {
 
                 if (foreignKey) {
                     (field as AssetTypeRelationField).referentialIntegrityStrategy = foreignKey.on_delete;
-                    (field as AssetTypeRelationField).relationTypeConstraint = [
-                        foreignKey.foreign_table_name.replace('asset_', '').replace(/_/g, '-'),
-                    ];
+                    (field as AssetTypeRelationField).targetAssetType = foreignKey.foreign_table_name
+                        .replace('asset_', '')
+                        .replace(/_/g, '-');
                 }
                 fields.push(field);
             }
 
             // check for join tables
-            const joinTables = await this.getDynamicTables(row.uuid);
+            for (const externalJoinKey of row.externalJoinKeys) {
+                const [fieldName, targetAssetType, required, referentialIntegrityStrategy] = externalJoinKey.split('#');
+                fields.push({
+                    name: fieldName,
+                    type: AssetFieldType.RELATION,
+                    required: required == '1',
+                    allowMultiple: true,
+                    targetAssetType,
+                    referentialIntegrityStrategy: referentialIntegrityStrategy,
+                } as AssetTypeRelationField);
+            }
             // TODO add processing of join tables
 
             types.push({
@@ -78,12 +88,12 @@ export class PostgresDriver extends DatabaseGateway {
         return types;
     }
 
-    private async getDynamicTables(uuid: string) {
+    private async getJoinTables(uuid: string) {
         if (!this.db) throw new Error('Database not connected');
 
         // Pattern erstellen.
         // Falls deine Tabellenstruktur wie bei assets ist (Unterstriche statt Bindestriche):
-        const formattedUuid = uuid.replace(/-/g, '_');
+        const formattedUuid = uuid.replace(/-/g, '').substring(0, 16);
         const searchPattern = `rel_${formattedUuid}%`;
 
         // Abfrage mit Knex Query Builder

@@ -15,7 +15,7 @@ export type AssetTypeField = {
 };
 
 export type AssetTypeRelationField = AssetTypeField & {
-    relationTypeConstraint: string[]; // UUIDs of AssetTypes that can be related
+    targetAssetType: string; // UUID of AssetType that the relation points to
     referentialIntegrityStrategy: 'CASCADE' | 'SET_NULL' | 'RESTRICT' | 'INVALIDATE';
 };
 
