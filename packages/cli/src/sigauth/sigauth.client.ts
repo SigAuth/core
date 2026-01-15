@@ -1,139 +1,57 @@
-import { AssetFieldType, AssetType, AssetTypeRelationField } from '@sigauth/generics/asset';
-import { Project, VariableDeclarationKind } from 'ts-morph';
+import { Client } from 'pg';
+import { configDotenv } from 'dotenv';
+import { Account, App, AuthorizationChallenge, AuthorizationInstance, Mirror, Session } from './asset-types.js';
+import { Utils } from './helper.js';
 
-export class ClientGenerator {
-    constructor(
-        private readonly project: Project,
-        private readonly assetTypes: AssetType[],
-        private readonly outPath: string,
-    ) {}
-
-    generate() {
-        const clientFile = this.project.createSourceFile(`${this.outPath}/sigauth.client.ts`, '', { overwrite: true });
-
-        // 1. Imports
-        clientFile.addStatements(`import { Client } from 'pg';`);
-        clientFile.addStatements(`import { configDotenv } from 'dotenv';`);
-        const assetNames = this.assetTypes
-            .map(t => t.name)
-            .sort()
-            .join(', ');
-        clientFile.addStatements(`import { ${assetNames} } from './asset-types.js';`);
-        clientFile.addStatements(`import { Utils } from './helper.js';`);
-
-        // Type Definition
-        clientFile.addStatements(`
 export type GlobalRealtionMap = Record<
     string,
     Record<string, { table: string; joinType?: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean }>
->;`);
+>;
 
-        // 2. TableIds Constant
-        const tableIdsProps = this.assetTypes.map(t => `${t.name}: 'asset_${t.uuid.replaceAll('-', '_')}'`);
-        clientFile.addVariableStatement({
-            declarationKind: VariableDeclarationKind.Const,
-            declarations: [
-                {
-                    name: 'TableIds',
-                    initializer: `{\n${tableIdsProps.join(',\n')}\n}`,
-                },
-            ],
-        });
+const TableIds = {
+    Account: 'asset_019bc17c_6001_7377_ae5c_a216d8b7b81a',
+    Session: 'asset_019bc17c_6054_7bfd_8976_b34a2df8a62b',
+    App: 'asset_019bc17c_60d1_7c4f_8bd3_9bb3753969f4',
+    Mirror: 'asset_019bc17c_6120_745c_b566_cd34f1c5e352',
+    AuthorizationInstance: 'asset_019bc17c_61b1_75f8_87da_e8bcf25b59c9',
+    AuthorizationChallenge: 'asset_019bc17c_6238_79e6_8f8e_78a6d79ad63c'
+};
+const Relations: GlobalRealtionMap = {
+    [TableIds.Account]: {
+        subject_sessions: { table: TableIds.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
+        owner_mirrors: { table: TableIds.Mirror, joinType: 'reverse', fieldName: 'ownerUuids', usingJoinTable: true }
+    },
+    [TableIds.Session]: {
+        subject_account: { table: TableIds.Account, joinType: 'forward', fieldName: 'subjectUuid' },
+        session_authorizationinstances: { table: TableIds.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
+        session_authorizationchallenges: { table: TableIds.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' }
+    },
+    [TableIds.App]: {
+        app_authorizationinstances: { table: TableIds.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
+        app_authorizationchallenges: { table: TableIds.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' }
+    },
+    [TableIds.Mirror]: {
+        owner_accounts: { table: TableIds.Account, joinType: 'forward', fieldName: 'ownerUuids', usingJoinTable: true }
+    },
+    [TableIds.AuthorizationInstance]: {
+        session_reference: { table: TableIds.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+        app_reference: { table: TableIds.App, joinType: 'forward', fieldName: 'appUuid' }
+    },
+    [TableIds.AuthorizationChallenge]: {
+        session_reference: { table: TableIds.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+        app_reference: { table: TableIds.App, joinType: 'forward', fieldName: 'appUuid' }
+    }
+};
 
-        // 3. Pre-calculate Relations Map
-        type RelationConfig = { table: string; joinType: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean };
-        const relationsData: Record<string, Record<string, RelationConfig>> = {};
-        this.assetTypes.forEach(t => (relationsData[t.uuid] = {}));
-
-        for (const type of this.assetTypes) {
-            for (const field of type.fields) {
-                if (field.type === AssetFieldType.RELATION) {
-                    const relationField = field as AssetTypeRelationField;
-                    const targetUuid = relationField.targetAssetType;
-                    const targetType = this.assetTypes.find(t => targetUuid === t.uuid);
-                    if (!targetType) continue;
-
-                    const isJoinTable = !!relationField.allowMultiple;
-
-                    // --- Forward Relations (On Source Type) ---
-                    const forwardNameBase = field.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '');
-                    let forwardPropName = forwardNameBase;
-
-                    if (!forwardNameBase.toLowerCase().includes(targetType.name.toLowerCase()))
-                        forwardPropName = forwardNameBase + '_' + targetType.name.toLowerCase();
-                    else forwardPropName = forwardNameBase + '_reference';
-                    if (field.allowMultiple) forwardPropName += 's';
-
-                    relationsData[type.uuid][forwardPropName] = {
-                        table: `TableIds.${targetType.name}`,
-                        joinType: 'forward',
-                        fieldName: field.name,
-                        usingJoinTable: isJoinTable || undefined,
-                    };
-
-                    // --- Reverse Relations (On Target Type) ---
-                    const reverseNameBase = field.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '');
-                    const reversePropName = `${reverseNameBase}_${type.name.toLowerCase()}s`;
-
-                    if (relationsData[targetUuid]) {
-                        relationsData[targetUuid][reversePropName] = {
-                            table: `TableIds.${type.name}`,
-                            joinType: 'reverse',
-                            fieldName: field.name,
-                            usingJoinTable: isJoinTable || undefined,
-                        };
-                    }
-                }
-            }
-        }
-
-        // 4. Generate Relations Constant String
-        const relationsEntries = Object.entries(relationsData).map(([uuid, rels]) => {
-            const type = this.assetTypes.find(t => t.uuid === uuid);
-            // Use TableIds constant for key if possible
-            const tableKey = type ? `[TableIds.${type.name}]` : `'${uuid}'`;
-
-            const mappedRels = Object.entries(rels)
-                .map(([k, v]) => {
-                    const props = [];
-                    props.push(`table: ${v.table}`);
-                    props.push(`joinType: '${v.joinType}'`);
-                    props.push(`fieldName: '${v.fieldName}'`);
-                    if (v.usingJoinTable) props.push(`usingJoinTable: true`);
-                    return `${k}: { ${props.join(', ')} }`;
-                })
-                .join(',\n');
-
-            return `${tableKey}: {\n${mappedRels}\n}`;
-        });
-
-        clientFile.addVariableStatement({
-            declarationKind: VariableDeclarationKind.Const,
-            declarations: [
-                {
-                    name: 'Relations',
-                    type: 'GlobalRealtionMap',
-                    initializer: `{\n${relationsEntries.join(',\n')}\n}`,
-                },
-            ],
-        });
-
-        // 5. SigauthClient Class
-        const properties = this.assetTypes.map(t => {
-            const propName = t.name.charAt(0).toLowerCase() + t.name.slice(1);
-            return `    public ${propName}: Model<${t.name}>;`;
-        });
-
-        const initializers = this.assetTypes.map(t => {
-            const propName = t.name.charAt(0).toLowerCase() + t.name.slice(1);
-            return `        this.${propName} = new Model<${t.name}>(TableIds.${t.name}, this.client);`;
-        });
-
-        clientFile.addStatements(`
 export class SigauthClient {
     private client: Client;
 
-${properties.join('\n')}
+    public account: Model<Account>;
+    public session: Model<Session>;
+    public app: Model<App>;
+    public mirror: Model<Mirror>;
+    public authorizationInstance: Model<AuthorizationInstance>;
+    public authorizationChallenge: Model<AuthorizationChallenge>;
 
     constructor() {
         configDotenv();
@@ -142,18 +60,20 @@ ${properties.join('\n')}
         });
         this.client.connect();
 
-${initializers.join('\n')}
+        this.account = new Model<Account>(TableIds.Account, this.client);
+        this.session = new Model<Session>(TableIds.Session, this.client);
+        this.app = new Model<App>(TableIds.App, this.client);
+        this.mirror = new Model<Mirror>(TableIds.Mirror, this.client);
+        this.authorizationInstance = new Model<AuthorizationInstance>(TableIds.AuthorizationInstance, this.client);
+        this.authorizationChallenge = new Model<AuthorizationChallenge>(TableIds.AuthorizationChallenge, this.client);
     }
 }
-`);
 
-        // 6. Static Boilerplate (Model, Types)
-        clientFile.addStatements(`
 export class Model<T extends Record<string, any>> {
     constructor(
         private tableName: string,
         private client: Client,
-    ) {}
+    ) { }
 
     async findOne<Q extends Omit<FindQuery<T>, 'limit'>>(query: Q): Promise<Payload<T, Q> | null> {
         (query as any).limit = 1;
@@ -202,74 +122,74 @@ export class Model<T extends Record<string, any>> {
 
                 // Format value (handles arrays -> ARRAY['a','b'] or scalars)
                 const formattedValue = this.formatValue(value);
-                const valueSelect = Array.isArray(value) ? \`unnest(\${formattedValue})\` : formattedValue;
+                const valueSelect = Array.isArray(value) ? `unnest(${formattedValue})` : formattedValue;
 
                 let joinTableName: string;
                 let selectStmt: string;
 
                 // Aliases for the final select
-                const relAlias = \`rel_\${relName}\`;
+                const relAlias = `rel_${relName}`;
                 const targetAlias = relName; // e.g. owner_accounts
 
                 // Explicitly cast the value to UUID for the join table
-                const castValueSelect = \`\${valueSelect}::uuid\`;
+                const castValueSelect = `${valueSelect}::uuid`;
 
                 if (relConfig.joinType === 'forward') {
                     // Forward: SOURCE (Me) -> TARGET (Value)
                     // JoinTable: rel_Me_Other
-                    joinTableName = \`rel_\${thisShort}_\${otherShort}\`;
-                    selectStmt = \`SELECT "uuid", \${castValueSelect}, '\${relConfig.fieldName}' FROM inserted\`;
+                    joinTableName = `rel_${thisShort}_${otherShort}`;
+                    selectStmt = `SELECT "uuid", ${castValueSelect}, '${relConfig.fieldName}' FROM inserted`;
 
                     // Join logic for SELECT: From i (Me) -> JoinTable.source, JoinTable.target -> Target
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${joinTableName}" AS "\${relAlias}" ON "\${relAlias}"."source" = i."uuid" AND "\${relAlias}"."field" = '\${relConfig.fieldName}'\`,
+                        `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."source" = i."uuid" AND "${relAlias}"."field" = '${relConfig.fieldName}'`,
                     );
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${relConfig.table}" AS "\${targetAlias}" ON "\${targetAlias}"."uuid" = "\${relAlias}"."target"\`,
+                        `LEFT JOIN "${relConfig.table}" AS "${targetAlias}" ON "${targetAlias}"."uuid" = "${relAlias}"."target"`,
                     );
                 } else {
                     // Reverse: TARGET (Me) <- SOURCE (Value)
                     // JoinTable: rel_Other_Me
-                    joinTableName = \`rel_\${otherShort}_\${thisShort}\`;
-                    selectStmt = \`SELECT \${castValueSelect}, "uuid", '\${relConfig.fieldName}' FROM inserted\`;
+                    joinTableName = `rel_${otherShort}_${thisShort}`;
+                    selectStmt = `SELECT ${castValueSelect}, "uuid", '${relConfig.fieldName}' FROM inserted`;
 
                     // Join logic for SELECT: From i (Me) -> JoinTable.target, JoinTable.source -> Target
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${joinTableName}" AS "\${relAlias}" ON "\${relAlias}"."target" = i."uuid" AND "\${relAlias}"."field" = '\${relConfig.fieldName}'\`,
+                        `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."target" = i."uuid" AND "${relAlias}"."field" = '${relConfig.fieldName}'`,
                     );
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${relConfig.table}" AS "\${targetAlias}" ON "\${targetAlias}"."uuid" = "\${relAlias}"."source"\`,
+                        `LEFT JOIN "${relConfig.table}" AS "${targetAlias}" ON "${targetAlias}"."uuid" = "${relAlias}"."source"`,
                     );
                 }
 
                 // Append RETURNING 1 to ensure valid CTE syntax for data-modifying statements
                 joinTableInserts.push(
-                    \`INSERT INTO "\${joinTableName}" ("source", "target", "field") \${selectStmt} RETURNING 1\`,
+                    `INSERT INTO "${joinTableName}" ("source", "target", "field") ${selectStmt} RETURNING 1`,
                 );
 
                 // Add target table columns to selection
-                finalSelectColumns.push(\`"\${targetAlias}".*\`);
+                finalSelectColumns.push(`"${targetAlias}".*`);
             }
         }
 
         const keys = Object.keys(cleanData);
         if (keys.length === 0 && joinTableInserts.length === 0) throw new Error('No data provided for create');
 
-        const columns = keys.map(k => \`"\${k}"\`).join(', ');
+        const columns = keys.map(k => `"${k}"`).join(', ');
         const values = keys.map(k => this.formatValue(cleanData[k as keyof typeof cleanData])).join(', ');
 
         // 2. Build CTE Query
-        let sql = \`WITH inserted AS (INSERT INTO "\${this.tableName}" (\${columns}) VALUES (\${values}) RETURNING *)\`;
+        let sql = `WITH inserted AS (INSERT INTO "${this.tableName}" (${columns}) VALUES (${values}) RETURNING *)`;
 
         if (joinTableInserts.length > 0) {
-            const cteJoins = joinTableInserts.map((stmt, idx) => \`, join_\${idx} AS (\${stmt})\`).join('\\n');
-            sql += \`\\n\${cteJoins}\`;
+            const cteJoins = joinTableInserts.map((stmt, idx) => `, join_${idx} AS (${stmt})`).join('\n');
+            sql += `\n${cteJoins}`;
         }
 
         // 3. Final Select with Joins
-        sql += \`\\nSELECT \${finalSelectColumns.join(', ')} FROM inserted i\`;
+        sql += `\nSELECT ${finalSelectColumns.join(', ')} FROM inserted i`;
         if (finalSelectJoins.length > 0) {
-            sql += \`\\n\${finalSelectJoins.join('\\n')}\`;
+            sql += `\n${finalSelectJoins.join('\n')}`;
         }
 
         const result = await this.client.query(sql);
@@ -314,7 +234,7 @@ export class Model<T extends Record<string, any>> {
         if (!input.data || input.data.length === 0) return [];
 
         const keys = Array.from(allKeys);
-        const columns = keys.map(k => \`"\${k}"\`).join(', ');
+        const columns = keys.map(k => `"${k}"`).join(', ');
 
         const rowValues = input.data
             .map(row => {
@@ -324,12 +244,12 @@ export class Model<T extends Record<string, any>> {
                     if (val === undefined) return 'DEFAULT';
                     return this.formatValue(val);
                 });
-                return \`(\${values.join(', ')})\`;
+                return `(${values.join(', ')})`;
             })
             .join(', ');
 
-        const sql = \`INSERT INTO "\${this.tableName}" (\${columns}) VALUES \${rowValues} RETURNING *;\`;
-        
+        const sql = `INSERT INTO "${this.tableName}" (${columns}) VALUES ${rowValues} RETURNING *;`;
+
         const result = await this.client.query(sql);
 
         return result.rows as T[];
@@ -368,31 +288,31 @@ export class Model<T extends Record<string, any>> {
 
         const scopesSql = this.formatValue(scopes); // returns formatted array string e.g. ARRAY['a','b']
 
-        const sql = \`
+        const sql = `
             INSERT INTO "permission_instances" ("account", "app", "asset", "scope")
-            SELECT \${this.formatValue(userUuid)}, \${this.formatValue(appUuid)}, "uuid", unnest(\${scopesSql})
-            FROM "\${this.tableName}"
-            \${whereClause}
+            SELECT ${this.formatValue(userUuid)}, ${this.formatValue(appUuid)}, "uuid", unnest(${scopesSql})
+            FROM "${this.tableName}"
+            ${whereClause}
             ON CONFLICT DO NOTHING
-        \`;
+        `;
 
         await this.client.query(sql);
     }
 
     private async executeDelete(where: any, single: boolean): Promise<any> {
         const whereClause = this.buildWhereClause(where);
-        const sql = \`WITH deleted AS (DELETE FROM "\${this.tableName}" \${whereClause} RETURNING *),
+        const sql = `WITH deleted AS (DELETE FROM "${this.tableName}" ${whereClause} RETURNING *),
 perm_del AS (DELETE FROM "permission_instances" WHERE "asset" IN (SELECT "uuid" FROM deleted))
-SELECT * FROM deleted\`;
+SELECT * FROM deleted`;
 
         const result = await this.client.query(sql);
 
         if (single) {
             if (result.rowCount !== 1) {
                 if (result.rowCount === 0) {
-                    throw new Error(\`Record to delete does not exist.\`);
+                    throw new Error(`Record to delete does not exist.`);
                 } else {
-                    throw new Error(\`Delete operation failed. Expected 1 record to be deleted, but \${result.rowCount} were found.\`);
+                    throw new Error(`Delete operation failed. Expected 1 record to be deleted, but ${result.rowCount} were found.`);
                 }
             }
             return result.rows[0] as T;
@@ -426,8 +346,8 @@ SELECT * FROM deleted\`;
 
                 // Format value (handles arrays -> ARRAY['a','b'] or scalars)
                 const formattedValue = this.formatValue(value);
-                const valueSelect = Array.isArray(value) ? \`unnest(\${formattedValue})\` : formattedValue;
-                const castValueSelect = \`\${valueSelect}::uuid\`;
+                const valueSelect = Array.isArray(value) ? `unnest(${formattedValue})` : formattedValue;
+                const castValueSelect = `${valueSelect}::uuid`;
 
                 let joinTableName: string;
                 let deleteCondition: string;
@@ -435,76 +355,76 @@ SELECT * FROM deleted\`;
 
                 if (relConfig.joinType === 'forward') {
                     // Forward: Me -> Other. Join Table: rel_Me_Other
-                    joinTableName = \`rel_\${thisShort}_\${otherShort}\`;
+                    joinTableName = `rel_${thisShort}_${otherShort}`;
                     // Delete where source is ME (from updated rows) and field matches
-                    deleteCondition = \`"source" IN (SELECT "uuid" FROM updated) AND "field" = '\${relConfig.fieldName}'\`;
-                    insertSelect = \`SELECT "uuid", \${castValueSelect}, '\${relConfig.fieldName}' FROM updated\`;
+                    deleteCondition = `"source" IN (SELECT "uuid" FROM updated) AND "field" = '${relConfig.fieldName}'`;
+                    insertSelect = `SELECT "uuid", ${castValueSelect}, '${relConfig.fieldName}' FROM updated`;
                 } else {
                     // Reverse: Other -> Me. Join Table: rel_Other_Me
-                    joinTableName = \`rel_\${otherShort}_\${thisShort}\`;
+                    joinTableName = `rel_${otherShort}_${thisShort}`;
                     // Delete where target is ME
-                    deleteCondition = \`"target" IN (SELECT "uuid" FROM updated) AND "field" = '\${relConfig.fieldName}'\`;
-                    insertSelect = \`SELECT \${castValueSelect}, "uuid", '\${relConfig.fieldName}' FROM updated\`;
+                    deleteCondition = `"target" IN (SELECT "uuid" FROM updated) AND "field" = '${relConfig.fieldName}'`;
+                    insertSelect = `SELECT ${castValueSelect}, "uuid", '${relConfig.fieldName}' FROM updated`;
                 }
 
                 // CTE for DELETE (Remove old relations)
-                joinTableOps.push(\`del_\${opIndex} AS (DELETE FROM "\${joinTableName}" WHERE \${deleteCondition} RETURNING 1)\`);
+                joinTableOps.push(`del_${opIndex} AS (DELETE FROM "${joinTableName}" WHERE ${deleteCondition} RETURNING 1)`);
                 // CTE for INSERT (Add new relations)
                 joinTableOps.push(
-                    \`ins_\${opIndex} AS (INSERT INTO "\${joinTableName}" ("source", "target", "field") \${insertSelect} RETURNING 1)\`,
+                    `ins_${opIndex} AS (INSERT INTO "${joinTableName}" ("source", "target", "field") ${insertSelect} RETURNING 1)`,
                 );
                 opIndex++;
 
                 // Prepare SELECT to return the updated structure
-                const relAlias = \`rel_\${relName}\`;
+                const relAlias = `rel_${relName}`;
                 const targetAlias = relName;
 
                 if (relConfig.joinType === 'forward') {
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${joinTableName}" AS "\${relAlias}" ON "\${relAlias}"."source" = u."uuid" AND "\${relAlias}"."field" = '\${relConfig.fieldName}'\`,
+                        `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."source" = u."uuid" AND "${relAlias}"."field" = '${relConfig.fieldName}'`,
                     );
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${relConfig.table}" AS "\${targetAlias}" ON "\${targetAlias}"."uuid" = "\${relAlias}"."target"\`,
+                        `LEFT JOIN "${relConfig.table}" AS "${targetAlias}" ON "${targetAlias}"."uuid" = "${relAlias}"."target"`,
                     );
                 } else {
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${joinTableName}" AS "\${relAlias}" ON "\${relAlias}"."target" = u."uuid" AND "\${relAlias}"."field" = '\${relConfig.fieldName}'\`,
+                        `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."target" = u."uuid" AND "${relAlias}"."field" = '${relConfig.fieldName}'`,
                     );
                     finalSelectJoins.push(
-                        \`LEFT JOIN "\${relConfig.table}" AS "\${targetAlias}" ON "\${targetAlias}"."uuid" = "\${relAlias}"."source"\`,
+                        `LEFT JOIN "${relConfig.table}" AS "${targetAlias}" ON "${targetAlias}"."uuid" = "${relAlias}"."source"`,
                     );
                 }
-                finalSelectColumns.push(\`"\${targetAlias}".*\`);
+                finalSelectColumns.push(`"${targetAlias}".*`);
             }
         }
 
         // 2. Build Main UPDATE
         const setClauses: string[] = [];
         for (const [k, v] of Object.entries(cleanData)) {
-            setClauses.push(\`"\${k}" = \${this.formatValue(v)}\`);
+            setClauses.push(`"${k}" = ${this.formatValue(v)}`);
         }
 
         const whereClause = this.buildWhereClause(where);
 
         // If no scalar updates, we pseudo-update to ensure we return the target rows for relation updates
         const updateSet = setClauses.length > 0 ? setClauses.join(', ') : '"uuid" = "uuid"';
-        
+
         let sql: string;
         if (single) {
             // Use CTE to restrict update to exactly one row (arbitrary if multiple match, but safe from mass-update)
-            sql = \`WITH target AS (SELECT "uuid" FROM "\${this.tableName}" \${whereClause} LIMIT 1),
-updated AS (UPDATE "\${this.tableName}" SET \${updateSet} WHERE "uuid" IN (SELECT "uuid" FROM target) RETURNING *)\`;
+            sql = `WITH target AS (SELECT "uuid" FROM "${this.tableName}" ${whereClause} LIMIT 1),
+updated AS (UPDATE "${this.tableName}" SET ${updateSet} WHERE "uuid" IN (SELECT "uuid" FROM target) RETURNING *)`;
         } else {
-            sql = \`WITH updated AS (UPDATE "\${this.tableName}" SET \${updateSet} \${whereClause} RETURNING *)\`;
+            sql = `WITH updated AS (UPDATE "${this.tableName}" SET ${updateSet} ${whereClause} RETURNING *)`;
         }
 
         if (joinTableOps.length > 0) {
-            sql += \`,\\n\${joinTableOps.join(',\\n')}\`;
+            sql += `,\n${joinTableOps.join(',\n')}`;
         }
 
-        sql += \`\\nSELECT \${finalSelectColumns.join(', ')} FROM updated u\`;
+        sql += `\nSELECT ${finalSelectColumns.join(', ')} FROM updated u`;
         if (finalSelectJoins.length > 0) {
-            sql += \`\\n\${finalSelectJoins.join('\\n')}\`;
+            sql += `\n${finalSelectJoins.join('\n')}`;
         }
 
         const result = await this.client.query(sql);
@@ -529,52 +449,52 @@ updated AS (UPDATE "\${this.tableName}" SET \${updateSet} WHERE "uuid" IN (SELEC
                 if (key === 'AND') {
                     const subClauses = (Array.isArray(value) ? value : [value]).map((sub: any) => {
                         const subConds = buildConditions(sub);
-                        return subConds.length > 0 ? \`(\${subConds.join(' AND ')})\` : '';
+                        return subConds.length > 0 ? `(${subConds.join(' AND ')})` : '';
                     }).filter((s: string) => s !== '');
-                    if (subClauses.length > 0) conditions.push(\`(\${subClauses.join(' AND ')})\`);
+                    if (subClauses.length > 0) conditions.push(`(${subClauses.join(' AND ')})`);
                     continue;
                 }
                 if (key === 'OR') {
                     const subClauses = (Array.isArray(value) ? value : [value]).map((sub: any) => {
                         const subConds = buildConditions(sub);
-                        return subConds.length > 0 ? \`(\${subConds.join(' AND ')})\` : '';
+                        return subConds.length > 0 ? `(${subConds.join(' AND ')})` : '';
                     }).filter((s: string) => s !== '');
-                    if (subClauses.length > 0) conditions.push(\`(\${subClauses.join(' OR ')})\`);
+                    if (subClauses.length > 0) conditions.push(`(${subClauses.join(' OR ')})`);
                     continue;
                 }
 
-                const col = \`"\${key}"\`;
+                const col = `"${key}"`;
 
                 // Check for complex operators (objects that are not Dates or Arrays)
                 if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
                     if ('in' in value) {
                         const val = value as { in: any[] };
                         const opts = val.in.map((v: any) => this.formatValue(v)).join(',');
-                        conditions.push(\`\${col} IN (\${opts})\`);
+                        conditions.push(`${col} IN (${opts})`);
                     } else {
                         const val = value as { lt?: any; gt?: any };
-                        if (val.lt !== undefined) conditions.push(\`\${col} < \${this.formatValue(val.lt)}\`);
-                        if (val.gt !== undefined) conditions.push(\`\${col} > \${this.formatValue(val.gt)}\`);
+                        if (val.lt !== undefined) conditions.push(`${col} < ${this.formatValue(val.lt)}`);
+                        if (val.gt !== undefined) conditions.push(`${col} > ${this.formatValue(val.gt)}`);
                     }
                 } else {
-                    conditions.push(\`\${col} = \${this.formatValue(value)}\`);
+                    conditions.push(`${col} = ${this.formatValue(value)}`);
                 }
             }
             return conditions;
         };
 
         const conditions = buildConditions(where);
-        return conditions.length > 0 ? \`WHERE \${conditions.join(' AND ')}\` : '';
+        return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     }
 
     private formatValue(value: any): string {
         if (value === null || value === undefined) return 'NULL';
-        if (typeof value === 'string') return \`'\${value.replace(/'/g, "''")}'\`;
+        if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
         if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
-        if (value instanceof Date) return \`'\${value.toISOString()}'\`;
+        if (value instanceof Date) return `'${value.toISOString()}'`;
         if (Array.isArray(value)) {
             const content = value.map(v => this.formatValue(v)).join(',');
-            return \`ARRAY[\${content}]\`;
+            return `ARRAY[${content}]`;
         }
         return String(value);
     }
@@ -601,22 +521,22 @@ type ScalarKeys<T> = {
 export type Payload<T, Q extends FindQuery<T>> = Pick<T, ScalarKeys<T>> &
     (Q['includes'] extends object
         ? {
-              [K in keyof Q['includes'] & keyof T]: NonNullable<T[K]> extends (infer U)[]
-                  ? Payload<U, { includes: Q['includes'][K] }>[]
-                  : NonNullable<T[K]> extends object
-                    ? Payload<NonNullable<T[K]>, { includes: Q['includes'][K] }>
-                    : never;
-          }
+            [K in keyof Q['includes'] & keyof T]: NonNullable<T[K]> extends (infer U)[]
+            ? Payload<U, { includes: Q['includes'][K] }>[]
+            : NonNullable<T[K]> extends object
+            ? Payload<NonNullable<T[K]>, { includes: Q['includes'][K] }>
+            : never;
+        }
         : {});
 
 export type FindIncludesQuery<T> = {
     [K in keyof T as NonNullable<T[K]> extends (infer U)[] // 1. Unpack Arrays (e.g. Session[]) to check the inner type
-        ? U extends Scalar
-            ? never
-            : K // If inner type is scalar, exclude key
-        : NonNullable<T[K]> extends Scalar
-          ? never
-          : K]?: boolean | FindIncludesQuery<NonNullable<T[K]> extends (infer U)[] ? U : NonNullable<T[K]>>; // If type is scalar, exclude key
+    ? U extends Scalar
+    ? never
+    : K // If inner type is scalar, exclude key
+    : NonNullable<T[K]> extends Scalar
+    ? never
+    : K]?: boolean | FindIncludesQuery<NonNullable<T[K]> extends (infer U)[] ? U : NonNullable<T[K]>>; // If type is scalar, exclude key
 };
 
 export type FindWhere<T> = Partial<{ [K in keyof T]: T[K] | { in?: T[K][]; lt?: T[K]; gt?: T[K] } }> & {
@@ -664,9 +584,5 @@ export type DeleteInput<T> = {
 export type DeleteManyInput<T> = {
     where: FindWhere<T>;
 };
-`);
 
-        clientFile.formatText();
-        clientFile.saveSync();
-    }
-}
+
