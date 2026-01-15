@@ -1,52 +1,60 @@
 import { AssetFieldType, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
-import knex, { Knex } from 'knex';
+import { Client } from 'pg';
 import { DatabaseGateway } from './databse.gateway.js';
 
 export class PostgresDriver extends DatabaseGateway {
-    private db: Knex | null = null;
+    private client: Client | null = null;
 
     async connect(connectionString: string): Promise<boolean> {
-        this.db = knex({
-            client: 'pg',
-            connection: connectionString,
+        this.client = new Client({
+            connectionString: connectionString,
         });
+        await this.client.connect();
 
-        await this.db.raw('select 1');
+        await this.client.query('select 1');
         return true;
     }
 
     async disconnect(): Promise<boolean> {
-        if (this.db) {
-            await this.db.destroy();
-            this.db = null;
+        if (this.client) {
+            await this.client.end();
+            this.client = null;
         }
         return true;
     }
 
     async getAssetTypes(): Promise<AssetType[]> {
-        if (!this.db) throw new Error('Database not connected');
+        if (!this.client) throw new Error('Database not connected');
 
         const types: AssetType[] = [];
-        const typeRows = await this.db.select('*').from('asset_types');
-        for (const row of typeRows) {
+        const typeRes = await this.client.query('SELECT * FROM asset_types');
+
+        for (const row of typeRes.rows) {
             // fetch table signature and fields
             const tableName = `asset_${row.uuid.replace(/-/g, '_')}`;
-            const genericKeys = await this.db
-                .select('column_name', 'data_type', 'is_nullable', 'udt_name')
-                .from('information_schema.columns')
-                .where('table_name', tableName);
 
-            const foreignKeys = await this.db
-                .select('kcu.column_name', 'ccu.table_name as foreign_table_name', 'rc.delete_rule as on_delete')
-                .from('information_schema.key_column_usage as kcu')
-                .join('information_schema.referential_constraints as rc', 'kcu.constraint_name', 'rc.constraint_name')
-                .join('information_schema.constraint_column_usage as ccu', 'rc.unique_constraint_name', 'ccu.constraint_name')
-                .where('kcu.table_name', tableName);
+            const genericKeysRes = await this.client.query(
+                `SELECT column_name, data_type, is_nullable, udt_name 
+                 FROM information_schema.columns 
+                 WHERE table_name = $1`,
+                [tableName],
+            );
+            const genericKeys = genericKeysRes.rows;
+
+            const foreignKeysRes = await this.client.query(
+                `SELECT kcu.column_name, ccu.table_name as foreign_table_name, rc.delete_rule as on_delete
+                 FROM information_schema.key_column_usage as kcu
+                 JOIN information_schema.referential_constraints as rc ON kcu.constraint_name = rc.constraint_name
+                 JOIN information_schema.constraint_column_usage as ccu ON rc.unique_constraint_name = ccu.constraint_name
+                 WHERE kcu.table_name = $1`,
+                [tableName],
+            );
+            const foreignKeys = foreignKeysRes.rows;
 
             const fields: AssetTypeField[] = [];
 
             for (const key of genericKeys) {
-                const foreignKey = foreignKeys.find(fk => fk.column_name === key.column_name);
+                const foreignKey = foreignKeys.find((fk: any) => fk.column_name === key.column_name);
 
                 const field: AssetTypeField = {
                     name: key.column_name,
@@ -65,18 +73,19 @@ export class PostgresDriver extends DatabaseGateway {
             }
 
             // check for join tables
-            for (const externalJoinKey of row.externalJoinKeys) {
-                const [fieldName, targetAssetType, required, referentialIntegrityStrategy] = externalJoinKey.split('#');
-                fields.push({
-                    name: fieldName,
-                    type: AssetFieldType.RELATION,
-                    required: required == '1',
-                    allowMultiple: true,
-                    targetAssetType,
-                    referentialIntegrityStrategy: referentialIntegrityStrategy,
-                } as AssetTypeRelationField);
+            if (row.externalJoinKeys) {
+                for (const externalJoinKey of row.externalJoinKeys) {
+                    const [fieldName, targetAssetType, required, referentialIntegrityStrategy] = externalJoinKey.split('#');
+                    fields.push({
+                        name: fieldName,
+                        type: AssetFieldType.RELATION,
+                        required: required == '1',
+                        allowMultiple: true,
+                        targetAssetType,
+                        referentialIntegrityStrategy: referentialIntegrityStrategy,
+                    } as AssetTypeRelationField);
+                }
             }
-            // TODO add processing of join tables
 
             types.push({
                 uuid: row.uuid,
@@ -89,21 +98,23 @@ export class PostgresDriver extends DatabaseGateway {
     }
 
     private async getJoinTables(uuid: string) {
-        if (!this.db) throw new Error('Database not connected');
+        if (!this.client) throw new Error('Database not connected');
 
         // Pattern erstellen.
         // Falls deine Tabellenstruktur wie bei assets ist (Unterstriche statt Bindestriche):
         const formattedUuid = uuid.replace(/-/g, '').substring(0, 16);
         const searchPattern = `rel_${formattedUuid}%`;
 
-        // Abfrage mit Knex Query Builder
-        const tables = await this.db
-            .select('table_name')
-            .from('information_schema.tables')
-            .where('table_schema', 'public')
-            .andWhere('table_name', 'like', searchPattern);
+        // Abfrage mit Pg Client
+        const res = await this.client.query(
+            `SELECT table_name 
+             FROM information_schema.tables 
+             WHERE table_schema = 'public' 
+             AND table_name LIKE $1`,
+            [searchPattern],
+        );
 
-        return tables;
+        return res.rows;
     }
 
     private mapPostgresTypeToAssetFieldType(pgType: string): AssetFieldType {

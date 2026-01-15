@@ -4,7 +4,7 @@ import { configDotenv } from 'dotenv';
 import ora from 'ora';
 import { DatabaseGateway } from '../../database/databse.gateway.js';
 import { DatabaseUtil } from '../../database/databse.util.js';
-import { TypeGenerator } from '../../generator/generator.builder.js';
+import { TypeGenerator } from '../../postgres-generator/generator.builder.js';
 
 export default class DatabaseTypePull extends Command {
     static description = 'Generates types based of asset types defined in sigauth instance';
