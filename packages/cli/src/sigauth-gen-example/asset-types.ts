@@ -7,7 +7,7 @@ export interface Account {
     api?: string;
     username: string;
 
-    sessions: Session[];
+    subject_sessions: Session[];
 }
 
 export interface Session {

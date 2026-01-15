@@ -15,13 +15,13 @@ export default class ClientTest extends Command {
                 passwordHash: 'dfghaslrfigdsfuzagerfzgliufg',
             },
             includes: {
-                sessions: {
-                    subject_account: true
+                subject_sessions: {
+                    subject_account: true,
                 },
             },
         });
 
-        console.log(result?.sessions[0].subject_account);
+        console.log(result?.subject_sessions[0].subject_account);
     }
 
     // Einfacher Join: Table wird ist über ein Feld mit anderem Verbunden

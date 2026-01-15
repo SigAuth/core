@@ -6,7 +6,7 @@ export const DatabaseUtil = {
 
     getDriver(connectionString: string): DatabaseGateway | null {
         let dbGateway: DatabaseGateway | null = null;
-        if (connectionString.startsWith('postgres://')) {
+        if (connectionString.startsWith('postgresql://')) {
             dbGateway = new PostgresDriver();
         } else if (connectionString.startsWith('neo4j://')) {
             // not implemented yet

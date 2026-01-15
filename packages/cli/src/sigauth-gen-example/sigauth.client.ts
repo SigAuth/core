@@ -1,8 +1,6 @@
 import { Account, App, AuthorizationChallenge, AuthorizationInstance, Mirror, Session } from './asset-types.js';
 import { Utils } from './helper.functions.js';
 
-type GlobalRealtionMap = Record<string, Record<string, string>>;
-
 const TableIds = {
     Account: 'asset-46-484-6-4684245',
     Session: 'asset-84-684-68-4684245',
@@ -12,7 +10,7 @@ const TableIds = {
     AuthorizationChallenge: 'asset-486-484-6468-4684245',
 };
 
-const Relations: GlobalRealtionMap = {
+const Relations: Record<string, Record<string, string>> = {
     [TableIds.Account]: {
         sessions: TableIds.Session,
     },
