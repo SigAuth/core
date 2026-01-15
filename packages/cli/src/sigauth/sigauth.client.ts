@@ -224,7 +224,142 @@ export class Model<T extends Record<string, any>> {
         return input.data as T[];
     }
 
-    
+    async update(input: UpdateInput<T>): Promise<T> {
+        return this.executeUpdate(input.where, input.data, true);
+    }
+
+    async updateMany(input: UpdateManyInput<T>): Promise<T[]> {
+        const result = await this.executeUpdate(input.where, input.data, false);
+        return Array.isArray(result) ? result : [result];
+    }
+
+    private async executeUpdate(where: any, data: Partial<CreateQuery<T>>, single: boolean): Promise<any> {
+        const cleanData = { ...data };
+        const relationConfigs = Relations[this.tableName] || {};
+
+        const joinTableOps: string[] = [];
+        const finalSelectJoins: string[] = [];
+        const finalSelectColumns: string[] = ['u.*'];
+
+        // 1. Handle Join Tables (Relation Fields)
+        let opIndex = 0;
+        for (const key of Object.keys(data)) {
+            const entry = Object.entries(relationConfigs).find(([, c]) => c.fieldName === key && c.usingJoinTable);
+
+            if (entry) {
+                const [relName, relConfig] = entry;
+
+                // Remove from scalar update payload
+                delete cleanData[key as keyof typeof cleanData];
+
+                const thisShort = this.getShortId(this.tableName);
+                const otherShort = this.getShortId(relConfig.table);
+                const value = data[key as keyof CreateQuery<T>];
+
+                // Format value (handles arrays -> ARRAY['a','b'] or scalars)
+                const formattedValue = this.formatValue(value);
+                const valueSelect = Array.isArray(value) ? `unnest(${formattedValue})` : formattedValue;
+                const castValueSelect = `${valueSelect}::uuid`;
+
+                let joinTableName: string;
+                let deleteCondition: string;
+                let insertSelect: string;
+
+                if (relConfig.joinType === 'forward') {
+                    // Forward: Me -> Other. Join Table: rel_Me_Other
+                    joinTableName = `rel_${thisShort}_${otherShort}`;
+                    // Delete where source is ME (from updated rows) and field matches
+                    deleteCondition = `"source" IN (SELECT "uuid" FROM updated) AND "field" = '${relConfig.fieldName}'`;
+                    insertSelect = `SELECT "uuid", ${castValueSelect}, '${relConfig.fieldName}' FROM updated`;
+                } else {
+                    // Reverse: Other -> Me. Join Table: rel_Other_Me
+                    joinTableName = `rel_${otherShort}_${thisShort}`;
+                    // Delete where target is ME
+                    deleteCondition = `"target" IN (SELECT "uuid" FROM updated) AND "field" = '${relConfig.fieldName}'`;
+                    insertSelect = `SELECT ${castValueSelect}, "uuid", '${relConfig.fieldName}' FROM updated`;
+                }
+
+                // CTE for DELETE (Remove old relations)
+                joinTableOps.push(`del_${opIndex} AS (DELETE FROM "${joinTableName}" WHERE ${deleteCondition} RETURNING 1)`);
+                // CTE for INSERT (Add new relations)
+                joinTableOps.push(
+                    `ins_${opIndex} AS (INSERT INTO "${joinTableName}" ("source", "target", "field") ${insertSelect} RETURNING 1)`,
+                );
+                opIndex++;
+
+                // Prepare SELECT to return the updated structure
+                const relAlias = `rel_${relName}`;
+                const targetAlias = relName;
+
+                if (relConfig.joinType === 'forward') {
+                    finalSelectJoins.push(
+                        `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."source" = u."uuid" AND "${relAlias}"."field" = '${relConfig.fieldName}'`,
+                    );
+                    finalSelectJoins.push(
+                        `LEFT JOIN "${relConfig.table}" AS "${targetAlias}" ON "${targetAlias}"."uuid" = "${relAlias}"."target"`,
+                    );
+                } else {
+                    finalSelectJoins.push(
+                        `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."target" = u."uuid" AND "${relAlias}"."field" = '${relConfig.fieldName}'`,
+                    );
+                    finalSelectJoins.push(
+                        `LEFT JOIN "${relConfig.table}" AS "${targetAlias}" ON "${targetAlias}"."uuid" = "${relAlias}"."source"`,
+                    );
+                }
+                finalSelectColumns.push(`"${targetAlias}".*`);
+            }
+        }
+
+        // 2. Build Main UPDATE
+        const setClauses: string[] = [];
+        for (const [k, v] of Object.entries(cleanData)) {
+            setClauses.push(`"${k}" = ${this.formatValue(v)}`);
+        }
+
+        const whereClause = this.buildWhereClause(where);
+
+        // If no scalar updates, we pseudo-update to ensure we return the target rows for relation updates
+        const updateSet = setClauses.length > 0 ? setClauses.join(', ') : '"uuid" = "uuid"';
+
+        let sql = `WITH updated AS (UPDATE "${this.tableName}" SET ${updateSet} ${whereClause} RETURNING *)`;
+
+        if (joinTableOps.length > 0) {
+            sql += `,\n${joinTableOps.join(',\n')}`;
+        }
+
+        sql += `\nSELECT ${finalSelectColumns.join(', ')} FROM updated u`;
+        if (finalSelectJoins.length > 0) {
+            sql += `\n${finalSelectJoins.join('\n')}`;
+        }
+
+        console.log(sql);
+        return single ? (data as T) : ([data] as T[]);
+    }
+
+    private buildWhereClause(where: any): string {
+        if (!where || Object.keys(where).length === 0) return '';
+        const conditions: string[] = [];
+
+        for (const [key, value] of Object.entries(where as Record<string, any>)) {
+            const col = `"${key}"`;
+
+            // Check for complex operators (objects that are not Dates or Arrays)
+            if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+                if ('in' in value) {
+                    const val = value as { in: any[] };
+                    const opts = val.in.map((v: any) => this.formatValue(v)).join(',');
+                    conditions.push(`${col} IN (${opts})`);
+                } else {
+                    const val = value as { lt?: any; gt?: any };
+                    if (val.lt !== undefined) conditions.push(`${col} < ${this.formatValue(val.lt)}`);
+                    if (val.gt !== undefined) conditions.push(`${col} > ${this.formatValue(val.gt)}`);
+                }
+            } else {
+                conditions.push(`${col} = ${this.formatValue(value)}`);
+            }
+        }
+        return `WHERE ${conditions.join(' AND ')}`;
+    }
 
     private formatValue(value: any): string {
         if (value === null || value === undefined) return 'NULL';
@@ -300,4 +435,14 @@ export type CreateInput<T> = {
 };
 
 export type CreateQuery<T> = Omit<Pick<T, ScalarKeys<T>>, 'uuid'>;
+
+export type UpdateInput<T> = {
+    where: Partial<T>;
+    data: Partial<CreateQuery<T>>;
+};
+
+export type UpdateManyInput<T> = {
+    where: FindQuery<T>['where'];
+    data: Partial<CreateQuery<T>>;
+};
 
