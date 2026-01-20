@@ -1,8 +1,15 @@
+import { StorageService } from '@/internal/database/storage.service';
 import { Injectable } from '@nestjs/common';
-import { AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
+import { AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
 
 @Injectable()
 export abstract class DatabaseGateway {
+    protected readonly storage: StorageService;
+
+    constructor(private readonly _storage: StorageService) {
+        this.storage = _storage;
+    }
+
     abstract connect(): Promise<void>;
 
     abstract disconnect(): Promise<void>;

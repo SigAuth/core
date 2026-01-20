@@ -1,4 +1,4 @@
-import { DatabaseModule } from '@/common/database/database.module';
+import { DatabaseModule } from '@/internal/database/database.module';
 import { AccountModule } from '@/modules/account/account.module';
 import { AppsModule } from '@/modules/app/app.module';
 import { AssetTypeModule } from '@/modules/asset-type/asset-type.module';

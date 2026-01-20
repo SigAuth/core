@@ -6,6 +6,7 @@ package-lock.json
 # Build outputs
 dist/
 keys/
+**/api/config/**
 build/
 .next/
 out/

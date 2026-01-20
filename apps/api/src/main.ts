@@ -1,4 +1,4 @@
-import { UnauthorizedExceptionFilter } from '@/common/filters/unauthorized-exception.filter';
+import { UnauthorizedExceptionFilter } from '@/internal/filters/unauthorized-exception.filter';
 import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -21,7 +21,7 @@ async function bootstrap() {
         const config = new DocumentBuilder()
             .setTitle('SigAuth API')
             .setDescription(
-                `The SigAuth API is rate limited and protected by 2FA. You can't send more than ${API_RATE_LIMIT} requests per minute.`
+                `The SigAuth API is rate limited and protected by 2FA. You can't send more than ${API_RATE_LIMIT} requests per minute.`,
             )
             .setVersion('0.2')
             .build();

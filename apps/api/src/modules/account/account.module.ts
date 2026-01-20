@@ -1,4 +1,4 @@
-import { DatabaseModule } from '@/common/database/database.module';
+import { DatabaseModule } from '@/internal/database/database.module';
 import { AccountController } from '@/modules/account/account.controller';
 import { AccountService } from '@/modules/account/account.service';
 import { AuthGuard } from '@/modules/auth/guards/authentication.guard';

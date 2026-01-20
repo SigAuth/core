@@ -1,6 +1,6 @@
 import { AssetFieldType, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
 import { Client } from 'pg';
-import { DatabaseGateway } from './databse.gateway.js';
+import { DatabaseGateway } from './database.gateway.js';
 
 export class PostgresDriver extends DatabaseGateway {
     private client: Client | null = null;

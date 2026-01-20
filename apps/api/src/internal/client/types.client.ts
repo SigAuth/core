@@ -8,8 +8,6 @@ export interface Account {
     username: string;
     /** Reverse relation from Session.subjectUuid */
     subject_sessions?: Session[];
-    /** Reverse relation from Mirror.ownerUuids */
-    owner_mirrors?: Mirror[];
 }
 
 export interface Session {
@@ -46,9 +44,6 @@ export interface Mirror {
     name: string;
     code: string;
     lastResult?: string;
-    ownerUuids?: string[];
-    /** These fields are only available when the relation is included in the query */
-    owner_accounts?: Account[];
 }
 
 export interface AuthorizationInstance {

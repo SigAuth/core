@@ -2,7 +2,7 @@ import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { configDotenv } from 'dotenv';
 import ora from 'ora';
-import { DatabaseGateway } from '../../database/databse.gateway.js';
+import { DatabaseGateway } from '../../database/database.gateway.js';
 import { DatabaseUtil } from '../../database/databse.util.js';
 import { TypeGenerator } from '../../postgres-generator/generator.builder.js';
 

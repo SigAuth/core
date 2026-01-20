@@ -1,4 +1,4 @@
-import { DatabaseGateway } from '@/common/database/database.gateway';
+import { DatabaseGateway } from '@/internal/database/database.gateway';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()

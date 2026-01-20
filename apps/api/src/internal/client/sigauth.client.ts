@@ -1,95 +1,118 @@
-import { Client } from 'pg';
-import { configDotenv } from 'dotenv';
-import { Account, App, AuthorizationChallenge, AuthorizationInstance, Mirror, Session } from './asset-types.js';
-import { Utils } from './helper.js';
+import { DatabaseGateway } from '@/internal/database/database.gateway.js';
+import { Utils } from './helper.client.js';
+import { Account, App, AuthorizationChallenge, AuthorizationInstance, Mirror, Session } from './types.client.js';
 
 export type GlobalRealtionMap = Record<
     string,
     Record<string, { table: string; joinType?: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean }>
 >;
 
-const TableIds = {
-    Account: 'asset_019bc17c_6001_7377_ae5c_a216d8b7b81a',
-    Session: 'asset_019bc17c_6054_7bfd_8976_b34a2df8a62b',
-    App: 'asset_019bc17c_60d1_7c4f_8bd3_9bb3753969f4',
-    Mirror: 'asset_019bc17c_6120_745c_b566_cd34f1c5e352',
-    AuthorizationInstance: 'asset_019bc17c_61b1_75f8_87da_e8bcf25b59c9',
-    AuthorizationChallenge: 'asset_019bc17c_6238_79e6_8f8e_78a6d79ad63c'
+export type TableIdSignature = {
+    Account: string;
+    Session: string;
+    App: string;
+    Mirror: string;
+    AuthorizationInstance: string;
+    AuthorizationChallenge: string;
 };
-const Relations: GlobalRealtionMap = {
-    [TableIds.Account]: {
-        subject_sessions: { table: TableIds.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
-        owner_mirrors: { table: TableIds.Mirror, joinType: 'reverse', fieldName: 'ownerUuids', usingJoinTable: true }
-    },
-    [TableIds.Session]: {
-        subject_account: { table: TableIds.Account, joinType: 'forward', fieldName: 'subjectUuid' },
-        session_authorizationinstances: { table: TableIds.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
-        session_authorizationchallenges: { table: TableIds.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' }
-    },
-    [TableIds.App]: {
-        app_authorizationinstances: { table: TableIds.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
-        app_authorizationchallenges: { table: TableIds.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' }
-    },
-    [TableIds.Mirror]: {
-        owner_accounts: { table: TableIds.Account, joinType: 'forward', fieldName: 'ownerUuids', usingJoinTable: true }
-    },
-    [TableIds.AuthorizationInstance]: {
-        session_reference: { table: TableIds.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-        app_reference: { table: TableIds.App, joinType: 'forward', fieldName: 'appUuid' }
-    },
-    [TableIds.AuthorizationChallenge]: {
-        session_reference: { table: TableIds.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-        app_reference: { table: TableIds.App, joinType: 'forward', fieldName: 'appUuid' }
-    }
+
+const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
+    return {
+        [signature.Account]: {
+            subject_sessions: { table: signature.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
+        },
+        [signature.Session]: {
+            subject_account: { table: signature.Account, joinType: 'forward', fieldName: 'subjectUuid' },
+            session_authorizationinstances: { table: signature.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
+            session_authorizationchallenges: { table: signature.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' },
+        },
+        [signature.App]: {
+            app_authorizationinstances: { table: signature.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
+            app_authorizationchallenges: { table: signature.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
+        },
+        [signature.Mirror]: {},
+        [signature.AuthorizationInstance]: {
+            session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+        },
+        [signature.AuthorizationChallenge]: {
+            session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+        },
+    };
 };
 
 export class SigauthClient {
-    private client: Client;
+    private relations?: GlobalRealtionMap;
+    private models: Partial<Record<string, Model<any>>> = {};
+    private signature?: TableIdSignature;
+    private client?: DatabaseGateway;
 
-    public account: Model<Account>;
-    public session: Model<Session>;
-    public app: Model<App>;
-    public mirror: Model<Mirror>;
-    public authorizationInstance: Model<AuthorizationInstance>;
-    public authorizationChallenge: Model<AuthorizationChallenge>;
+    init(signature: TableIdSignature, client: DatabaseGateway) {
+        this.signature = signature;
+        this.client = client;
+        this.relations = buildTypeRelations(signature);
+    }
 
-    constructor() {
-        configDotenv();
-        this.client = new Client({
-            connectionString: process.env.DATABASE_URL,
-        });
-        this.client.connect();
+    private ensureInitialized() {
+        if (!this.signature || !this.client || !this.relations) {
+            throw new Error('SigauthClient not initialized. Call init() first.');
+        }
+    }
 
-        this.account = new Model<Account>(TableIds.Account, this.client);
-        this.session = new Model<Session>(TableIds.Session, this.client);
-        this.app = new Model<App>(TableIds.App, this.client);
-        this.mirror = new Model<Mirror>(TableIds.Mirror, this.client);
-        this.authorizationInstance = new Model<AuthorizationInstance>(TableIds.AuthorizationInstance, this.client);
-        this.authorizationChallenge = new Model<AuthorizationChallenge>(TableIds.AuthorizationChallenge, this.client);
+    private getModel<T extends object>(
+        key: keyof TableIdSignature & string,
+        Type: new (table: any, rels: GlobalRealtionMap, client: DatabaseGateway) => Model<T>,
+    ): Model<T> {
+        this.ensureInitialized();
+        if (!this.models[key]) {
+            this.models[key] = new Type(this.signature![key], this.relations!, this.client!);
+        }
+        return this.models[key] as Model<T>;
+    }
+
+    get Account() {
+        return this.getModel<Account>('Account', Model);
+    }
+    get Session() {
+        return this.getModel<Session>('Session', Model);
+    }
+    get App() {
+        return this.getModel<App>('App', Model);
+    }
+    get Mirror() {
+        return this.getModel<Mirror>('Mirror', Model);
+    }
+    get AuthorizationInstance() {
+        return this.getModel<AuthorizationInstance>('AuthorizationInstance', Model);
+    }
+    get AuthorizationChallenge() {
+        return this.getModel<AuthorizationChallenge>('AuthorizationChallenge', Model);
     }
 }
 
 export class Model<T extends Record<string, any>> {
     constructor(
         private tableName: string,
-        private client: Client,
-    ) { }
+        private relations: GlobalRealtionMap,
+        private db: DatabaseGateway,
+    ) {}
 
     async findOne<Q extends Omit<FindQuery<T>, 'limit'>>(query: Q): Promise<Payload<T, Q> | null> {
         (query as any).limit = 1;
         const qsString = Utils.simpleQs(query);
-        const sql = Utils.toSQL(this.tableName, query, Relations);
+        const sql = Utils.toSQL(this.tableName, query, this.relations);
 
-        const result = await this.client.query(sql);
-        return (result.rows[0] as Payload<T, Q>) || null;
+        const result: any = await this.db.rawQuery(sql);
+        return (result[0] as Payload<T, Q>) || null;
     }
 
     async findMany<Q extends FindQuery<T>>(query: Q): Promise<Payload<T, Q>[]> {
         const qsString = Utils.simpleQs(query);
-        const sql = Utils.toSQL(this.tableName, query, Relations);
+        const sql = Utils.toSQL(this.tableName, query, this.relations);
 
-        const result = await this.client.query(sql);
-        return result.rows as Payload<T, Q>[];
+        const result: any = await this.db.rawQuery(sql);
+        return result as Payload<T, Q>[];
     }
 
     private getShortId(fullId: string) {
@@ -101,7 +124,7 @@ export class Model<T extends Record<string, any>> {
 
     async createOne(input: CreateInput<T>): Promise<T> {
         const cleanData = { ...input.data };
-        const relationConfigs = Relations[this.tableName] || {};
+        const relationConfigs = this.relations[this.tableName] || {};
         const joinTableInserts: string[] = [];
         const finalSelectJoins: string[] = [];
         const finalSelectColumns: string[] = ['i.*'];
@@ -163,9 +186,7 @@ export class Model<T extends Record<string, any>> {
                 }
 
                 // Append RETURNING 1 to ensure valid CTE syntax for data-modifying statements
-                joinTableInserts.push(
-                    `INSERT INTO "${joinTableName}" ("source", "target", "field") ${selectStmt} RETURNING 1`,
-                );
+                joinTableInserts.push(`INSERT INTO "${joinTableName}" ("source", "target", "field") ${selectStmt} RETURNING 1`);
 
                 // Add target table columns to selection
                 finalSelectColumns.push(`"${targetAlias}".*`);
@@ -192,13 +213,12 @@ export class Model<T extends Record<string, any>> {
             sql += `\n${finalSelectJoins.join('\n')}`;
         }
 
-        const result = await this.client.query(sql);
-
-        return result.rows[0] as T;
+        const result: any = await this.db.rawQuery(sql);
+        return result[0] as T;
     }
 
     async createMany(input: CreateManyInput<T>): Promise<T[]> {
-        const relationConfigs = Relations[this.tableName] || {};
+        const relationConfigs = this.relations[this.tableName] || {};
 
         // 1. Analyze all keys across all rows to determine if we need join table handling
         const allKeys = new Set<string>();
@@ -214,7 +234,7 @@ export class Model<T extends Record<string, any>> {
         // This is required because we need to link the specific generated UUID of the new row
         // to the specific array of relations (in the CTEs generated by createOne()).
         if (hasJoinTableFields) {
-            await this.client.query('BEGIN');
+            await this.db.rawQuery('BEGIN');
             const results: T[] = [];
             try {
                 for (const row of input.data) {
@@ -222,10 +242,10 @@ export class Model<T extends Record<string, any>> {
                     const res = await this.createOne({ data: row });
                     results.push(res);
                 }
-                await this.client.query('COMMIT');
+                await this.db.rawQuery('COMMIT');
                 return results;
             } catch (e) {
-                await this.client.query('ROLLBACK');
+                await this.db.rawQuery('ROLLBACK');
                 throw e;
             }
         }
@@ -250,9 +270,8 @@ export class Model<T extends Record<string, any>> {
 
         const sql = `INSERT INTO "${this.tableName}" (${columns}) VALUES ${rowValues} RETURNING *;`;
 
-        const result = await this.client.query(sql);
-
-        return result.rows as T[];
+        const result: any = await this.db.rawQuery(sql);
+        return result as T[];
     }
 
     async updateOne(input: UpdateInput<T>): Promise<T> {
@@ -296,7 +315,7 @@ export class Model<T extends Record<string, any>> {
             ON CONFLICT DO NOTHING
         `;
 
-        await this.client.query(sql);
+        await this.db.rawQuery(sql);
     }
 
     private async executeDelete(where: any, single: boolean): Promise<any> {
@@ -305,7 +324,7 @@ export class Model<T extends Record<string, any>> {
 perm_del AS (DELETE FROM "permission_instances" WHERE "asset" IN (SELECT "uuid" FROM deleted))
 SELECT * FROM deleted`;
 
-        const result = await this.client.query(sql);
+        const result: any = await this.db.rawQuery(sql);
 
         if (single) {
             if (result.rowCount !== 1) {
@@ -315,15 +334,15 @@ SELECT * FROM deleted`;
                     throw new Error(`Delete operation failed. Expected 1 record to be deleted, but ${result.rowCount} were found.`);
                 }
             }
-            return result.rows[0] as T;
+            return result[0] as T;
         }
 
-        return result.rows as T[];
+        return result as T[];
     }
 
     private async executeUpdate(where: any, data: Partial<CreateQuery<T>>, single: boolean): Promise<any> {
         const cleanData = { ...data };
-        const relationConfigs = Relations[this.tableName] || {};
+        const relationConfigs = this.relations[this.tableName] || {};
 
         const joinTableOps: string[] = [];
         const finalSelectJoins: string[] = [];
@@ -427,16 +446,15 @@ updated AS (UPDATE "${this.tableName}" SET ${updateSet} WHERE "uuid" IN (SELECT 
             sql += `\n${finalSelectJoins.join('\n')}`;
         }
 
-        const result = await this.client.query(sql);
-
+        const result: any = await this.db.rawQuery(sql);
         if (single) {
             if (result.rowCount === 0) {
                 throw new Error('Record to update does not exist.');
             }
-            return result.rows[0];
+            return result[0];
         }
 
-        return result.rows;
+        return result;
     }
 
     private buildWhereClause(where: any): string {
@@ -447,18 +465,22 @@ updated AS (UPDATE "${this.tableName}" SET ${updateSet} WHERE "uuid" IN (SELECT 
 
             for (const [key, value] of Object.entries(w as Record<string, any>)) {
                 if (key === 'AND') {
-                    const subClauses = (Array.isArray(value) ? value : [value]).map((sub: any) => {
-                        const subConds = buildConditions(sub);
-                        return subConds.length > 0 ? `(${subConds.join(' AND ')})` : '';
-                    }).filter((s: string) => s !== '');
+                    const subClauses = (Array.isArray(value) ? value : [value])
+                        .map((sub: any) => {
+                            const subConds = buildConditions(sub);
+                            return subConds.length > 0 ? `(${subConds.join(' AND ')})` : '';
+                        })
+                        .filter((s: string) => s !== '');
                     if (subClauses.length > 0) conditions.push(`(${subClauses.join(' AND ')})`);
                     continue;
                 }
                 if (key === 'OR') {
-                    const subClauses = (Array.isArray(value) ? value : [value]).map((sub: any) => {
-                        const subConds = buildConditions(sub);
-                        return subConds.length > 0 ? `(${subConds.join(' AND ')})` : '';
-                    }).filter((s: string) => s !== '');
+                    const subClauses = (Array.isArray(value) ? value : [value])
+                        .map((sub: any) => {
+                            const subConds = buildConditions(sub);
+                            return subConds.length > 0 ? `(${subConds.join(' AND ')})` : '';
+                        })
+                        .filter((s: string) => s !== '');
                     if (subClauses.length > 0) conditions.push(`(${subClauses.join(' OR ')})`);
                     continue;
                 }
@@ -521,22 +543,22 @@ type ScalarKeys<T> = {
 export type Payload<T, Q extends FindQuery<T>> = Pick<T, ScalarKeys<T>> &
     (Q['includes'] extends object
         ? {
-            [K in keyof Q['includes'] & keyof T]: NonNullable<T[K]> extends (infer U)[]
-            ? Payload<U, { includes: Q['includes'][K] }>[]
-            : NonNullable<T[K]> extends object
-            ? Payload<NonNullable<T[K]>, { includes: Q['includes'][K] }>
-            : never;
-        }
+              [K in keyof Q['includes'] & keyof T]: NonNullable<T[K]> extends (infer U)[]
+                  ? Payload<U, { includes: Q['includes'][K] }>[]
+                  : NonNullable<T[K]> extends object
+                    ? Payload<NonNullable<T[K]>, { includes: Q['includes'][K] }>
+                    : never;
+          }
         : {});
 
 export type FindIncludesQuery<T> = {
     [K in keyof T as NonNullable<T[K]> extends (infer U)[] // 1. Unpack Arrays (e.g. Session[]) to check the inner type
-    ? U extends Scalar
-    ? never
-    : K // If inner type is scalar, exclude key
-    : NonNullable<T[K]> extends Scalar
-    ? never
-    : K]?: boolean | FindIncludesQuery<NonNullable<T[K]> extends (infer U)[] ? U : NonNullable<T[K]>>; // If type is scalar, exclude key
+        ? U extends Scalar
+            ? never
+            : K // If inner type is scalar, exclude key
+        : NonNullable<T[K]> extends Scalar
+          ? never
+          : K]?: boolean | FindIncludesQuery<NonNullable<T[K]> extends (infer U)[] ? U : NonNullable<T[K]>>; // If type is scalar, exclude key
 };
 
 export type FindWhere<T> = Partial<{ [K in keyof T]: T[K] | { in?: T[K][]; lt?: T[K]; gt?: T[K] } }> & {
@@ -584,5 +606,3 @@ export type DeleteInput<T> = {
 export type DeleteManyInput<T> = {
     where: FindWhere<T>;
 };
-
-

@@ -2,7 +2,7 @@ import { Command } from '@oclif/core';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
 import ora from 'ora';
-import { DatabaseGateway } from '../../database/databse.gateway.js';
+import { DatabaseGateway } from '../../database/database.gateway.js';
 import { DatabaseUtil } from '../../database/databse.util.js';
 
 export default class DbConnect extends Command {

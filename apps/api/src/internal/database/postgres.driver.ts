@@ -1,15 +1,12 @@
-import { DatabaseGateway } from '@/common/database/database.gateway';
+import { TableIdSignature } from '@/internal/client/sigauth.client';
+import { DatabaseGateway } from '@/internal/database/database.gateway';
 import { Logger } from '@nestjs/common';
 import { ASSET_TYPE_TABLE, AssetFieldType, AssetTypeField, AssetTypeRelationField, PERMISSION_TABLE } from '@sigauth/generics/asset';
 import knex, { Knex } from 'knex';
 
-export class PostgresDriver implements DatabaseGateway {
+export class PostgresDriver extends DatabaseGateway {
     private readonly logger = new Logger(PostgresDriver.name);
     private db?: Knex;
-
-    constructor() {
-        this.connect();
-    }
 
     async connect(): Promise<void> {
         if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set in .env!');
@@ -19,7 +16,30 @@ export class PostgresDriver implements DatabaseGateway {
             connection: process.env.DATABASE_URL,
         });
         this.logger.log('Connected to Postgres database!');
-        await this.initializeSchema();
+
+        const exists = await this.checkIfInstancedSchemaExists();
+        if (!exists) {
+            this.logger.log('Instanced schema not found, initializing database schema...');
+            await this.initializeSchema();
+        } else {
+            this.logger.log('Instanced schema found, skipping initialization.');
+        }
+    }
+
+    private async checkIfInstancedSchemaExists() {
+        if (!this.db) throw new Error('Database not connected');
+
+        const signature = this.storage.InstancedSignature;
+        if (!signature) return false;
+
+        for (const tableName of Object.values(signature)) {
+            const exists = await this.db.schema.hasTable(tableName);
+            if (!exists) {
+                this.logger.error(`Expected default table "${tableName}" to exist, but it does not.`);
+                throw new Error(`Expected default table "${tableName}" to exist, but it does not.`);
+            }
+        }
+        return true;
     }
 
     private async initializeSchema(): Promise<void> {
@@ -67,23 +87,17 @@ export class PostgresDriver implements DatabaseGateway {
         ]);
         if (!appType) throw new Error('Failed to create App asset type during initialization');
 
-        await this.createAssetType('Mirror', [
+        const mirrorType = await this.createAssetType('Mirror', [
             { name: 'name', type: AssetFieldType.VARCHAR, required: true },
             { name: 'code', type: AssetFieldType.TEXT, required: true },
             { name: 'autoRun', type: AssetFieldType.BOOLEAN, required: true },
             { name: 'autoRunInterval', type: AssetFieldType.INTEGER },
             { name: 'lastRun', type: AssetFieldType.DATE },
             { name: 'lastResult', type: AssetFieldType.VARCHAR },
-            {
-                name: 'ownerUuids',
-                type: AssetFieldType.RELATION,
-                allowMultiple: true,
-                targetAssetType: accountType,
-                referentialIntegrityStrategy: 'CASCADE',
-            },
         ]);
+        if (!mirrorType) throw new Error('Failed to create Mirror asset type during initialization');
 
-        await this.createAssetType('AuthorizationInstance', [
+        const authInstanceType = await this.createAssetType('AuthorizationInstance', [
             {
                 name: 'sessionUuid',
                 type: AssetFieldType.RELATION,
@@ -101,8 +115,9 @@ export class PostgresDriver implements DatabaseGateway {
             { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
             { name: 'accessToken', type: AssetFieldType.VARCHAR, required: true },
         ]);
+        if (!authInstanceType) throw new Error('Failed to create AuthorizationInstance asset type during initialization');
 
-        await this.createAssetType('AuthorizationChallenge', [
+        const authChallengeType = await this.createAssetType('AuthorizationChallenge', [
             {
                 name: 'sessionUuid',
                 type: AssetFieldType.RELATION,
@@ -122,6 +137,7 @@ export class PostgresDriver implements DatabaseGateway {
             { name: 'redirectUri', type: AssetFieldType.VARCHAR, required: true },
             { name: 'created', type: AssetFieldType.DATE, required: true },
         ]);
+        if (!authChallengeType) throw new Error('Failed to create AuthorizationChallenge asset type during initialization');
 
         if (!(await this.db.schema.hasTable(PERMISSION_TABLE))) {
             await this.db.schema.createTable(PERMISSION_TABLE, table => {
@@ -148,6 +164,15 @@ export class PostgresDriver implements DatabaseGateway {
             });
         }
 
+        const signature: TableIdSignature = {
+            Account: 'asset_' + accountType.replaceAll('-', '_'),
+            Session: 'asset_' + sessionType.replaceAll('-', '_'),
+            App: 'asset_' + appType.replaceAll('-', '_'),
+            AuthorizationChallenge: 'asset_' + authChallengeType.replaceAll('-', '_'),
+            AuthorizationInstance: 'asset_' + authInstanceType.replaceAll('-', '_'),
+            Mirror: 'asset_' + mirrorType.replaceAll('-', '_'),
+        };
+        this.storage.saveInstancedSignature(signature);
         this.logger.log('Initialized database schema');
     }
 
@@ -160,7 +185,10 @@ export class PostgresDriver implements DatabaseGateway {
     }
 
     async rawQuery<T>(queryString: string, params?: any[]): Promise<T[]> {
-        return [];
+        if (!this.db) throw new Error('Database not connected');
+
+        const result = await this.db.raw(queryString);
+        return result.rows as T[];
     }
 
     async createAssetType(
@@ -169,9 +197,10 @@ export class PostgresDriver implements DatabaseGateway {
     ): Promise<string | undefined> {
         if (!this.db) throw new Error('Database not connected');
 
-        if (await this.db(ASSET_TYPE_TABLE).where({ name }).first()) {
+        const exists = await this.db(ASSET_TYPE_TABLE).where({ name }).first();
+        if (exists) {
             this.logger.error(`Asset type "${name}" already exists, skipping creation.`);
-            return undefined;
+            return exists['uuid'];
         }
 
         // add asset_type entry

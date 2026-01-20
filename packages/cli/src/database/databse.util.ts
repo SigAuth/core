@@ -1,4 +1,4 @@
-import { DatabaseGateway } from './databse.gateway.js';
+import { DatabaseGateway } from './database.gateway.js';
 import { PostgresDriver } from './postgres.driver.js';
 
 export const DatabaseUtil = {
