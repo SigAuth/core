@@ -1,7 +1,14 @@
 import { TableIdSignature } from '@/internal/client/sigauth.client';
 import { DatabaseGateway } from '@/internal/database/database.gateway';
 import { Logger } from '@nestjs/common';
-import { ASSET_TYPE_TABLE, AssetFieldType, AssetTypeField, AssetTypeRelationField, PERMISSION_TABLE } from '@sigauth/generics/asset';
+import {
+    ACCESS_TABLE,
+    ASSET_TYPE_TABLE,
+    AssetFieldType,
+    AssetTypeField,
+    AssetTypeRelationField,
+    PERMISSION_TABLE,
+} from '@sigauth/generics/asset';
 import knex, { Knex } from 'knex';
 
 export class PostgresDriver extends DatabaseGateway {
@@ -147,13 +154,16 @@ export class PostgresDriver extends DatabaseGateway {
                     .references('uuid')
                     .inTable(`asset_${accountType.replace(/-/g, '_')}`)
                     .onDelete('CASCADE');
+
+                table.uuid('asset');
+
                 table
                     .uuid('app')
                     .notNullable()
                     .references('uuid')
                     .inTable(`asset_${appType.replace(/-/g, '_')}`)
                     .onDelete('CASCADE');
-                table.uuid('asset');
+
                 table.string('scope').notNullable();
 
                 table.primary(['account', 'app', 'asset', 'scope']);
@@ -161,6 +171,22 @@ export class PostgresDriver extends DatabaseGateway {
                 table.index(['account', 'app'], 'idx_acc_app');
                 table.index(['account', 'asset'], 'idx_acc_asset');
                 table.index(['account', 'app', 'scope'], 'idx_acc_app_scope');
+            });
+        }
+
+        if (!(await this.db.schema.hasTable(ACCESS_TABLE))) {
+            await this.db.schema.createTable(ACCESS_TABLE, table => {
+                table
+                    .uuid('app')
+                    .notNullable()
+                    .references('uuid')
+                    .inTable(`asset_${appType.replace(/-/g, '_')}`)
+                    .onDelete('CASCADE');
+                table.uuid('assetTypeUuid').notNullable().references('uuid').inTable(ASSET_TYPE_TABLE).onDelete('CASCADE');
+                table.boolean('find').notNullable();
+                table.boolean('create').notNullable();
+                table.boolean('edit').notNullable();
+                table.boolean('delete').notNullable();
             });
         }
 

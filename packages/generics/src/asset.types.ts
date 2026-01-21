@@ -1,5 +1,6 @@
-export const ASSET_TYPE_TABLE = 'asset_types';
-export const PERMISSION_TABLE = 'permission_instances';
+export const ASSET_TYPE_TABLE = '_internal_asset_types';
+export const PERMISSION_TABLE = '_internal_permission_instances';
+export const ACCESS_TABLE = '_internal_app_access';
 
 export type AssetType = {
     uuid: string;
