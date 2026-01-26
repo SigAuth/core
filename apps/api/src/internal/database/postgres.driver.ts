@@ -1,13 +1,15 @@
-import { TableIdSignature } from '@/internal/client/sigauth.client';
 import { DatabaseGateway } from '@/internal/database/database.gateway';
+import { TableIdSignature } from '@/internal/database/orm-client/sigauth.client';
 import { Logger } from '@nestjs/common';
 import {
-    ACCESS_TABLE,
-    ASSET_TYPE_TABLE,
     AssetFieldType,
     AssetTypeField,
     AssetTypeRelationField,
-    PERMISSION_TABLE,
+    INTERNAL_APP_ACCESS_TABLE,
+    INTERNAL_ASSET_TYPE_TABLE,
+    INTERNAL_GRANT_TABLE,
+    INTERNAL_PERMISSION_TABLE,
+    SELF_REFERENCE_ASSET_TYPE_UUID,
 } from '@sigauth/generics/asset';
 import knex, { Knex } from 'knex';
 
@@ -53,11 +55,17 @@ export class PostgresDriver extends DatabaseGateway {
         if (!this.db) throw new Error('Database not connected');
 
         // generate base table to maintain asset types
-        if (!(await this.db.schema.hasTable(ASSET_TYPE_TABLE))) {
-            await this.db.schema.createTable(ASSET_TYPE_TABLE, table => {
+        if (!(await this.db.schema.hasTable(INTERNAL_ASSET_TYPE_TABLE))) {
+            await this.db.schema.createTable(INTERNAL_ASSET_TYPE_TABLE, table => {
                 table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key
                 table.string('name').notNullable().unique();
                 table.specificType('externalJoinKeys', 'varchar[]');
+            });
+
+            await this.db(INTERNAL_ASSET_TYPE_TABLE).insert({
+                uuid: SELF_REFERENCE_ASSET_TYPE_UUID,
+                name: 'AssetType',
+                externalJoinKeys: [],
             });
         }
 
@@ -146,43 +154,45 @@ export class PostgresDriver extends DatabaseGateway {
         ]);
         if (!authChallengeType) throw new Error('Failed to create AuthorizationChallenge asset type during initialization');
 
-        if (!(await this.db.schema.hasTable(PERMISSION_TABLE))) {
-            await this.db.schema.createTable(PERMISSION_TABLE, table => {
+        if (!(await this.db.schema.hasTable(INTERNAL_GRANT_TABLE))) {
+            await this.db.schema.createTable(INTERNAL_GRANT_TABLE, table => {
                 table
-                    .uuid('account')
+                    .uuid('accountUuid')
                     .notNullable()
                     .references('uuid')
                     .inTable(`asset_${accountType.replace(/-/g, '_')}`)
                     .onDelete('CASCADE');
 
-                table.uuid('asset');
+                table.uuid('assetUuid');
+                table.uuid('typeUuid').references('uuid').inTable(INTERNAL_ASSET_TYPE_TABLE).onDelete('CASCADE');
 
                 table
-                    .uuid('app')
+                    .uuid('appUuid')
                     .notNullable()
                     .references('uuid')
                     .inTable(`asset_${appType.replace(/-/g, '_')}`)
                     .onDelete('CASCADE');
 
-                table.string('scope').notNullable();
+                table.string('permission').notNullable();
+                table.boolean('grantable').notNullable().defaultTo(false);
 
-                table.primary(['account', 'app', 'asset', 'scope']);
-                table.index(['account'], 'idx_permission_account');
-                table.index(['account', 'app'], 'idx_acc_app');
-                table.index(['account', 'asset'], 'idx_acc_asset');
-                table.index(['account', 'app', 'scope'], 'idx_acc_app_scope');
+                table.primary(['accountUuid', 'appUuid', 'assetUuid', 'permission']);
+                table.index(['accountUuid'], 'idx_permission_account');
+                table.index(['accountUuid', 'appUuid'], 'idx_acc_app');
+                table.index(['accountUuid', 'assetUuid'], 'idx_acc_asset');
+                table.index(['accountUuid', 'appUuid', 'permission'], 'idx_acc_app_permission');
             });
         }
 
-        if (!(await this.db.schema.hasTable(ACCESS_TABLE))) {
-            await this.db.schema.createTable(ACCESS_TABLE, table => {
+        if (!(await this.db.schema.hasTable(INTERNAL_APP_ACCESS_TABLE))) {
+            await this.db.schema.createTable(INTERNAL_APP_ACCESS_TABLE, table => {
                 table
-                    .uuid('app')
+                    .uuid('appUuid')
                     .notNullable()
                     .references('uuid')
                     .inTable(`asset_${appType.replace(/-/g, '_')}`)
                     .onDelete('CASCADE');
-                table.uuid('assetTypeUuid').notNullable().references('uuid').inTable(ASSET_TYPE_TABLE).onDelete('CASCADE');
+                table.uuid('typeUuid').notNullable().references('uuid').inTable(INTERNAL_ASSET_TYPE_TABLE).onDelete('CASCADE');
                 table.boolean('find').notNullable();
                 table.boolean('create').notNullable();
                 table.boolean('edit').notNullable();
@@ -190,15 +200,35 @@ export class PostgresDriver extends DatabaseGateway {
             });
         }
 
-        const signature: TableIdSignature = {
+        if (!(await this.db.schema.hasTable(INTERNAL_PERMISSION_TABLE))) {
+            await this.db.schema.createTable(INTERNAL_PERMISSION_TABLE, table => {
+                table
+                    .uuid('appUuid')
+                    .notNullable()
+                    .references('uuid')
+                    .inTable(`asset_${appType.replace(/-/g, '_')}`)
+                    .onDelete('CASCADE');
+                table.uuid('typeUuid').references('uuid').inTable(INTERNAL_ASSET_TYPE_TABLE).onDelete('CASCADE');
+                table.string('permission').notNullable();
+                table.primary(['appUuid', 'typeUuid', 'permission']);
+                table.index(['appUuid'], 'idx_type_permission');
+            });
+        }
+
+        const signatures: TableIdSignature = {
             Account: 'asset_' + accountType.replaceAll('-', '_'),
             Session: 'asset_' + sessionType.replaceAll('-', '_'),
             App: 'asset_' + appType.replaceAll('-', '_'),
             AuthorizationChallenge: 'asset_' + authChallengeType.replaceAll('-', '_'),
             AuthorizationInstance: 'asset_' + authInstanceType.replaceAll('-', '_'),
             Mirror: 'asset_' + mirrorType.replaceAll('-', '_'),
+
+            AppAccess: INTERNAL_APP_ACCESS_TABLE,
+            Permission: INTERNAL_PERMISSION_TABLE,
+            AssetType: INTERNAL_ASSET_TYPE_TABLE,
+            Grant: INTERNAL_GRANT_TABLE,
         };
-        this.storage.saveInstancedSignature(signature);
+        this.storage.saveConfigFile({ signatures });
         this.logger.log('Initialized database schema');
     }
 
@@ -223,7 +253,7 @@ export class PostgresDriver extends DatabaseGateway {
     ): Promise<string | undefined> {
         if (!this.db) throw new Error('Database not connected');
 
-        const exists = await this.db(ASSET_TYPE_TABLE).where({ name }).first();
+        const exists = await this.db(INTERNAL_ASSET_TYPE_TABLE).where({ name }).first();
         if (exists) {
             this.logger.error(`Asset type "${name}" already exists, skipping creation.`);
             return exists['uuid'];
@@ -243,7 +273,7 @@ export class PostgresDriver extends DatabaseGateway {
                     '#' +
                     f.referentialIntegrityStrategy,
             );
-        const [{ uuid }] = await this.db(ASSET_TYPE_TABLE).insert({ name, externalJoinKeys }).returning('uuid');
+        const [{ uuid }] = await this.db(INTERNAL_ASSET_TYPE_TABLE).insert({ name, externalJoinKeys }).returning('uuid');
         const tableName = `asset_${uuid.replace(/-/g, '_')}`;
         await this.db.schema.createTable(tableName, async table => {
             table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key

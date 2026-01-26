@@ -1,4 +1,4 @@
-import { TableIdSignature } from '@/internal/client/sigauth.client';
+import { TableIdSignature } from '@/internal/database/orm-client/sigauth.client';
 import { Injectable, Logger } from '@nestjs/common';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'crypto';
 import fs from 'fs';
@@ -13,6 +13,9 @@ export class StorageService {
     private authPublicKey: KeyObject | null = null;
     private authPrivateKey: KeyObject | null = null;
 
+    // instance specific fields
+    private sigauthAppUuid: string | null = null;
+
     getPath(): string {
         return this.PATH;
     }
@@ -23,22 +26,30 @@ export class StorageService {
 
         fs.mkdirSync(path, { recursive: true });
         this.loadAuthKeyPair();
-        this.loadInstancedSignature();
+        this.loadConfigFile();
     }
 
-    public saveInstancedSignature(signature: TableIdSignature) {
-        const path = `${this.getPath()}/instance_signature.json`;
-        fs.writeFileSync(path, JSON.stringify(signature, null, 2));
-        this.instancedSignature = signature;
+    public saveConfigFile(props: { signatures?: TableIdSignature; sigauthAppUuid?: string }) {
+        const path = `${this.getPath()}/sigauth-config.json`;
+        const config = {
+            signatures: props.signatures || this.instancedSignature,
+            sigauthAppUuid: props.sigauthAppUuid || this.sigauthAppUuid,
+        };
+
+        fs.writeFileSync(path, JSON.stringify(config, null, 2));
+
+        this.instancedSignature = props.signatures || this.instancedSignature;
+        this.sigauthAppUuid = props.sigauthAppUuid || this.sigauthAppUuid;
     }
 
-    private loadInstancedSignature() {
-        const path = `${this.getPath()}/instance_signature.json`;
+    private loadConfigFile() {
+        const path = `${this.getPath()}/sigauth-config.json`;
 
         if (fs.existsSync(path)) {
             this.logger.log('Loading instance signature from config.');
-            const data = fs.readFileSync(path, 'utf-8');
-            this.instancedSignature = JSON.parse(data) as TableIdSignature;
+            const data = JSON.parse(fs.readFileSync(path, 'utf-8'));
+            this.instancedSignature = data.signatures as TableIdSignature;
+            this.sigauthAppUuid = data.sigauthAppUuid;
         }
     }
 
@@ -74,5 +85,9 @@ export class StorageService {
 
     get AuthPublicKey(): KeyObject | null {
         return this.authPublicKey;
+    }
+
+    get SigAuthAppUuid(): string | null {
+        return this.sigauthAppUuid;
     }
 }

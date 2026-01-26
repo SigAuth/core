@@ -1,6 +1,17 @@
 import { DatabaseGateway } from '@/internal/database/database.gateway.js';
 import { Utils } from './helper.client.js';
-import { Account, App, AuthorizationChallenge, AuthorizationInstance, Mirror, Session } from './types.client.js';
+import {
+    Account,
+    App,
+    AppAccess,
+    AssetType,
+    AuthorizationChallenge,
+    AuthorizationInstance,
+    Grant,
+    Mirror,
+    Permission,
+    Session,
+} from './types.client.js';
 
 export type GlobalRealtionMap = Record<
     string,
@@ -14,12 +25,19 @@ export type TableIdSignature = {
     Mirror: string;
     AuthorizationInstance: string;
     AuthorizationChallenge: string;
+
+    // Internal
+    AssetType: string;
+    Grant: string;
+    AppAccess: string;
+    Permission: string;
 };
 
 const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
     return {
         [signature.Account]: {
             subject_sessions: { table: signature.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
+            account_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'accountUuid' }, // Internal
         },
         [signature.Session]: {
             subject_account: { table: signature.Account, joinType: 'forward', fieldName: 'subjectUuid' },
@@ -29,6 +47,10 @@ const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
         [signature.App]: {
             app_authorizationinstances: { table: signature.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
             app_authorizationchallenges: { table: signature.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
+
+            app_accesses: { table: signature.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+            app_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+            app_permissions: { table: signature.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
         },
         [signature.Mirror]: {},
         [signature.AuthorizationInstance]: {
@@ -38,6 +60,25 @@ const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
         [signature.AuthorizationChallenge]: {
             session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },
             app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+        },
+        // Internal
+        [signature.AssetType]: {
+            type_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'typeUuid' },
+            type_appAccesses: { table: signature.AppAccess, joinType: 'reverse', fieldName: 'typeUuid' },
+            type_permissions: { table: signature.Permission, joinType: 'reverse', fieldName: 'typeUuid' },
+        },
+        [signature.Grant]: {
+            account_reference: { table: signature.Account, joinType: 'forward', fieldName: 'accountUuid' },
+            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+            type_reference: { table: signature.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+        },
+        [signature.AppAccess]: {
+            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+            type_reference: { table: signature.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+        },
+        [signature.Permission]: {
+            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+            type_reference: { table: signature.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
         },
     };
 };
@@ -88,6 +129,23 @@ export class SigauthClient {
     }
     get AuthorizationChallenge() {
         return this.getModel<AuthorizationChallenge>('AuthorizationChallenge', Model);
+    }
+
+    // Internal
+    get AssetType() {
+        return this.getModel<AssetType>('AssetType', Model);
+    }
+
+    get Grant() {
+        return this.getModel<Grant>('Grant', Model);
+    }
+
+    get AppAccess() {
+        return this.getModel<AppAccess>('AppAccess', Model);
+    }
+
+    get Permission() {
+        return this.getModel<Permission>('Permission', Model);
     }
 }
 

@@ -1,6 +1,9 @@
-export const ASSET_TYPE_TABLE = '_internal_asset_types';
-export const PERMISSION_TABLE = '_internal_permission_instances';
-export const ACCESS_TABLE = '_internal_app_access';
+export const SELF_REFERENCE_ASSET_TYPE_UUID = '00000000-0000-7000-8000-000000000000';
+
+export const INTERNAL_ASSET_TYPE_TABLE = '_internal_asset_types';
+export const INTERNAL_GRANT_TABLE = '_internal_grants';
+export const INTERNAL_APP_ACCESS_TABLE = '_internal_app_access';
+export const INTERNAL_PERMISSION_TABLE = '_internal_permissions';
 
 export type AssetType = {
     uuid: string;

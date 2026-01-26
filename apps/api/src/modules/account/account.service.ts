@@ -1,84 +1,93 @@
-import { DatabaseGateway } from '@/internal/database/database.gateway';
-import { Injectable, Logger } from '@nestjs/common';
+import { FindWhere } from '@/internal/database/orm-client/sigauth.client';
+import { Account } from '@/internal/database/orm-client/types.client';
+import { ORMService } from '@/internal/database/orm.client';
+import { Utils } from '@/internal/utils';
+import { CreateAccountDto } from '@/modules/account/dto/create-account.dto';
+import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AccountService {
     private logger: Logger = new Logger(AccountService.name);
 
-    constructor(private readonly database: DatabaseGateway) {}
+    constructor(private readonly db: ORMService) {}
 
-    // async createAccount(createAccountDto: CreateAccountDto): Promise<AccountWithPermissions> {
-    //     const existing = await this.prisma.account.findFirst({
-    //         where: {
-    //             OR: [{ name: createAccountDto.name }, { email: createAccountDto.email }],
-    //         },
-    //     });
+    async createAccount(createAccountDto: CreateAccountDto): Promise<Account> {
+        const existing = await this.db.Account.findOne({
+            where: {
+                OR: [{ username: createAccountDto.username }, { email: createAccountDto.email }],
+            },
+        });
 
-    //     if (existing) {
-    //         throw new BadRequestException('Name or Email already exists');
-    //     }
+        if (existing) {
+            throw new BadRequestException('Name or Email already exists');
+        }
 
-    //     const account: Account = await this.prisma.account.create({
-    //         data: {
-    //             name: createAccountDto.name,
-    //             email: createAccountDto.email,
-    //             password: bcrypt.hashSync(createAccountDto.password, 10),
-    //             api: createAccountDto.apiAccess ? Utils.generateToken(32) : null,
-    //         },
-    //     });
+        const account: Account = await this.db.Account.createOne({
+            data: {
+                username: createAccountDto.username,
+                email: createAccountDto.email,
+                passwordHash: bcrypt.hashSync(createAccountDto.password, 10),
+                deactivated: false,
+                api: createAccountDto.apiAccess ? Utils.generateToken(32) : undefined,
+            },
+        });
 
-    //     return { ...account, permissions: [] };
-    // }
+        return account;
+    }
 
-    // async editAccount(editAccountDto: EditAccountDto): Promise<AccountWithPermissions> {
-    //     // Check for unique values (Name/Email)
-    //     let account = await this.prisma.account.findUnique({
-    //         where: { id: editAccountDto.id },
-    //         include: { permissions: true },
-    //     });
-    //     if (!account) throw new NotFoundException('Account does not exist');
-    //     if (editAccountDto.name || editAccountDto.email) {
-    //         const orConditions: Prisma.AccountWhereInput[] = [];
-    //         if (editAccountDto.name) orConditions.push({ name: editAccountDto.name });
-    //         if (editAccountDto.email) orConditions.push({ email: editAccountDto.email });
+    async editAccount(editAccountDto: EditAccountDto): Promise<Account> {
+        // Check for unique values (Name/Email)
 
-    //         const existing = await this.prisma.account.findFirst({
-    //             where: {
-    //                 OR: orConditions,
-    //             },
-    //             include: { permissions: true },
-    //         });
+        // Todo include permission in account type
+        let account = await this.db.Account.findOne({
+            where: { uuid: editAccountDto.uuid },
+        });
 
-    //         if (existing && existing.id !== editAccountDto.id) {
-    //             throw new BadRequestException('Name or Email already exists');
-    //         }
-    //     }
+        if (!account) throw new NotFoundException('Account does not exist');
+        if (editAccountDto.username || editAccountDto.email) {
+            const orConditions: FindWhere<Account>[] = [];
+            if (editAccountDto.username) orConditions.push({ username: editAccountDto.username });
+            if (editAccountDto.email) orConditions.push({ email: editAccountDto.email });
 
-    //     // Dynamically build update object
-    //     const data: { name?: string; email?: string; password?: string; api?: string | null; deactivated?: boolean } = {};
-    //     if (editAccountDto.name) data.name = editAccountDto.name;
-    //     if (editAccountDto.email) data.email = editAccountDto.email;
-    //     if (editAccountDto.password) data.password = bcrypt.hashSync(editAccountDto.password, 10);
-    //     if (editAccountDto.deactivated !== undefined) data.deactivated = editAccountDto.deactivated;
-    //     if (editAccountDto.apiAccess !== undefined) {
-    //         data.api = editAccountDto.apiAccess ? Utils.generateToken(32) : null;
-    //     }
+            const existing = await this.db.Account.findOne({
+                where: {
+                    OR: orConditions,
+                },
+            });
 
-    //     // when deativated is toggled to true log out all sessions
-    //     if (editAccountDto.deactivated && !account.deactivated) {
-    //         await this.logOutAll(editAccountDto.id);
-    //     }
+            if (existing && existing.uuid !== editAccountDto.uuid) {
+                throw new BadRequestException('Name or Email already exists');
+            }
+        }
 
-    //     const updated = await this.prisma.account.update({
-    //         where: { id: editAccountDto.id },
-    //         data,
-    //     });
+        // Dynamically build update object
+        const data: { username?: string; email?: string; passwordHash?: string; api?: string; deactivated?: boolean } = {};
+        if (editAccountDto.username) data.username = editAccountDto.username;
+        if (editAccountDto.email) data.email = editAccountDto.email;
+        if (editAccountDto.password) data.passwordHash = bcrypt.hashSync(editAccountDto.password, 10);
+        if (editAccountDto.deactivated !== undefined) data.deactivated = editAccountDto.deactivated;
+        if (editAccountDto.apiAccess !== undefined) {
+            data.api = editAccountDto.apiAccess ? Utils.generateToken(32) : undefined;
+        }
 
-    //     return { ...updated, permissions: account.permissions || [] };
-    // }
+        // when deativated is toggled to true log out all sessions
+        if (editAccountDto.deactivated && !account.deactivated) {
+            // await this.logOutAll(editAccountDto.id);
+        }
+
+        const updated = await this.db.Account.updateOne({
+            where: { uuid: editAccountDto.uuid },
+            data,
+        });
+
+        return updated;
+    }
 
     // async deleteAccount(deleteAccountDto: DeleteAccountDto) {
-    //     await this.prisma.permissionInstance.deleteMany({
+
+    //     await this.db.Permission Instance.deleteMany({
     //         where: { accountId: { in: deleteAccountDto.accountIds } },
     //     });
 
