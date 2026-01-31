@@ -1,6 +1,6 @@
 import { StorageService } from '@/internal/database/storage.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
+import { Asset, AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
 
 @Injectable()
 export abstract class DatabaseGateway {
@@ -23,5 +23,7 @@ export abstract class DatabaseGateway {
     abstract editAssetType(uuid: string, name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<boolean>;
 
     abstract deleteAssetType(uuid: string): Promise<boolean>;
+
+    abstract getAssetByUuid(typeUuid: string, assetUuid: string): Promise<Asset | null>;
 }
 

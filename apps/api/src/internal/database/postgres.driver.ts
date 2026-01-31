@@ -1,6 +1,7 @@
 import { DatabaseGateway } from '@/internal/database/database.gateway';
 import { TableIdSignature } from '@/internal/database/orm-client/sigauth.client';
 import {
+    Asset,
     AssetFieldType,
     AssetTypeField,
     AssetTypeRelationField,
@@ -400,6 +401,14 @@ export class PostgresDriver extends DatabaseGateway {
                 // todo no direct equivalent in Postgres, would require triggers
                 break;
         }
+    }
+
+    async getAssetByUuid(typeUuid: string, assetUuid: string): Promise<Asset | null> {
+        const tableName = `asset_${typeUuid.replace(/-/g, '_')}`;
+        if (!this.db) throw new Error('Database not connected');
+
+        const asset = await this.db(tableName).where({ uuid: assetUuid }).first();
+        return asset ? (asset as Asset) : null;
     }
 }
 
