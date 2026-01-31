@@ -1,19 +1,22 @@
 import { DatabaseGateway } from '@/internal/database/database.gateway';
 import { SigauthClient } from '@/internal/database/orm-client/sigauth.client';
 import { StorageService } from '@/internal/database/storage.service';
+import { Utils } from '@/internal/utils';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/generics/asset';
+import { SigAuthPermissions } from '@sigauth/generics/protected';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ORMService extends SigauthClient implements OnApplicationBootstrap {
-    private readonly logger = new Logger(ORMService.name);
+    private readonly serviceLogger: Logger;
 
     constructor(
         private readonly db: DatabaseGateway,
         private readonly storage: StorageService,
     ) {
         super();
+        this.serviceLogger = new Logger(ORMService.name);
     }
 
     async onApplicationBootstrap() {
@@ -25,7 +28,8 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
         this.init(this.storage.InstancedSignature, this.db);
 
         if (!this.storage.SigAuthAppUuid || !(await this.App.findOne({ where: { uuid: this.storage.SigAuthAppUuid } }))) {
-            this.logger.warn('SigAuth App not found in database. Creating default SigAuth App entry.');
+            this.serviceLogger.warn('SigAuth App not found in database. Creating default SigAuth App entry.');
+
             const app = await this.App.createOne({
                 data: {
                     name: 'SigAuth Internal App',
@@ -36,10 +40,10 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
             // adding default sigauth scopes
             const sigauthScopes = await this.Permission.createMany({
                 data: [
-                    { appUuid: app.uuid, typeUuid: undefined, permission: 'root' },
-                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: 'create' },
-                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: 'delete' },
-                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: 'create' },
+                    { appUuid: app.uuid, typeUuid: undefined, permission: SigAuthPermissions.ROOT },
+                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: SigAuthPermissions.CREATE_ASSET },
+                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: SigAuthPermissions.DELETE_ASSET },
+                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: SigAuthPermissions.EDIT_ASSET },
                 ],
             });
             this.storage.saveConfigFile({ sigauthAppUuid: app.uuid });
@@ -48,7 +52,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
         const appId = this.storage.SigAuthAppUuid!;
         const accounts = await this.Account.findOne({});
         if (!accounts) {
-            this.logger.warn('No accounts found in database. Creating dummy account for initial setup.');
+            this.serviceLogger.warn('No accounts found in database. Creating dummy account for initial setup.');
             const account = await this.Account.createOne({
                 data: {
                     username: 'admin',
@@ -63,17 +67,17 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
                     {
                         accountUuid: account.uuid,
                         appUuid: appId,
-                        assetUuid: undefined,
+                        assetUuid: SELF_REFERENCE_ASSET_TYPE_UUID, // needs a valid uuid because its part of the primary key
                         typeUuid: undefined,
-                        permission: 'root',
+                        permission: SigAuthPermissions.ROOT,
                         grantable: true,
                     },
                     {
                         accountUuid: account.uuid,
                         appUuid: appId,
                         typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID,
-                        assetUuid: this.storage.InstancedSignature.Account,
-                        permission: 'create',
+                        assetUuid: Utils.convertSignatureToUuid(this.storage.InstancedSignature.Account),
+                        permission: SigAuthPermissions.CREATE_ASSET,
                         grantable: true,
                     },
                 ],
@@ -85,3 +89,4 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
         return this.db;
     }
 }
+

@@ -37,9 +37,9 @@
             "default": "./dist/json.types.js"
         },
         "./protected": {
-            "types": "./dist/protected.d.ts",
-            "import": "./dist/protected.js",
-            "default": "./dist/protected.js"
+            "types": "./dist/protected.types.d.ts",
+            "import": "./dist/protected.types.js",
+            "default": "./dist/protected.types.js"
         },
         "./mirror": {
             "types": "./dist/mirror.types.d.ts",
@@ -62,3 +62,4 @@
         "typescript": "latest"
     }
 }
+

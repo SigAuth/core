@@ -38,4 +38,5 @@ async function bootstrap() {
 
 bootstrap()
     .then(() => logger.log('API is running...'))
-    .catch(logger.error);
+    .catch(error => logger.error(error));
+

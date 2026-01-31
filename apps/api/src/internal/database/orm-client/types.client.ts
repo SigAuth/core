@@ -31,7 +31,7 @@ export interface App {
     url: string;
     oidcAuthCodeCb?: string;
     token?: string;
-    scopes?: string[];
+
     /** Reverse relation from AuthorizationInstance.appUuid */
     app_authorizationinstances?: AuthorizationInstance[];
     /** Reverse relation from AuthorizationChallenge.appUuid */
@@ -106,6 +106,7 @@ export interface Grant {
     type_reference?: AssetType;
 }
 
+// TODO we could think about merging AppAccess to Permissions -> Therore a functionality would be needed that grants could be applied to apps or not all all
 export interface AppAccess {
     appUuid: string;
     typeUuid: string;
@@ -128,3 +129,4 @@ export type Permission = {
     app_reference?: App;
     type_reference?: AssetType;
 };
+

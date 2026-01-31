@@ -1,6 +1,5 @@
 import { DatabaseGateway } from '@/internal/database/database.gateway';
 import { TableIdSignature } from '@/internal/database/orm-client/sigauth.client';
-import { Logger } from '@nestjs/common';
 import {
     AssetFieldType,
     AssetTypeField,
@@ -12,13 +11,17 @@ import {
     SELF_REFERENCE_ASSET_TYPE_UUID,
 } from '@sigauth/generics/asset';
 import knex, { Knex } from 'knex';
+import { exit } from 'process';
 
 export class PostgresDriver extends DatabaseGateway {
-    private readonly logger = new Logger(PostgresDriver.name);
     private db?: Knex;
 
     async connect(): Promise<void> {
-        if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set in .env!');
+        if (!process.env.DATABASE_URL) {
+            // we cant use the logger because its not initialized yet
+            console.error('DATABASE_URL environment variable not set');
+            exit(-1);
+        }
 
         this.db = knex({
             client: 'pg',
@@ -36,7 +39,10 @@ export class PostgresDriver extends DatabaseGateway {
     }
 
     private async checkIfInstancedSchemaExists() {
-        if (!this.db) throw new Error('Database not connected');
+        if (!this.db) {
+            console.error('Database not connected');
+            exit(-1);
+        }
 
         const signature = this.storage.InstancedSignature;
         if (!signature) return false;
@@ -52,7 +58,10 @@ export class PostgresDriver extends DatabaseGateway {
     }
 
     private async initializeSchema(): Promise<void> {
-        if (!this.db) throw new Error('Database not connected');
+        if (!this.db) {
+            console.error('Database not connected');
+            exit(-1);
+        }
 
         // generate base table to maintain asset types
         if (!(await this.db.schema.hasTable(INTERNAL_ASSET_TYPE_TABLE))) {
@@ -98,7 +107,6 @@ export class PostgresDriver extends DatabaseGateway {
             { name: 'url', type: AssetFieldType.VARCHAR, required: true },
             { name: 'oidcAuthCodeCb', type: AssetFieldType.VARCHAR },
             { name: 'token', type: AssetFieldType.VARCHAR },
-            { name: 'scopes', type: AssetFieldType.VARCHAR, allowMultiple: true },
         ]);
         if (!appType) throw new Error('Failed to create App asset type during initialization');
 
@@ -210,7 +218,7 @@ export class PostgresDriver extends DatabaseGateway {
                     .onDelete('CASCADE');
                 table.uuid('typeUuid').references('uuid').inTable(INTERNAL_ASSET_TYPE_TABLE).onDelete('CASCADE');
                 table.string('permission').notNullable();
-                table.primary(['appUuid', 'typeUuid', 'permission']);
+                table.primary(['appUuid', 'permission']);
                 table.index(['appUuid'], 'idx_type_permission');
             });
         }
@@ -394,3 +402,4 @@ export class PostgresDriver extends DatabaseGateway {
         }
     }
 }
+

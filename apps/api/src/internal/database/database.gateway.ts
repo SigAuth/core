@@ -1,13 +1,15 @@
 import { StorageService } from '@/internal/database/storage.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AssetTypeField, AssetTypeRelationField } from '@sigauth/generics/asset';
 
 @Injectable()
 export abstract class DatabaseGateway {
     protected readonly storage: StorageService;
+    protected readonly logger;
 
     constructor(private readonly _storage: StorageService) {
         this.storage = _storage;
+        this.logger = new Logger(DatabaseGateway.name);
     }
 
     abstract connect(): Promise<void>;
@@ -22,3 +24,4 @@ export abstract class DatabaseGateway {
 
     abstract deleteAssetType(uuid: string): Promise<boolean>;
 }
+
