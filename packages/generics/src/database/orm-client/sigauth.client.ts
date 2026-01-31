@@ -1,4 +1,4 @@
-import { DatabaseGateway } from '@/internal/database/database.gateway.js';
+import { GenericDatabaseGateway } from 'src/database/database.gateway.js';
 import { Utils } from './helper.client.js';
 import {
     Account,
@@ -87,9 +87,9 @@ export class SigauthClient {
     private relations?: GlobalRealtionMap;
     private models: Partial<Record<string, Model<any>>> = {};
     private signature?: TableIdSignature;
-    private client?: DatabaseGateway;
+    private client?: GenericDatabaseGateway;
 
-    init(signature: TableIdSignature, client: DatabaseGateway) {
+    init(signature: TableIdSignature, client: GenericDatabaseGateway) {
         this.signature = signature;
         this.client = client;
         this.relations = buildTypeRelations(signature);
@@ -103,7 +103,7 @@ export class SigauthClient {
 
     private getModel<T extends object>(
         key: keyof TableIdSignature & string,
-        Type: new (table: any, rels: GlobalRealtionMap, client: DatabaseGateway) => Model<T>,
+        Type: new (table: any, rels: GlobalRealtionMap, client: GenericDatabaseGateway) => Model<T>,
     ): Model<T> {
         this.ensureInitialized();
         if (!this.models[key]) {
@@ -153,7 +153,7 @@ export class Model<T extends Record<string, any>> {
     constructor(
         private tableName: string,
         private relations: GlobalRealtionMap,
-        private db: DatabaseGateway,
+        private db: GenericDatabaseGateway,
     ) {}
 
     async findOne<Q extends Omit<FindQuery<T>, 'limit'>>(query: Q): Promise<Payload<T, Q> | null> {
@@ -664,3 +664,4 @@ export type DeleteInput<T> = {
 export type DeleteManyInput<T> = {
     where: FindWhere<T>;
 };
+

@@ -1,5 +1,5 @@
-import { TableIdSignature } from '@/internal/database/orm-client/sigauth.client';
 import { Injectable, Logger } from '@nestjs/common';
+import { TableIdSignature } from '@sigauth/generics/database/orm-client/sigauth.client';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'crypto';
 import fs from 'fs';
 
@@ -91,3 +91,4 @@ export class StorageService {
         return this.sigauthAppUuid;
     }
 }
+

@@ -1,9 +1,9 @@
 import { Command, Flags } from '@oclif/core';
+import { GenericDatabaseGateway } from '@sigauth/generics/database/database.gateway.js';
+import { DatabaseUtil } from '@sigauth/generics/database/databse.util.js';
 import chalk from 'chalk';
 import { configDotenv } from 'dotenv';
 import ora from 'ora';
-import { DatabaseGateway } from '../../database/database.gateway.js';
-import { DatabaseUtil } from '../../database/databse.util.js';
 import { TypeGenerator } from '../../postgres-generator/generator.builder.js';
 
 export default class DatabaseTypePull extends Command {
@@ -29,7 +29,7 @@ export default class DatabaseTypePull extends Command {
         }
 
         const spinner = ora('Connecting to database…').start();
-        let dbGateway: DatabaseGateway | null = DatabaseUtil.getDriver(dbUrl);
+        let dbGateway: GenericDatabaseGateway | null = DatabaseUtil.getDriver(dbUrl);
         if (dbGateway === null) {
             spinner.fail(chalk.red('Database connection failed'));
             this.error(`Unsupported driver: ${dbUrl}`);
@@ -54,3 +54,4 @@ export default class DatabaseTypePull extends Command {
         this.exit(0);
     }
 }
+

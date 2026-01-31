@@ -1,5 +1,3 @@
-import { FindWhere } from '@/internal/database/orm-client/sigauth.client';
-import { Account } from '@/internal/database/orm-client/types.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { Utils } from '@/internal/utils';
 import { CreateAccountDto } from '@/modules/account/dto/create-account.dto';
@@ -8,6 +6,8 @@ import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
 import { PermissionSetDto } from '@/modules/account/dto/permission-set.dto';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/generics/asset';
+import { FindWhere } from '@sigauth/generics/database/orm-client/sigauth.client';
+import { Account } from '@sigauth/generics/database/orm-client/types.client';
 import bcrypt from 'bcryptjs';
 
 @Injectable()

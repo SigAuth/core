@@ -1,9 +1,9 @@
 import { Command } from '@oclif/core';
+import { GenericDatabaseGateway } from '@sigauth/generics/database/database.gateway.js';
+import { DatabaseUtil } from '@sigauth/generics/database/databse.util.js';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
 import ora from 'ora';
-import { DatabaseGateway } from '../../database/database.gateway.js';
-import { DatabaseUtil } from '../../database/databse.util.js';
 
 export default class DbConnect extends Command {
     static description = 'Connects to Datasource using knex and DATABASE_URL from env';
@@ -18,7 +18,7 @@ export default class DbConnect extends Command {
             throw new Error('DATABASE_URL not set in env');
         }
 
-        let dbGateway: DatabaseGateway | null = DatabaseUtil.getDriver(dbUrl);
+        let dbGateway: GenericDatabaseGateway | null = DatabaseUtil.getDriver(dbUrl);
         if (dbGateway === null) {
             spinner.fail(chalk.red('Database connection failed'));
             this.error(`Unsupported driver: ${dbUrl}`);
@@ -35,3 +35,4 @@ export default class DbConnect extends Command {
         }
     }
 }
+

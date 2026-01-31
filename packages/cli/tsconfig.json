@@ -8,12 +8,7 @@
         "target": "es2022",
         "moduleResolution": "node16"
     },
-    "include": [
-        "./src/**/*",
-        "../../apps/api/src/internal/client/asset-types.ts",
-        "../../apps/api/src/internal/client/helper.ts",
-        "../../apps/api/src/internal/client/sigauth.client.ts"
-    ],
+    "include": ["./src/**/*"],
     "ts-node": {
         "esm": true
     }

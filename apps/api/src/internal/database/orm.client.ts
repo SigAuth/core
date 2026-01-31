@@ -1,9 +1,9 @@
-import { DatabaseGateway } from '@/internal/database/database.gateway';
-import { SigauthClient } from '@/internal/database/orm-client/sigauth.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/generics/asset';
+import { GenericDatabaseGateway } from '@sigauth/generics/database/database.gateway';
+import { SigauthClient } from '@sigauth/generics/database/orm-client/sigauth.client';
 import { SigAuthPermissions } from '@sigauth/generics/protected';
 import bcrypt from 'bcryptjs';
 
@@ -12,7 +12,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
     private readonly serviceLogger: Logger;
 
     constructor(
-        private readonly db: DatabaseGateway,
+        private readonly db: GenericDatabaseGateway,
         private readonly storage: StorageService,
     ) {
         super();

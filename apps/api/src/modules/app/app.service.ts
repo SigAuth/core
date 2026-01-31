@@ -1,4 +1,3 @@
-import { App, Permission } from '@/internal/database/orm-client/types.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
@@ -6,6 +5,7 @@ import { CreateAppDto, PermissionsDto } from '@/modules/app/dto/create-app.dto';
 import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { App, Permission } from '@sigauth/generics/database/orm-client/types.client';
 import { firstValueFrom } from 'rxjs';
 
 const APP_FETCH_ROUTE = '/sigauth-config.json';

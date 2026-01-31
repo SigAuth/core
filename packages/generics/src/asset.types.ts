@@ -5,6 +5,8 @@ export const INTERNAL_GRANT_TABLE = '_internal_grants';
 export const INTERNAL_APP_ACCESS_TABLE = '_internal_app_access';
 export const INTERNAL_PERMISSION_TABLE = '_internal_permissions';
 
+export type JSONSerializable = string | number | boolean | null | { [key: string]: JSONSerializable } | JSONSerializable[];
+
 export type AssetType = {
     uuid: string;
     name: string;
@@ -40,3 +42,4 @@ export type Asset = {
     name: string;
     [key: string]: string | number | boolean | Date | Asset | Asset[]; // fields with dynamic keys
 };
+
