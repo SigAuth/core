@@ -1,5 +1,12 @@
+import { App, Permission } from '@/internal/database/orm-client/types.client';
+import { ORMService } from '@/internal/database/orm.client';
+import { StorageService } from '@/internal/database/storage.service';
+import { Utils } from '@/internal/utils';
+import { CreateAppDto, PermissionsDto } from '@/modules/app/dto/create-app.dto';
+import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
 
 const APP_FETCH_ROUTE = '/sigauth-config.json';
 const APP_NUDGE_ROUTE = '/api/sigauth/nudge';
@@ -8,155 +15,132 @@ const APP_NUDGE_ROUTE = '/api/sigauth/nudge';
 export class AppsService {
     private readonly logger = new Logger(AppsService.name);
 
-    constructor(private readonly httpService: HttpService) {}
+    constructor(
+        private readonly httpService: HttpService,
+        private readonly db: ORMService,
+        private readonly storage: StorageService,
+    ) {}
 
-    // async createApp(createAppDto: CreateAppDto): Promise<App> {
-    //     let appToken: string = '';
-    //     do {
-    //         appToken = Utils.generateToken(64);
-    //     } while (await this.prisma.app.findUnique({ where: { token: appToken } }));
+    async createApp(createAppDto: CreateAppDto): Promise<App> {
+        let appToken: string = '';
+        do {
+            appToken = Utils.generateToken(64);
+        } while (await this.db.App.findOne({ where: { token: appToken } }));
 
-    //     if (createAppDto.webFetchEnabled)
-    //         createAppDto.permissions = (await this.fetchPermissionsFromURL(createAppDto.url)) ?? createAppDto.permissions;
+        // if (createAppDto.webFetchEnabled)
+        //    createAppDto.permissions = (await this.fetchPermissionsFromURL(createAppDto.url)) ?? createAppDto.permissions;
 
-    //     // look for duplicate identifiers in permissions
-    //     const allPerms = Object.values(createAppDto.permissions).flat();
-    //     const uniquePerms = Array.from(new Set(allPerms));
-    //     if (allPerms.length !== uniquePerms.length) throw new UnprocessableEntityException('Duplicate permissions in different categories');
+        // look for duplicate identifiers in permissions within a category
+        this.checkForDuplicatePermissions(createAppDto.permissions);
 
-    //     const app = await this.prisma.app.create({
-    //         data: {
-    //             name: createAppDto.name,
-    //             url: createAppDto.url,
-    //             token: appToken,
-    //             oidcAuthCodeUrl: createAppDto.oidcAuthCodeUrl,
-    //             webFetch: {
-    //                 enabled: createAppDto.webFetchEnabled,
-    //                 lastFetch: 0,
-    //                 success: false,
-    //             },
-    //             permissions: {
-    //                 root: createAppDto.permissions.root,
-    //                 container: createAppDto.permissions.container,
-    //                 asset: createAppDto.permissions.asset,
-    //             } as AppPermission,
-    //         },
-    //     });
+        const app = await this.db.App.createOne({
+            data: {
+                name: createAppDto.name,
+                url: createAppDto.url,
+                token: appToken,
+                oidcAuthCodeCb: createAppDto.oidcAuthCodeUrl,
+            },
+        });
 
-    //     return app;
-    // }
+        const perms = await this.db.Permission.createMany({
+            data: createAppDto.permissions.flatMap(type =>
+                type.permissions.map(perm => ({
+                    appUuid: app.uuid,
+                    type: type.typeUuid,
+                    permission: perm,
+                })),
+            ),
+        });
 
-    // async editApp(editAppDto: EditAppDto): Promise<App> {
-    //     if (editAppDto.id == PROTECTED.App.id) throw new BadRequestException('You can not edit the SigAuth app, please create a new one');
+        return app;
+    }
 
-    //     const app = await this.prisma.app.findUnique({ where: { id: editAppDto.id } });
-    //     if (!app) throw new NotFoundException("App doesn't exist");
+    async editApp(editAppDto: EditAppDto): Promise<App> {
+        if (editAppDto.uuid == this.storage.SigAuthAppUuid)
+            throw new BadRequestException('You can not edit the SigAuth app, please create a new one');
 
-    //     if (editAppDto.nudge) await this.sendAppNudge(app.url);
+        const app = await this.db.App.findOne({ where: { uuid: editAppDto.uuid }, includes: { app_permissions: true } });
+        if (!app) throw new NotFoundException("App doesn't exist");
 
-    //     // look for duplicate identifiers in permissions
-    //     const allPerms = Object.values(editAppDto.permissions).flat();
-    //     const uniquePerms = Array.from(new Set(allPerms));
-    //     if (allPerms.length !== uniquePerms.length) throw new UnprocessableEntityException('Duplicate permissions in different categories');
+        if (editAppDto.nudge) await this.sendAppNudge(app.url);
 
-    //     const newPerms = editAppDto.webFetchEnabled
-    //         ? await this.fetchPermissionsFromURL(app.url)
-    //         : (editAppDto.permissions as AppPermission);
-    //     if (!newPerms) throw new UnprocessableEntityException('Fetched permissions have invalid format');
+        // look for duplicate identifiers in permissions
+        this.checkForDuplicatePermissions(editAppDto.permissions);
 
-    //     // handle permission removal
-    //     await this.clearDeletedPermissions(app.id, app.permissions as AppPermission, newPerms);
-    //     return this.prisma.app.update({
-    //         where: { id: editAppDto.id },
-    //         data: {
-    //             name: editAppDto.name,
-    //             url: editAppDto.url,
-    //             oidcAuthCodeUrl: (editAppDto.oidcAuthCodeUrl || '').length > 0 ? editAppDto.oidcAuthCodeUrl : null,
-    //             webFetch: {
-    //                 enabled: editAppDto.webFetchEnabled,
-    //                 lastFetch: editAppDto.webFetchEnabled ? dayjs().unix() : (app.webFetch as AppWebFetch).lastFetch,
-    //                 success: editAppDto.webFetchEnabled ? true : (app.webFetch as AppWebFetch).success,
-    //             },
-    //             permissions: newPerms,
-    //         },
-    //     });
-    // }
+        // handle permission removal
+        await this.clearDeletedPermissions(app.uuid, app.app_permissions, editAppDto.permissions);
 
-    // async deleteApps(appIds: number[]) {
-    //     if (appIds.includes(PROTECTED.App.id)) throw new BadRequestException('You can not delete the SigAuth app!');
+        return this.db.App.updateOne({
+            where: { uuid: editAppDto.uuid },
+            data: {
+                name: editAppDto.name,
+                url: editAppDto.url,
+                oidcAuthCodeCb: (editAppDto.oidcAuthCodeUrl || '').length > 0 ? editAppDto.oidcAuthCodeUrl : undefined,
+            },
+        });
+    }
 
-    //     const apps = await this.prisma.app.findMany({ where: { id: { in: appIds } } });
-    //     if (apps.length != appIds.length) throw new NotFoundException('Not all apps found or invalid ids provided');
+    async deleteApps(appUuids: string[]) {
+        if (appUuids.includes(this.storage.SigAuthAppUuid!)) throw new BadRequestException('You can not delete the SigAuth app!');
 
-    //     // delete related permission instances
-    //     await this.prisma.permissionInstance.deleteMany({
-    //         where: {
-    //             appId: { in: appIds },
-    //         },
-    //     });
+        const apps = await this.db.App.findMany({ where: { uuid: { in: appUuids } } });
+        if (apps.length != appUuids.length) throw new NotFoundException('Not all apps found or invalid ids provided');
 
-    //     // todo this can be in a single query if we had a container-app relation table
-    //     for (const id of appIds) {
-    //         const containers = await this.prisma.container.findMany({ where: { apps: { has: id } } });
-    //         for (const container of containers) {
-    //             container.apps = container.apps.filter(c => c !== id);
-    //             await this.prisma.container.update({ where: { id: container.id }, data: { apps: container.apps } });
-    //         }
-    //     }
+        await this.db.App.deleteMany({ where: { uuid: { in: appUuids } } });
+    }
 
-    //     await this.prisma.app.deleteMany({ where: { id: { in: appIds } } });
-    // }
+    async clearDeletedPermissions(appUuid: string, oldPermissions: Permission[], newPermissions: PermissionsDto[]) {
+        const toKeep: Set<string> = new Set();
+        for (const permCategory of newPermissions) {
+            for (const perm of permCategory.permissions) {
+                const key = `${permCategory.typeUuid || 'root'}#${perm}`;
+                toKeep.add(key);
+            }
+        }
 
-    // async clearDeletedPermissions(appId: number, oldPermissions: AppPermission, newPermissions: AppPermission) {
-    //     const oldPerms = Object.values(oldPermissions).flat();
-    //     const newPerms = Object.values(newPermissions).flat();
-    //     const removed = oldPerms.filter(p => !newPerms.includes(p)).map(p => Utils.convertPermissionNameToIdent(p));
-    //     await this.prisma.permissionInstance.deleteMany({ where: { identifier: { in: removed }, appId } });
-    // }
+        const toDelete = oldPermissions.filter(p => {
+            const key = `${p.typeUuid || 'root'}#${p.permission}`;
+            return !toKeep.has(key);
+        });
 
-    // async fetchPermissionsFromURL(url: string) {
-    //     try {
-    //         const appRequest = await firstValueFrom(
-    //             this.httpService
-    //                 .get(url + APP_FETCH_ROUTE, { withCredentials: true })
-    //                 .pipe(retry(3))
-    //                 .pipe(timeout(2000)),
-    //         );
-    //         if (appRequest.status != 200) {
-    //             this.logger.error(url + ' returned status ' + appRequest.status + " couldn't update permissions");
-    //             return;
-    //         }
+        if (toDelete.length > 0) {
+            await this.db.Permission.deleteMany({
+                where: {
+                    appUuid,
+                    OR: toDelete.map(p => ({
+                        typeUuid: p.typeUuid,
+                        permission: p.permission,
+                    })),
+                },
+            });
+        }
+    }
 
-    //         const perms = appRequest.data as AppPermission;
-    //         if (
-    //             !Array.isArray(perms.root) ||
-    //             !Array.isArray(perms.container) ||
-    //             !Array.isArray(perms.asset) ||
-    //             perms.root.some(r => typeof r != 'string') ||
-    //             perms.container.some(r => typeof r != 'string') ||
-    //             perms.asset.some(r => typeof r != 'string')
-    //         )
-    //             throw new UnprocessableEntityException('Fetched permissions have invalid format');
-    //         return {
-    //             root: perms.root,
-    //             container: perms.container,
-    //             asset: perms.asset,
-    //         };
-    //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    //     } catch (error: any) {
-    //         this.logger.error(error.message);
-    //         this.logger.error(url + " wasn't reachable couldn't update permissions");
-    //         throw new RequestTimeoutException('App unreachable');
-    //     }
-    // }
+    async sendAppNudge(url: string) {
+        try {
+            await firstValueFrom(this.httpService.get(url + APP_NUDGE_ROUTE, { withCredentials: true }));
+        } catch (_) {
+            this.logger.error(url + " wasn't reachable couldn't send nudge");
+        }
+    }
 
-    // async sendAppNudge(url: string) {
-    //     try {
-    //         await firstValueFrom(this.httpService.get(url + APP_NUDGE_ROUTE, { withCredentials: true }));
-    //     } catch (_) {
-    //         this.logger.error(url + " wasn't reachable couldn't send nudge");
-    //     }
-    // }
+    checkForDuplicatePermissions(dto: PermissionsDto[]) {
+        const cats: Record<string, string[]> = {};
+        for (const perm of dto) {
+            const key = perm.typeUuid || 'root';
+            if (!cats[key]) cats[key] = [];
+            cats[key].push(...perm.permissions);
+        }
+
+        if (
+            Object.values(cats).some(c => {
+                const uniquePerms = Array.from(new Set(c));
+                return c.length !== uniquePerms.length;
+            })
+        ) {
+            throw new UnprocessableEntityException('Duplicate permissions in the same category');
+        }
+    }
 
     // async getAppInfo(app: App): Promise<AppInfo> {
     //     const accounts = await this.prisma.account.findMany({
@@ -223,3 +207,4 @@ export class AppsService {
     //     };
     // }
 }
+

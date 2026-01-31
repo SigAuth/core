@@ -1,13 +1,12 @@
 import { PermissionsDto } from '@/modules/app/dto/create-app.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsPositive, IsString, IsUrl, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString, IsUrl, IsUUID, ValidateNested } from 'class-validator';
 
 export class EditAppDto {
-    @IsNumber()
-    @IsPositive()
-    @ApiProperty({ example: 1, type: 'number', description: 'Id of the app to edit' })
-    id!: number;
+    @IsUUID('7')
+    @ApiProperty({ example: 1, type: 'number', description: 'UUID of the app to edit' })
+    uuid!: string;
 
     @IsString()
     @ApiProperty({ example: 'Starlink Monitoring', description: 'Name of the app', type: 'string' })
@@ -25,25 +24,17 @@ export class EditAppDto {
     })
     oidcAuthCodeUrl?: string;
 
-    @ValidateNested()
+    @IsArray()
+    @ValidateNested({ each: true })
     @Type(() => PermissionsDto)
     @ApiProperty({
         type: PermissionsDto,
-        example: {
-            asset: ['chart-insights', 'reports', 'maintainer'],
-            container: ['brand-manager', 'editor', 'viewer'],
-            root: ['app1-administrator', 'app1-developer'],
-        },
+        example: [
+            { permissions: ['read', 'write', 'delete'] },
+            { typeUuid: '550e8400-e29b-41d4-a716-446655440000', permissions: ['view', 'edit'] },
+        ],
     })
-    permissions!: PermissionsDto;
-
-    @IsBoolean()
-    @ApiProperty({
-        example: true,
-        type: 'boolean',
-        description: 'Enable web fetch (periodically fetch permissions from the app)',
-    })
-    webFetchEnabled!: boolean;
+    permissions!: PermissionsDto[];
 
     @IsBoolean()
     @ApiProperty({
@@ -53,3 +44,4 @@ export class EditAppDto {
     })
     nudge!: boolean;
 }
+

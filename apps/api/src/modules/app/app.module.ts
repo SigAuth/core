@@ -1,3 +1,4 @@
+import { DatabaseModule } from '@/internal/database/database.module';
 import { AppsController } from '@/modules/app/app.controller';
 import { AppWebFetchCron } from '@/modules/app/app.cron';
 import { AppsService } from '@/modules/app/app.service';
@@ -7,8 +8,9 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 
 @Module({
-    imports: [HttpModule],
+    imports: [HttpModule, DatabaseModule],
     controllers: [AppsController],
     providers: [AppsService, AuthGuard, IsRoot, AppWebFetchCron],
 })
 export class AppsModule {}
+

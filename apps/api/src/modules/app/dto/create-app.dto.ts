@@ -1,25 +1,31 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsOptional, IsString, IsUrl, Matches, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, IsUrl, IsUUID, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator';
 
 export class PermissionsDto {
-    @IsArray()
-    @IsString({ each: true })
-    @Matches(/^[A-Za-z0-9 _-]*$/, { each: true }) // space allowed because this is the permission name (ident is generated when applying permission instance)
-    @ApiProperty({ type: [String], example: '["chart-insights", "reports", "maintainer"]' })
-    asset!: string[];
+    @IsOptional()
+    @IsUUID('7')
+    @ApiProperty({
+        example: '550e8400-e29b-41d4-a716-446655440000',
+        description: 'The UUID of the asset type the permissions is applied to',
+        required: false,
+    })
+    typeUuid?: string;
 
     @IsArray()
     @IsString({ each: true })
-    @Matches(/^[A-Za-z0-9 _-]*$/, { each: true })
-    @ApiProperty({ type: [String], example: '["brand-manager", "editor", "viewer"]' })
-    container!: string[];
-
-    @IsArray()
-    @IsString({ each: true })
-    @Matches(/^[A-Za-z0-9 _-]*$/, { each: true })
-    @ApiProperty({ type: [String], example: '["app1-administrator", "app1-developer"]' })
-    root!: string[];
+    @MinLength(4, { each: true })
+    @MaxLength(64, { each: true })
+    @Matches(/^[a-zA-Z_\-:.]+$/, {
+        each: true,
+        message: 'permissions may only contain a-z, A-Z, _, -, :, .',
+    })
+    @ApiProperty({
+        example: ['read', 'write', 'delete'],
+        type: 'array',
+        description: 'List of permission identifiers',
+    })
+    permissions!: string[];
 }
 
 export class CreateAppDto {
@@ -39,23 +45,16 @@ export class CreateAppDto {
     })
     oidcAuthCodeUrl?: string;
 
-    @ValidateNested()
+    @IsArray()
+    @ValidateNested({ each: true })
     @Type(() => PermissionsDto)
     @ApiProperty({
         type: PermissionsDto,
-        example: {
-            asset: ['chart-insights', 'reports', 'maintainer'],
-            container: ['brand-manager', 'editor', 'viewer'],
-            root: ['app1-administrator', 'app1-developer'],
-        },
+        example: [
+            { permissions: ['read', 'write', 'delete'] },
+            { typeUuid: '550e8400-e29b-41d4-a716-446655440000', permissions: ['view', 'edit'] },
+        ],
     })
-    permissions!: PermissionsDto;
-
-    @IsBoolean()
-    @ApiProperty({
-        example: true,
-        type: 'boolean',
-        description: 'Enable web fetch (periodically fetch permissions from the app)',
-    })
-    webFetchEnabled!: boolean;
+    permissions!: PermissionsDto[];
 }
+
