@@ -1,10 +1,11 @@
-import { ArrayMinSize, IsArray, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { ArrayMinSize, IsArray, IsUUID } from 'class-validator';
 
 export class DeleteAppDto {
     @IsArray()
     @ArrayMinSize(1)
-    @IsNumber({}, { each: true })
-    @ApiProperty({ example: [1, 2, 3], type: [Number], minItems: 1 })
-    appIds!: number[];
+    @IsUUID('7', { each: true })
+    @ApiProperty({ example: ['uuid1', 'uuid2', 'uuid3'], type: [String], minItems: 1 })
+    appUuids!: string[];
 }
+

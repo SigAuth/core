@@ -40,10 +40,22 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
             // adding default sigauth scopes
             const sigauthScopes = await this.Permission.createMany({
                 data: [
-                    { appUuid: app.uuid, typeUuid: undefined, permission: SigAuthPermissions.ROOT },
-                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: SigAuthPermissions.CREATE_ASSET },
-                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: SigAuthPermissions.DELETE_ASSET },
-                    { appUuid: app.uuid, typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID, permission: SigAuthPermissions.EDIT_ASSET },
+                    { appUuid: app.uuid, typeUuid: undefined, permission: Utils.convertPermissionNameToIdent(SigAuthPermissions.ROOT) },
+                    {
+                        appUuid: app.uuid,
+                        typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID,
+                        permission: Utils.convertPermissionNameToIdent(SigAuthPermissions.CREATE_ASSET),
+                    },
+                    {
+                        appUuid: app.uuid,
+                        typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID,
+                        permission: Utils.convertPermissionNameToIdent(SigAuthPermissions.DELETE_ASSET),
+                    },
+                    {
+                        appUuid: app.uuid,
+                        typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID,
+                        permission: Utils.convertPermissionNameToIdent(SigAuthPermissions.EDIT_ASSET),
+                    },
                 ],
             });
             this.storage.saveConfigFile({ sigauthAppUuid: app.uuid });

@@ -1,13 +1,13 @@
-import { App } from '@sigauth/generics/prisma-client';
-import { AccountWithPermissions } from '@src/common/types/extended-prisma';
+import { Account, App } from '@/internal/database/orm-client/types.client';
 
 declare global {
     namespace Express {
         interface Request {
-            account?: AccountWithPermissions;
+            account?: Account;
             sigauthApp?: App;
             cookies: Record<string, string>;
             authMethod: 'session' | 'api-token';
         }
     }
 }
+
