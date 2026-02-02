@@ -18,9 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { PopoverContent } from '@radix-ui/react-popover';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
-import { type AssetType, type Container } from '@sigauth/generics/prisma-types';
-import { PROTECTED } from '@sigauth/generics/protected';
+import { AssetFieldType, type AssetType, type AssetTypeField } from '@sigauth/generics/asset';
 import { CommandEmpty } from 'cmdk';
 import { BadgePlus, Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
@@ -45,7 +43,7 @@ export const CreateAssetDialog = () => {
 
         console.log({ assetFields, assetType, containerIds });
         const res = await request('POST', '/api/asset/create', {
-            assetTypeId: assetType.id,
+            assetTypeUuid: assetType.uuid,
             name: name,
             fields: assetFields,
             containerIds,
@@ -57,12 +55,6 @@ export const CreateAssetDialog = () => {
             const data = await res.json();
             setSession({
                 assets: [...session.assets, data.asset],
-                containers: [
-                    ...session.containers.map(c => {
-                        const updated = data.updatedContainers.find((uc: Container) => uc.id === c.id);
-                        return updated ? updated : c;
-                    }),
-                ],
             });
             return;
         }
@@ -112,10 +104,10 @@ export const CreateAssetDialog = () => {
                                             <CommandEmpty>No asset types found.</CommandEmpty>
                                             <CommandGroup>
                                                 {session.assetTypes
-                                                    .filter(type => type.id != PROTECTED.AssetType.id)
+                                                    .filter(type => Object.values(session.protected.signatures).includes(type.uuid))
                                                     .map(type => (
                                                         <CommandItem
-                                                            key={type.id}
+                                                            key={type.uuid}
                                                             onSelect={() => {
                                                                 setAssetType(type);
                                                                 setAssetTypeSelectionOpen(false);
@@ -136,58 +128,6 @@ export const CreateAssetDialog = () => {
                         </div>
                     </div>
 
-                    {/* Container selection */}
-                    <div className="grid gap-1 mt-3">
-                        <Label htmlFor="name">Assign to container</Label>
-                        <div className="[&>:first-child]:w-full">
-                            <Popover open={containerSelectionOpen} onOpenChange={setContainerSelectionOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant={'outline'}
-                                        role="combobox"
-                                        aria-expanded={containerSelectionOpen}
-                                        className="justify-between"
-                                    >
-                                        Select containers...
-                                        <ChevronsUpDown className="opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="p-0 !z-300">
-                                    <Command>
-                                        <CommandInput placeholder="Search containers..." className="h-9" />
-                                        <CommandList>
-                                            <CommandEmpty>No containers found.</CommandEmpty>
-                                            <CommandGroup>
-                                                {session.containers
-                                                    .filter(con => con.id != PROTECTED.Container.id)
-                                                    .map(con => (
-                                                        <CommandItem
-                                                            key={con.id}
-                                                            onSelect={() => {
-                                                                setContainerIds(prev =>
-                                                                    prev.includes(con.id)
-                                                                        ? prev.filter(id => id !== con.id)
-                                                                        : [...prev, con.id],
-                                                                );
-                                                            }}
-                                                        >
-                                                            {con.name}
-                                                            <Check
-                                                                className={cn(
-                                                                    'ml-auto',
-                                                                    containerIds.includes(con.id) ? 'opacity-100' : 'opacity-0',
-                                                                )}
-                                                            />
-                                                        </CommandItem>
-                                                    ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                    </div>
-
                     <ScrollArea className="w-full max-h-96 mt-3">
                         <div className="flex flex-col gap-3 m-1">
                             {assetType &&
@@ -195,22 +135,22 @@ export const CreateAssetDialog = () => {
                                     return (
                                         <div className="grid col-span-2 gap-1 animate-in fade-in duration-500">
                                             <Label htmlFor={field.name}>{field.name}</Label>
-                                            {field.type == AssetFieldType.CHECKFIELD ? (
+                                            {field.type == AssetFieldType.BOOLEAN ? (
                                                 <Checkbox
-                                                    checked={!!assetFields[field.id]}
-                                                    onCheckedChange={checked => setAssetFields({ ...assetFields, [field.id]: checked })}
+                                                    checked={!!assetFields[field.name]}
+                                                    onCheckedChange={checked => setAssetFields({ ...assetFields, [field.name]: checked })}
                                                 />
                                             ) : (
                                                 <Input
                                                     id={field.name}
                                                     name={field.name}
-                                                    type={field.type == AssetFieldType.NUMBER ? 'number' : 'text'}
+                                                    type={field.type == AssetFieldType.INTEGER ? 'number' : 'text'}
                                                     onChange={e =>
                                                         setAssetFields({
                                                             ...assetFields,
-                                                            [field.id]:
-                                                                field.type == AssetFieldType.NUMBER
-                                                                    ? parseFloat(e.target.value)
+                                                            [field.name]:
+                                                                field.type == AssetFieldType.INTEGER
+                                                                    ? parseInt(e.target.value)
                                                                     : e.target.value,
                                                         })
                                                     }
@@ -243,3 +183,4 @@ export const CreateAssetDialog = () => {
         </Dialog>
     );
 };
+

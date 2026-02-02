@@ -1,15 +1,13 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
-import { BadgePlus, Edit, XIcon } from 'lucide-react';
+import type { Permission } from '@sigauth/generics/database/orm-client/types.client';
+import { Edit } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -19,37 +17,38 @@ const formSchema = z.object({
     name: z.string().min(4, 'Name must be at least 4 characters long'),
     url: z.string().url('Invalid URL'),
     oidcAuthCodeUrl: z.union([z.literal(''), z.string().trim().url('Invalid OIDC Authorization Code URL')]),
-    permissions: z.object({
-        asset: z.array(z.string().min(3, 'Asset permission must be at least 3 characters long')),
-        container: z.array(z.string().min(3, 'Container permission must be at least 3 characters long')),
-        root: z.array(z.string().min(3, 'Root permission must be at least 3 characters long')),
-    }),
+    permissions: z.array(
+        z.object({
+            typeUuid: z.uuidv7().optional(),
+            appUuid: z.uuidv7(),
+            permission: z.string(),
+        }),
+    ),
     nudge: z.boolean(),
     webFetchEnabled: z.boolean().optional(),
 });
 
-export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; open: boolean; setOpen: (open: boolean) => void }) => {
+export const EditAppDialog = ({ appUuids, open, setOpen }: { appUuids: string[]; open: boolean; setOpen: (open: boolean) => void }) => {
     const { session, setSession } = useSession();
 
     const app = useMemo(() => {
-        if (appIds.length !== 1) return undefined;
-        return session.apps.find(a => a.id === appIds[0]);
-    }, [appIds, session.apps]);
+        if (appUuids.length !== 1) return undefined;
+        return session.apps.find(a => a.uuid === appUuids[0]);
+    }, [appUuids, session.apps]);
 
-    const [tab, setTab] = useState<'asset' | 'container' | 'root'>('asset');
     const [permissionField, setPermissionField] = useState<string>('');
 
     const submitToApi = async (values: z.infer<typeof formSchema>) => {
         if (!app) return;
         const res = await request('POST', '/api/app/edit', {
-            id: app.id,
+            uuid: app.uuid,
             ...values,
             oidcAuthCodeUrl: values.oidcAuthCodeUrl.trim() === '' ? undefined : values.oidcAuthCodeUrl.trim(),
         });
 
         if (res.ok) {
             const data = await res.json();
-            setSession({ apps: session.apps.map(a => (a.id === app.id ? data : a)) });
+            setSession({ apps: session.apps.map(a => (a.uuid === app.uuid ? data : a)) });
             close();
             return;
         }
@@ -61,14 +60,10 @@ export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; ope
         defaultValues: {
             name: app?.name,
             url: app?.url,
-            oidcAuthCodeUrl: app?.oidcAuthCodeUrl || '',
-            webFetchEnabled: app ? (app.webFetch as AppWebFetch).enabled : false,
+            oidcAuthCodeUrl: app?.oidcAuthCodeCb || '',
+            // webFetchEnabled: app ? (app.webFetch as AppWebFetch).enabled : false,
             nudge: false,
-            permissions: {
-                asset: app ? (app.permissions as AppPermission).asset : [],
-                container: app ? (app.permissions as AppPermission).container : [],
-                root: app ? (app.permissions as AppPermission).root : [],
-            },
+            permissions: app.app_permissions as Permission[],
         },
         mode: 'onChange',
     });
@@ -78,38 +73,34 @@ export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; ope
             form.reset({
                 name: app.name,
                 url: app.url,
-                oidcAuthCodeUrl: app.oidcAuthCodeUrl || '',
-                webFetchEnabled: (app.webFetch as AppWebFetch).enabled,
+                oidcAuthCodeUrl: app.oidcAuthCodeCb || '',
+                // webFetchEnabled: (app.webFetch as AppWebFetch).enabled,
                 nudge: false,
-                permissions: {
-                    asset: (app.permissions as AppPermission).asset,
-                    container: (app.permissions as AppPermission).container,
-                    root: (app.permissions as AppPermission).root,
-                },
+                permissions: app.app_permissions as Permission[],
             });
         }
     }, [app]);
 
     if (!app) return null;
-    const permissions = form.watch(`permissions.${tab}`);
+    const permissions = form.watch('permissions');
     const webFetch = form.watch('webFetchEnabled');
-    const addItem = () => {
-        if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9_-]*$/i.test(permissionField)) {
-            return;
-        }
+    // const addItem = () => {
+    //     if (!permissionField || permissionField.length < 3 || !/^[A-Z0-9_-]*$/i.test(permissionField)) {
+    //         return;
+    //     }
 
-        form.setValue(`permissions.${tab}`, [...permissions, permissionField], {
-            shouldValidate: true,
-            shouldDirty: true,
-            shouldTouch: true,
-        });
-        setPermissionField('');
-    };
+    //     form.setValue(`permissions.${tab}`, [...permissions, permissionField], {
+    //         shouldValidate: true,
+    //         shouldDirty: true,
+    //         shouldTouch: true,
+    //     });
+    //     setPermissionField('');
+    // };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button disabled={appIds.length !== 1} variant="ghost" size="icon-lg" className="w-fit">
+                <Button disabled={appUuids.length !== 1} variant="ghost" size="icon-lg" className="w-fit">
                     <Edit />
                 </Button>
             </DialogTrigger>
@@ -200,7 +191,7 @@ export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; ope
                                 )}
                             />
 
-                            <Tabs defaultValue="asset" value={tab} onValueChange={value => setTab(value as 'asset' | 'container' | 'root')}>
+                            {/* <Tabs defaultValue="asset" value={tab} onValueChange={value => setTab(value as 'asset' | 'container' | 'root')}>
                                 <div className="flex gap-3">
                                     <TabsList className="mb-3">
                                         <TabsTrigger value="asset">Asset</TabsTrigger>
@@ -258,7 +249,7 @@ export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; ope
                                         </Badge>
                                     ))}
                                 </div>
-                            </Tabs>
+                            </Tabs> */}
 
                             <Button className="w-full" type="submit" disabled={!form.formState.isValid}>
                                 Submit
@@ -270,3 +261,4 @@ export const EditAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; ope
         </Dialog>
     );
 };
+

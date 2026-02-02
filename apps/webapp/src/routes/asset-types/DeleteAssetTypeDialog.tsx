@@ -16,25 +16,25 @@ import { Trash, TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const DeleteAssetTypeDialog = ({
-    typeIds,
+    typeUuids,
     open,
     setOpen,
 }: {
-    typeIds: number[];
+    typeUuids: string[];
     open: boolean;
     setOpen: (open: boolean) => void;
 }) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        if (!typeIds || typeIds.length === 0) return;
+        if (!typeUuids || typeUuids.length === 0) return;
 
         const res = await request('POST', '/api/asset-type/delete', {
-            assetTypeIds: typeIds,
+            assetTypeUuids: typeUuids,
         });
 
         if (res.ok) {
-            setSession({ assetTypes: session.assetTypes.filter(at => !typeIds.includes(at.id)) });
+            setSession({ assetTypes: session.assetTypes.filter(at => !typeUuids.includes(at.uuid)) });
         } else {
             console.error(await res.text());
             throw new Error();
@@ -44,7 +44,7 @@ export const DeleteAssetTypeDialog = ({
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon-lg" disabled={typeIds?.length === 0} className="w-fit">
+                <Button variant="ghost" size="icon-lg" disabled={typeUuids?.length === 0} className="w-fit">
                     <Trash />
                 </Button>
             </AlertDialogTrigger>
@@ -79,3 +79,4 @@ export const DeleteAssetTypeDialog = ({
         </AlertDialog>
     );
 };
+

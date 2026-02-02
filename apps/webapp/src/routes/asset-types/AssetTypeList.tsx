@@ -19,9 +19,7 @@ import { cn } from '@/lib/utils';
 import { CreateAssetTypeDialog } from '@/routes/asset-types/CreateAssetTypeDialog';
 import { DeleteAssetTypeDialog } from '@/routes/asset-types/DeleteAssetTypeDialog';
 import { EditAssetTypeDialog } from '@/routes/asset-types/EditAssetTypeDialog';
-import type { AssetTypeField } from '@sigauth/generics/json-types';
-import type { AssetType } from '@sigauth/generics/prisma-client';
-import { PROTECTED } from '@sigauth/generics/protected';
+import type { AssetType, AssetTypeField } from '@sigauth/generics/asset';
 import {
     type ColumnDef,
     flexRender,
@@ -85,7 +83,7 @@ export const AssetTypeList = () => {
                 />
             ),
             cell: ({ row }) =>
-                row.original.id != PROTECTED.AssetType.id ? (
+                Object.values(session.protected.signatures).includes(row.original.uuid) ? (
                     <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={value => row.toggleSelected(!!value)}
@@ -108,7 +106,7 @@ export const AssetTypeList = () => {
         { header: 'ID', accessorKey: 'id', maxSize: 1 },
         { header: 'Name', accessorKey: 'name', cell: info => info.getValue() },
         { header: 'Fields', accessorFn: row => (row.fields as AssetTypeField[]).length },
-        { header: 'Assets Using Type', accessorFn: row => session.assets.filter(a => a.typeId === row.id).length },
+        { header: 'Assets Using Type', accessorFn: row => session.assets.filter(a => a.typeUuid === row.uuid).length },
         {
             header: 'Actions',
             id: 'actions',
@@ -123,7 +121,7 @@ export const AssetTypeList = () => {
                                 setRowSelection({ [row.index]: true });
                                 setEditDialogOpen(true);
                             }}
-                            disabled={row.original.id === PROTECTED.AssetType.id}
+                            disabled={Object.values(session.protected.signatures).includes(row.original.uuid)}
                         >
                             <Edit className="mr-2 size-4" />
                             Edit
@@ -133,7 +131,7 @@ export const AssetTypeList = () => {
                                 setRowSelection({ [row.index]: true });
                                 setDeleteDialogOpen(true);
                             }}
-                            disabled={row.original.id === PROTECTED.AssetType.id}
+                            disabled={Object.values(session.protected.signatures).includes(row.original.uuid)}
                         >
                             <Trash className="mr-2 size-4" />
                             Delete
@@ -227,7 +225,7 @@ export const AssetTypeList = () => {
         },
     });
 
-    const selectedTypeIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+    const selectedTypeUuids = table.getSelectedRowModel().rows.map(row => row.original.uuid);
     const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
         currentPage: table.getState().pagination.pageIndex + 1,
         totalPages: table.getPageCount(),
@@ -235,9 +233,9 @@ export const AssetTypeList = () => {
     });
 
     useEffect(() => {
-        if (selectedTypeIds.includes(PROTECTED.AssetType.id)) {
+        if (selectedTypeUuids.some(uuid => Object.values(session.protected.signatures).includes(uuid))) {
             table.getRowModel().rows.forEach(row => {
-                if (row.original.id === PROTECTED.AssetType.id) {
+                if (Object.values(session.protected.signatures).includes(row.original.uuid)) {
                     row.toggleSelected(false);
                 }
             });
@@ -257,8 +255,8 @@ export const AssetTypeList = () => {
 
                     <div className="flex gap-2 ml-3">
                         <CreateAssetTypeDialog />
-                        <DeleteAssetTypeDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} typeIds={selectedTypeIds} />
-                        <EditAssetTypeDialog setOpen={setEditDialogOpen} open={editDialogOpen} typeIds={selectedTypeIds} />
+                        <DeleteAssetTypeDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} typeUuids={selectedTypeUuids} />
+                        <EditAssetTypeDialog setOpen={setEditDialogOpen} open={editDialogOpen} typeUuids={selectedTypeUuids} />
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -474,3 +472,4 @@ export const AssetTypeList = () => {
         </div>
     );
 };
+

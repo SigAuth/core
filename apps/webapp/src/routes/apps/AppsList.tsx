@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -20,9 +19,7 @@ import { cn } from '@/lib/utils';
 import { CreateAppDialog } from '@/routes/apps/CreateAppDialog';
 import { DeleteAppDialog } from '@/routes/apps/DeleteAppDialog';
 import { EditAppDialog } from '@/routes/apps/EditAppDialog';
-import type { AppPermission, AppWebFetch } from '@sigauth/generics/json-types';
-import type { App } from '@sigauth/generics/prisma-client';
-import { PROTECTED } from '@sigauth/generics/protected';
+import type { App } from '@sigauth/generics/database/orm-client/types.client';
 import {
     type ColumnDef,
     flexRender,
@@ -87,7 +84,7 @@ export const AppsList = () => {
                 />
             ),
             cell: ({ row }) =>
-                row.original.id != PROTECTED.App.id ? (
+                row.original.uuid != session.protected.sigauthAppUuid ? (
                     <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={value => row.toggleSelected(!!value)}
@@ -131,7 +128,8 @@ export const AppsList = () => {
             accessorKey: 'webFetch',
             cell: info => (
                 <div className="flex">
-                    {info.getValue<AppWebFetch>().enabled ? (
+                    NO DATA
+                    {/* {info.getValue<AppWebFetch>().enabled ? (
                         <>
                             <Badge className="bg-green-700 dark:bg-green-400">Enabled</Badge>
                             {info.getValue<AppWebFetch>().success ? (
@@ -144,25 +142,23 @@ export const AppsList = () => {
                         </>
                     ) : (
                         <Badge variant="outline">Disabled</Badge>
-                    )}
+                    )} */}
                 </div>
             ),
         },
         {
-            header: 'Containers',
-            accessorFn: app => session.containers.filter(container => container.apps.includes(app.id)).length,
-        },
-        {
             header: 'Assets',
-            accessorFn: app =>
-                session.containers
-                    .filter(container => container.apps.includes(app.id))
-                    .reduce((acc, container) => acc + container.assets.length, 0),
+            accessorFn: app => {
+                return 'NO DATA';
+                // session.assets
+                //     .filter(container => container.apps.includes(app.id))
+                //     .reduce((acc, container) => acc + container.assets.length, 0),
+            },
         },
         {
             header: 'Permissions',
-            accessorFn: app =>
-                `${(app.permissions as AppPermission).asset.length} / ${(app.permissions as AppPermission).container.length} / ${(app.permissions as AppPermission).root.length}`,
+            // ${(app.permissions as AppPermission).asset.length} / ${(app.permissions as AppPermission).container.length} / ${(app.permissions as AppPermission).root.length}
+            accessorFn: app => `NO DATA`,
         },
         {
             header: 'Actions',
@@ -174,7 +170,7 @@ export const AppsList = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                            disabled={row.original.id === PROTECTED.App.id}
+                            disabled={row.original.uuid === session.protected.sigauthAppUuid}
                             onClick={() => {
                                 setRowSelection({ [row.index]: true });
                                 setEditDialogOpen(true);
@@ -184,7 +180,7 @@ export const AppsList = () => {
                             Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                            disabled={row.original.id === PROTECTED.App.id}
+                            disabled={row.original.uuid === session.protected.sigauthAppUuid}
                             onClick={() => {
                                 setRowSelection({ [row.index]: true });
                                 setDeleteDialogOpen(true);
@@ -282,7 +278,7 @@ export const AppsList = () => {
         },
     });
 
-    const selectedAppIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+    const selectedAppUuids = table.getSelectedRowModel().rows.map(row => row.original.uuid);
     const { pages, showLeftEllipsis, showRightEllipsis } = usePagination({
         currentPage: table.getState().pagination.pageIndex + 1,
         totalPages: table.getPageCount(),
@@ -290,9 +286,9 @@ export const AppsList = () => {
     });
 
     useEffect(() => {
-        if (selectedAppIds.includes(PROTECTED.App.id)) {
+        if (selectedAppUuids.includes(session.protected.sigauthAppUuid)) {
             table.getRowModel().rows.forEach(row => {
-                if (row.original.id === PROTECTED.App.id) {
+                if (row.original.uuid === session.protected.sigauthAppUuid) {
                     row.toggleSelected(false);
                 }
             });
@@ -312,8 +308,8 @@ export const AppsList = () => {
 
                     <div className="flex gap-2 ml-3">
                         <CreateAppDialog />
-                        <DeleteAppDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} appIds={selectedAppIds} />
-                        <EditAppDialog setOpen={setEditDialogOpen} open={editDialogOpen} appIds={selectedAppIds} />
+                        <DeleteAppDialog open={deleteDialogOpen} setOpen={setDeleteDialogOpen} appUuids={selectedAppUuids} />
+                        <EditAppDialog setOpen={setEditDialogOpen} open={editDialogOpen} appUuids={selectedAppUuids} />
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -529,3 +525,4 @@ export const AppsList = () => {
         </div>
     );
 };
+

@@ -6,7 +6,7 @@ import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AssetType } from '@sigauth/generics/asset';
 import { Account, App, Session } from '@sigauth/generics/database/orm-client/types.client';
-import { SigAuthPermissions } from '@sigauth/generics/protected';
+import { ProtectedData, SigAuthPermissions } from '@sigauth/generics/protected';
 import bcrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import { SignJWT } from 'jose';
@@ -74,6 +74,7 @@ export class AuthService {
         accounts: Partial<Account>[];
         assetTypes: AssetType[];
         apps: App[];
+        protected: ProtectedData;
     }> {
         const session = await this.db.Session.findOne({ where: { uuid: sessionId } });
         if (!account || !session) throw new UnauthorizedException('Not authenticated');
@@ -94,7 +95,7 @@ export class AuthService {
             const [accounts, assetTypes, apps] = await Promise.all([
                 this.db.Account.findMany({}),
                 this.db.DBClient.getAssetTypes(),
-                this.db.App.findMany({}),
+                this.db.App.findMany({ includes: { app_permissions: true } }),
             ]);
 
             accounts.map(a => {
@@ -102,7 +103,7 @@ export class AuthService {
                 delete (a as any)['twoFactorCode'];
             });
 
-            return { account, session, accounts, assetTypes, apps };
+            return { account, session, accounts, assetTypes, apps, protected: this.storage.getProtectedData() };
         } else {
             // const accounts = await this.db.Account.findMany({
             //     where: { id: { in: account.accounts as number[] } },
@@ -125,7 +126,7 @@ export class AuthService {
             //     where: { id: { in: assetTypeIds } },
             // });
 
-            return { account, session, accounts: [], assetTypes: [], apps: [] };
+            return { account, session, accounts: [], assetTypes: [], apps: [], protected: this.storage.getProtectedData() };
         }
     }
 

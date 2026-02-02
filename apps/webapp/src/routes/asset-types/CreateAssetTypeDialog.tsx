@@ -16,8 +16,9 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
+import type { UpdatedTypeField } from '@/lib/constants';
 import { request } from '@/lib/utils';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
+import { AssetFieldType } from '@sigauth/generics/asset';
 import { BadgePlus, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -25,14 +26,13 @@ import { toast } from 'sonner';
 export const CreateAssetTypeDialog = () => {
     const { session, setSession } = useSession();
 
-    const [fields, setFields] = useState<AssetTypeField[]>([]);
+    const [fields, setFields] = useState<UpdatedTypeField[]>([]);
 
     const addField = () => {
-        const newField: AssetTypeField = {
+        const newField: UpdatedTypeField = {
             id: fields.reduce((maxId, field) => Math.max(maxId, field.id), 0) + 1,
             name: 'New Field',
             type: AssetFieldType.TEXT,
-            options: [],
             required: false,
         };
         setFields([...fields, newField]);
@@ -140,8 +140,8 @@ export const CreateAssetTypeDialog = () => {
                                                     <SelectGroup>
                                                         <SelectLabel>Field types</SelectLabel>
                                                         <SelectItem value={AssetFieldType.TEXT + ''}>Text</SelectItem>
-                                                        <SelectItem value={AssetFieldType.NUMBER + ''}>Number</SelectItem>
-                                                        <SelectItem value={AssetFieldType.CHECKFIELD + ''}>Checkfield</SelectItem>
+                                                        <SelectItem value={AssetFieldType.INTEGER + ''}>Number</SelectItem>
+                                                        <SelectItem value={AssetFieldType.BOOLEAN + ''}>Boolean</SelectItem>
                                                     </SelectGroup>
                                                 </SelectContent>
                                             </Select>
@@ -194,3 +194,4 @@ export const CreateAssetTypeDialog = () => {
         </Dialog>
     );
 };
+

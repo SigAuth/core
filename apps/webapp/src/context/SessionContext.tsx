@@ -1,16 +1,16 @@
-import type { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
-import type { App, Asset, AssetType, Container, Mirror, Session } from '@sigauth/generics/prisma-types';
+import type { Asset, AssetType } from '@sigauth/generics/asset';
+import type { Account, App, Session } from '@sigauth/generics/database/orm-client/types.client';
+import type { ProtectedData } from '@sigauth/generics/protected';
 import { createContext, use, useState, type ReactNode } from 'react';
 
 export type SessionStorage = {
-    account?: AccountWithPermissions;
+    account?: Account;
     session?: Session;
-    accounts: AccountWithPermissions[];
+    accounts: Account[];
     assetTypes: AssetType[];
-    assets: Asset[];
+    assets: ({ typeUuid: string } & Asset)[];
     apps: App[];
-    containers: Container[];
-    mirrors: Mirror[];
+    protected?: ProtectedData;
 };
 
 export type SessionContext = {
@@ -21,12 +21,11 @@ export type SessionContext = {
 const defaultSessionContext: SessionStorage = {
     account: undefined,
     session: undefined,
+    protected: undefined,
     accounts: [],
     assetTypes: [],
     assets: [],
     apps: [],
-    containers: [],
-    mirrors: [],
 };
 
 export const SessionStorageContext = createContext<SessionContext | null>(null);
@@ -47,3 +46,4 @@ export function useSession() {
     if (!ctx) throw new Error('useSession must be used within a SessionContextProvider');
     return ctx;
 }
+

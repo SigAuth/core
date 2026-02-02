@@ -1,5 +1,7 @@
+import { Utils } from '@/internal/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { TableIdSignature } from '@sigauth/generics/database/orm-client/sigauth.client';
+import { ProtectedData } from '@sigauth/generics/protected';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'crypto';
 import fs from 'fs';
 
@@ -73,6 +75,22 @@ export class StorageService {
             fs.writeFileSync(`${this.getPath()}/auth_public_key.pem`, pair.publicKey);
             fs.writeFileSync(`${this.getPath()}/auth_private_key.pem`, pair.privateKey);
         }
+    }
+
+    public getProtectedData(): ProtectedData {
+        if (!this.instancedSignature || !this.sigauthAppUuid) throw new Error('Storage service not initialized yet');
+
+        const criticalUuids = structuredClone(this.instancedSignature);
+
+        Object.keys(criticalUuids).forEach(key => {
+            const k = key as keyof typeof criticalUuids;
+            criticalUuids[k] = Utils.convertSignatureToUuid(criticalUuids[k]);
+        });
+
+        return {
+            signatures: criticalUuids,
+            sigauthAppUuid: this.sigauthAppUuid!,
+        };
     }
 
     get InstancedSignature(): TableIdSignature | null {

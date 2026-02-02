@@ -8,34 +8,39 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
+import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/asset';
 import { BadgePlus, Trash } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: number[]; open: boolean; setOpen: (open: boolean) => void }) => {
+export const EditAssetTypeDialog = ({
+    typeUuids,
+    open,
+    setOpen,
+}: {
+    typeUuids: string[];
+    open: boolean;
+    setOpen: (open: boolean) => void;
+}) => {
     const { session, setSession } = useSession();
 
     const assetType = useMemo(() => {
-        if (typeIds.length !== 1) return undefined;
-        return session.assetTypes.find(at => at.id === typeIds[0]);
-    }, [typeIds, session.assetTypes]);
-    const [fields, setFields] = useState<AssetTypeField[]>([]);
-    const [fieldCache, setFieldCache] = useState<AssetTypeField[]>([]);
+        if (typeUuids.length !== 1) return undefined;
+        return session.assetTypes.find(at => at.uuid === typeUuids[0]);
+    }, [typeUuids, session.assetTypes]);
+
+    const [fields, setFields] = useState<({ updatedName?: string } & AssetTypeField)[]>([]);
 
     useEffect(() => {
         if (assetType) {
-            setFields(assetType.fields as AssetTypeField[]);
-            setFieldCache(assetType.fields as AssetTypeField[]);
+            setFields(assetType.fields as ({ updatedName?: string } & AssetTypeField)[]);
         }
     }, [assetType]);
 
     const addField = () => {
         const newField: AssetTypeField = {
-            id: fields.reduce((maxId, field) => Math.max(maxId, field.id), 0) + 1,
-            name: 'New Field',
+            name: 'New-Field',
             type: AssetFieldType.TEXT,
-            options: [],
             required: false,
         };
         setFields([...fields, newField]);
@@ -50,18 +55,14 @@ export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: numbe
         }
 
         const res = await request('POST', '/api/asset-type/edit', {
-            assetTypeId: assetType.id,
+            assetTypeUuid: assetType.uuid,
             updatedName: name,
-            updatedFields: fields.map(f => {
-                // eslint-disable-next-line
-                if (!fieldCache.find(fc => fc.id === f.id)) return { ...f, id: undefined } as any; // new fields get a id from the backend
-                return f;
-            }),
+            updatedFields: fields,
         });
 
         if (res.ok) {
             const data = await res.json();
-            setSession({ assetTypes: session.assetTypes.map(at => (at.id === assetType.id ? data.updatedAssetType : at)) });
+            setSession({ assetTypes: session.assetTypes.map(at => (at.uuid === assetType.uuid ? data.updatedAssetType : at)) });
             setFields([]);
         } else {
             console.error(await res.text());
@@ -100,12 +101,11 @@ export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: numbe
                             </TableHeader>
                             <TableBody>
                                 {fields.map(field => (
-                                    <TableRow key={field.id}>
+                                    <TableRow key={field.name}>
                                         <TableCell
                                             className="w-[10px] cursor-pointer"
                                             onClick={() => {
-                                                setFields(fields.filter(f => f.id !== field.id));
-                                                setFieldCache(fieldCache.filter(f => f.id !== field.id));
+                                                setFields(fields.filter(f => f.name !== field.name));
                                             }}
                                         >
                                             <Trash size={12} />
@@ -120,14 +120,16 @@ export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: numbe
                                                     onInput={e =>
                                                         setFields(
                                                             fields.map(f =>
-                                                                f.id === field.id
-                                                                    ? { ...f, name: (e.target as HTMLDivElement).innerText }
+                                                                f.name === field.name
+                                                                    ? { ...f, updatedName: (e.target as HTMLDivElement).innerText }
                                                                     : f,
                                                             ),
                                                         )
                                                     }
                                                 >
-                                                    {fieldCache.find(f => f.id === field.id)?.name || 'New Field'}
+                                                    {fields.find(f => f.name === field.name)?.updatedName ||
+                                                        fields.find(f => f.name === field.name)?.name ||
+                                                        'New Field'}
                                                 </div>
                                             </ScrollArea>
                                         </TableCell>
@@ -137,7 +139,7 @@ export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: numbe
                                                 value={field.type + ''}
                                                 onValueChange={value => {
                                                     const type = parseInt(value) as AssetFieldType;
-                                                    setFields(fields.map(f => (f.id === field.id ? { ...f, type } : f)));
+                                                    setFields(fields.map(f => (f.name === field.name ? { ...f, type } : f)));
                                                 }}
                                             >
                                                 <SelectTrigger className="w-[150px]">
@@ -147,8 +149,8 @@ export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: numbe
                                                     <SelectGroup>
                                                         <SelectLabel>Field types</SelectLabel>
                                                         <SelectItem value={AssetFieldType.TEXT + ''}>Text</SelectItem>
-                                                        <SelectItem value={AssetFieldType.NUMBER + ''}>Number</SelectItem>
-                                                        <SelectItem value={AssetFieldType.CHECKFIELD + ''}>Checkfield</SelectItem>
+                                                        <SelectItem value={AssetFieldType.INTEGER + ''}>Number</SelectItem>
+                                                        <SelectItem value={AssetFieldType.BOOLEAN + ''}>Checkfield</SelectItem>
                                                     </SelectGroup>
                                                 </SelectContent>
                                             </Select>
@@ -160,7 +162,7 @@ export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: numbe
                                             <Switch
                                                 checked={field.required}
                                                 onCheckedChange={checked => {
-                                                    setFields(fields.map(f => (f.id === field.id ? { ...f, required: checked } : f)));
+                                                    setFields(fields.map(f => (f.name === field.name ? { ...f, required: checked } : f)));
                                                 }}
                                             />
                                         </TableCell>
@@ -201,3 +203,4 @@ export const EditAssetTypeDialog = ({ typeIds, open, setOpen }: { typeIds: numbe
         </Dialog>
     );
 };
+

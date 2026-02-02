@@ -15,3 +15,4 @@ export const AssetTypePage: React.FC = () => {
         </>
     );
 };
+

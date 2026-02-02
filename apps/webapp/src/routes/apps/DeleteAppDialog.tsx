@@ -15,18 +15,17 @@ import { request } from '@/lib/utils';
 import { Trash, TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const DeleteAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; open: boolean; setOpen: (open: boolean) => void }) => {
+export const DeleteAppDialog = ({ appUuids, open, setOpen }: { appUuids: string[]; open: boolean; setOpen: (open: boolean) => void }) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        if (appIds.length === 0) return;
-
+        if (appUuids.length === 0) return;
         const res = await request('POST', '/api/app/delete', {
-            appIds,
+            appUuids,
         });
 
         if (res.ok) {
-            setSession({ apps: session.apps.filter(a => !appIds.includes(a.id)) });
+            setSession({ apps: session.apps.filter(a => !appUuids.includes(a.uuid)) });
         } else {
             console.error(await res.text());
             throw new Error();
@@ -36,7 +35,7 @@ export const DeleteAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; o
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon-lg" disabled={appIds?.length === 0} className="w-fit">
+                <Button variant="ghost" size="icon-lg" disabled={appUuids?.length === 0} className="w-fit">
                     <Trash />
                 </Button>
             </AlertDialogTrigger>
@@ -71,3 +70,4 @@ export const DeleteAppDialog = ({ appIds, open, setOpen }: { appIds: number[]; o
         </AlertDialog>
     );
 };
+

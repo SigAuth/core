@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import {
     Dialog,
     DialogClose,
@@ -13,14 +12,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSession } from '@/context/SessionContext';
-import { cn, request } from '@/lib/utils';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/json-types';
-import { type Container } from '@sigauth/generics/prisma-types';
-import { PROTECTED } from '@sigauth/generics/protected';
-import { Check, ChevronsUpDown, Edit } from 'lucide-react';
+import { request } from '@/lib/utils';
+import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/asset';
+import { Edit } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -33,15 +29,12 @@ export const EditAssetDialog = ({ assetIds, open, setOpen }: { assetIds: number[
     }, [assetIds, session.assets]);
     const [assetFields, setAssetFields] = useState<Record<string, string | number | boolean>>({});
 
-    const [containerIds, setContainerIds] = useState<number[]>([]);
-    const [containerSelectionOpen, setContainerSelectionOpen] = useState(false);
-
-    const assetType = useMemo(() => session.assetTypes.find(type => type.id === asset?.typeId) || null, [asset]);
+    const assetType = useMemo(() => session.assetTypes.find(type => type.uuid === asset?.typeUuid) || null, [asset]);
 
     useEffect(() => {
         if (asset) {
-            setAssetFields((asset.fields as Record<string, string | number | boolean>) || {});
-            setContainerIds(session.containers.filter(con => con.assets.includes(asset.id)).map(c => c.id));
+            const { uuid, name, ...fields } = asset;
+            setAssetFields(fields as Record<string, string | number | boolean>);
         }
     }, [asset]);
 
@@ -53,10 +46,9 @@ export const EditAssetDialog = ({ assetIds, open, setOpen }: { assetIds: number[
         }
 
         const res = await request('POST', '/api/asset/edit', {
-            assetId: asset.id,
+            uuid: asset.uuid,
             name,
             fields: assetFields,
-            containerIds,
         });
 
         close();
@@ -64,10 +56,6 @@ export const EditAssetDialog = ({ assetIds, open, setOpen }: { assetIds: number[
             const data = await res.json();
             setSession({
                 assets: session.assets.map(a => (a.id === asset.id ? data.asset : a)),
-                containers: session.containers.map(c => {
-                    const updated = data.updatedContainers.find((uc: Container) => uc.id === c.id);
-                    return updated ? updated : c;
-                }),
             });
             return;
         }
@@ -94,58 +82,6 @@ export const EditAssetDialog = ({ assetIds, open, setOpen }: { assetIds: number[
                         <Input id="edit-name" name="name" placeholder="e.G Back to the Future 3" defaultValue={asset?.name} />
                     </div>
 
-                    {/* Container selection */}
-                    <div className="grid gap-1 mt-3">
-                        <Label htmlFor="name">Assign to container</Label>
-                        <div className="[&>:first-child]:w-full [&>:last-child]:!min-w-[90%]">
-                            <Popover open={containerSelectionOpen} onOpenChange={setContainerSelectionOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant={'outline'}
-                                        role="combobox"
-                                        aria-expanded={containerSelectionOpen}
-                                        className="justify-between"
-                                    >
-                                        Select containers...
-                                        <ChevronsUpDown className="opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="p-0 !z-300">
-                                    <Command>
-                                        <CommandInput placeholder="Search containers..." className="h-9" />
-                                        <CommandList>
-                                            <CommandEmpty>No containers found.</CommandEmpty>
-                                            <CommandGroup>
-                                                {session.containers
-                                                    .filter(con => con.id != PROTECTED.Container.id)
-                                                    .map(con => (
-                                                        <CommandItem
-                                                            key={con.id}
-                                                            onSelect={() => {
-                                                                setContainerIds(prev =>
-                                                                    prev.includes(con.id)
-                                                                        ? prev.filter(id => id !== con.id)
-                                                                        : [...prev, con.id],
-                                                                );
-                                                            }}
-                                                        >
-                                                            {con.name}
-                                                            <Check
-                                                                className={cn(
-                                                                    'ml-auto',
-                                                                    containerIds.includes(con.id) ? 'opacity-100' : 'opacity-0',
-                                                                )}
-                                                            />
-                                                        </CommandItem>
-                                                    ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                    </div>
-
                     <ScrollArea className="w-full max-h-96 mt-3">
                         <div className="flex flex-col gap-3 m-1">
                             {asset &&
@@ -153,22 +89,22 @@ export const EditAssetDialog = ({ assetIds, open, setOpen }: { assetIds: number[
                                     return (
                                         <div className="grid col-span-2 gap-1 animate-in fade-in duration-500">
                                             <Label htmlFor={field.name}>{field.name}</Label>
-                                            {field.type == AssetFieldType.CHECKFIELD ? (
+                                            {field.type === AssetFieldType.BOOLEAN ? (
                                                 <Checkbox
-                                                    checked={!!assetFields[field.id]}
-                                                    onCheckedChange={checked => setAssetFields({ ...assetFields, [field.id]: checked })}
+                                                    checked={!!assetFields[field.name]}
+                                                    onCheckedChange={checked => setAssetFields({ ...assetFields, [field.name]: checked })}
                                                 />
                                             ) : (
                                                 <Input
                                                     id={field.name}
                                                     name={field.name}
-                                                    type={field.type == AssetFieldType.NUMBER ? 'number' : 'text'}
-                                                    defaultValue={assetFields[field.id] as string | number}
+                                                    type={field.type == AssetFieldType.INTEGER ? 'number' : 'text'}
+                                                    defaultValue={assetFields[field.name] as string | number}
                                                     onChange={e =>
                                                         setAssetFields({
                                                             ...assetFields,
-                                                            [field.id]:
-                                                                field.type == AssetFieldType.NUMBER
+                                                            [field.name]:
+                                                                field.type == AssetFieldType.INTEGER
                                                                     ? parseFloat(e.target.value)
                                                                     : e.target.value,
                                                         })
@@ -202,3 +138,4 @@ export const EditAssetDialog = ({ assetIds, open, setOpen }: { assetIds: number[
         </Dialog>
     );
 };
+
