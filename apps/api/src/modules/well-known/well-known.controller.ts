@@ -1,10 +1,10 @@
-import { AuthService } from '@/modules/auth/auth.service';
+import { StorageService } from '@/internal/database/storage.service';
 import { Controller, Get } from '@nestjs/common';
 import { KeyObject } from 'crypto';
 
 @Controller('.well-known')
 export class WellKnownController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly storage: StorageService) {}
 
     @Get('openid-configuration')
     async getOpenIDConfiguration() {
@@ -23,7 +23,7 @@ export class WellKnownController {
 
     @Get('jwks.json')
     async getJWKS() {
-        const jwk = (this.authService.publicKey! as KeyObject).export({ format: 'jwk' });
+        const jwk = (this.storage.AuthPublicKey! as KeyObject).export({ format: 'jwk' });
 
         jwk.use = 'sig';
         jwk.alg = 'RS256';
@@ -32,3 +32,4 @@ export class WellKnownController {
         return { keys: [jwk] };
     }
 }
+

@@ -8,7 +8,6 @@ import {
     AuthorizationChallenge,
     AuthorizationInstance,
     Grant,
-    Mirror,
     Permission,
     Session,
 } from './types.client.js';
@@ -22,7 +21,6 @@ export type TableIdSignature = {
     Account: string;
     Session: string;
     App: string;
-    Mirror: string;
     AuthorizationInstance: string;
     AuthorizationChallenge: string;
 
@@ -52,7 +50,6 @@ const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
             app_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
             app_permissions: { table: signature.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
         },
-        [signature.Mirror]: {},
         [signature.AuthorizationInstance]: {
             session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },
             app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
@@ -121,9 +118,7 @@ export class SigauthClient {
     get App() {
         return this.getModel<App>('App', Model);
     }
-    get Mirror() {
-        return this.getModel<Mirror>('Mirror', Model);
-    }
+
     get AuthorizationInstance() {
         return this.getModel<AuthorizationInstance>('AuthorizationInstance', Model);
     }

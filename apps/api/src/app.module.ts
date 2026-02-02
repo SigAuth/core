@@ -5,7 +5,6 @@ import { AssetTypeModule } from '@/modules/asset-type/asset-type.module';
 import { AssetModule } from '@/modules/asset/asset.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { HealthModule } from '@/modules/health/health.module';
-import { MirrorModule } from '@/modules/mirror/mirror.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -35,7 +34,6 @@ const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
         AssetModule,
         AppsModule,
         AuthModule,
-        MirrorModule,
         WellKnownModule,
         HealthModule,
         DatabaseModule,

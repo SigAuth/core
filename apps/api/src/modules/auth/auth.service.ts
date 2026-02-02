@@ -1,273 +1,257 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { KeyObject } from 'node:crypto';
+import { ORMService } from '@/internal/database/orm.client';
+import { StorageService } from '@/internal/database/storage.service';
+import { Utils } from '@/internal/utils';
+import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
+import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
+import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { AssetType } from '@sigauth/generics/asset';
+import { Account, App, Session } from '@sigauth/generics/database/orm-client/types.client';
+import { SigAuthPermissions } from '@sigauth/generics/protected';
+import bcrypt from 'bcryptjs';
+import dayjs from 'dayjs';
+import { SignJWT } from 'jose';
+import speakeasy from 'speakeasy';
 
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
 
-    public publicKey: KeyObject | null = null;
-    public privateKey: KeyObject | null = null;
+    constructor(
+        private readonly db: ORMService,
+        private readonly storage: StorageService,
+    ) {}
 
-    // // load or generate RSA keys
-    // async onModuleInit() {
-    //     const privatePath = './keys/private.pem';
-    //     const publicPath = './keys/public.pub.pem';
+    async login(loginRequestDto: LoginRequestDto) {
+        const account = await this.db.Account.findOne({ where: { username: loginRequestDto.username } });
+        if (!account || !bcrypt.compareSync(loginRequestDto.password, account.passwordHash)) {
+            throw new UnauthorizedException('Invalid credentials');
+        }
 
-    //     fs.mkdirSync('./keys', { recursive: true });
+        if (account.deactivated) {
+            throw new UnauthorizedException('Your account has been deactivated. Please contact your administrator for assistance.');
+        }
 
-    //     if (!fs.existsSync(privatePath) || !fs.existsSync(publicPath)) {
-    //         this.logger.warn('No RSA keys found, generating new keys');
-    //         const pair = generateKeyPairSync('rsa', {
-    //             modulusLength: 4096,
-    //             publicExponent: 0x10001,
-    //             publicKeyEncoding: { type: 'spki', format: 'pem' },
-    //             privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-    //         });
+        // validate 2fa
+        if (account.twoFactorCode && typeof loginRequestDto.twoFactorCode !== 'string') {
+            throw new UnauthorizedException('2FA required');
+        } else if (account.twoFactorCode) {
+            const verified = speakeasy.totp.verify({
+                secret: account.twoFactorCode,
+                encoding: 'ascii',
+                token: loginRequestDto.twoFactorCode!,
+            });
 
-    //         fs.writeFileSync(privatePath, pair.privateKey);
-    //         fs.writeFileSync(publicPath, pair.publicKey);
+            if (!verified) {
+                throw new UnauthorizedException('Invalid credentials');
+            }
+        }
 
-    //         this.publicKey = createPublicKey(pair.publicKey);
-    //         this.privateKey = createPrivateKey(pair.privateKey);
-    //     } else {
-    //         this.logger.log('Using existing RSA keys');
-    //         this.publicKey = createPublicKey(fs.readFileSync(publicPath, 'utf8'));
-    //         this.privateKey = createPrivateKey(fs.readFileSync(privatePath, 'utf8'));
-    //     }
-    // }
+        // create session and return token
+        const created = dayjs().unix();
+        const expire = created + 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5);
+        const session = await this.db.Session.createOne({
+            data: {
+                created,
+                expire,
+                subjectUuid: account.uuid,
+            },
+        });
+        return session.uuid;
+    }
 
-    // constructor(private readonly prisma: PrismaService) {}
+    async logout(account: Account, sessionId: string) {
+        const session = await this.db.Session.deleteOne({ where: { uuid: sessionId } });
+        if (!session) throw new UnauthorizedException('Invalid session');
+        // TODO handle automatically remove expired session from db after a certain time
+    }
 
-    // async login(loginRequestDto: LoginRequestDto) {
-    //     const account = await this.prisma.account.findUnique({ where: { name: loginRequestDto.username } });
-    //     if (!account || !bycrypt.compareSync(loginRequestDto.password, account.password)) {
-    //         throw new UnauthorizedException('Invalid credentials');
-    //     }
+    async getInitData(
+        sessionId: string,
+        account?: Account,
+    ): Promise<{
+        account: Partial<Account>;
+        session: Session;
+        accounts: Partial<Account>[];
+        assetTypes: AssetType[];
+        apps: App[];
+    }> {
+        const session = await this.db.Session.findOne({ where: { uuid: sessionId } });
+        if (!account || !session) throw new UnauthorizedException('Not authenticated');
 
-    //     if (account.deactivated) {
-    //         throw new UnauthorizedException('Your account has been deactivated. Please contact your administrator for assistance.');
-    //     }
+        // update expire new threshold
+        await this.db.Session.updateOne({
+            where: { uuid: sessionId },
+            data: {
+                expire: dayjs().unix() + 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5),
+            },
+        });
 
-    //     // validate 2fa
-    //     if (account.secondFactor && typeof loginRequestDto.secondFactor !== 'string') {
-    //         throw new UnauthorizedException('2FA required');
-    //     } else if (account.secondFactor) {
-    //         const verified = speakeasy.totp.verify({
-    //             secret: account.secondFactor,
-    //             encoding: 'ascii',
-    //             token: loginRequestDto.secondFactor!,
-    //         });
+        const isRoot = await this.db.Grant.findOne({
+            where: { accountUuid: account.uuid, appUuid: this.storage.SigAuthAppUuid!, permission: SigAuthPermissions.ROOT },
+        });
 
-    //         if (!verified) {
-    //             throw new UnauthorizedException('Invalid credentials');
-    //         }
-    //     }
+        if (isRoot) {
+            const [accounts, assetTypes, apps] = await Promise.all([
+                this.db.Account.findMany({}),
+                this.db.DBClient.getAssetTypes(),
+                this.db.App.findMany({}),
+            ]);
 
-    //     // create session and return token
-    //     const sessionId = Utils.generateToken(64);
+            accounts.map(a => {
+                delete (a as any)['passwordHash'];
+                delete (a as any)['twoFactorCode'];
+            });
 
-    //     const created = dayjs().unix();
-    //     const expire = created + 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5);
-    //     await this.prisma.session.create({
-    //         data: {
-    //             id: sessionId,
+            return { account, session, accounts, assetTypes, apps };
+        } else {
+            // const accounts = await this.db.Account.findMany({
+            //     where: { id: { in: account.accounts as number[] } },
+            //     select: { id: true, name: true, email: true, api: true, accounts: true, permissions: true },
+            // });
 
-    //             created,
-    //             expire,
-    //             subject: account.id,
-    //         },
-    //     });
-    //     return sessionId;
-    // }
+            // const apps = await this.prisma.app.findMany({
+            //     where: { id: { in: account.permissions.map(p => p.appId) } },
+            // });
 
-    // async logout(account: AccountWithPermissions, sessionId: string) {
-    //     const session = await this.prisma.session.delete({ where: { id: sessionId } });
-    //     if (!session) throw new UnauthorizedException('Invalid session');
-    //     // TODO handle automatically remove expired session from db after a certain time
-    // }
+            // const assetIds = account.permissions
+            //     .map(p => p.assetId)
+            //     .filter((value, index, self) => value !== null && self.indexOf(value) === index) as number[];
+            // const assets = await this.prisma.asset.findMany({
+            //     where: { id: { in: assetIds } },
+            // });
 
-    // async getInitData(
-    //     sessionId: string,
-    //     account?: AccountWithPermissions,
-    // ): Promise<{
-    //     account: Partial<AccountWithPermissions>;
-    //     session: Session;
-    //     accounts: Partial<AccountWithPermissions>[];
-    //     assets: Asset[];
-    //     assetTypes: AssetType[];
-    //     apps: App[];
-    //     mirrors: Mirror[];
-    // }> {
-    //     const session = await this.prisma.session.findUnique({ where: { id: sessionId } });
-    //     if (!account || !session) throw new UnauthorizedException('Not authenticated');
+            // const assetTypeIds = assets.map(a => a.typeId);
+            // const assetTypes = await this.prisma.assetType.findMany({
+            //     where: { id: { in: assetTypeIds } },
+            // });
 
-    //     // update expire new threshold
-    //     await this.prisma.session.update({
-    //         where: { id: sessionId },
-    //         data: {
-    //             expire: dayjs().unix() + 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5),
-    //         },
-    //     });
+            return { account, session, accounts: [], assetTypes: [], apps: [] };
+        }
+    }
 
-    //     if (account.permissions.some(p => p.identifier == Utils.convertPermissionNameToIdent(SigAuthRootPermissions.ROOT))) {
-    //         const [accounts, assets, assetTypes, apps, mirrors] = await Promise.all([
-    //             this.prisma.account.findMany({
-    //                 select: { id: true, name: true, email: true, api: true, accounts: true, permissions: true, deactivated: true },
-    //             }),
-    //             this.prisma.asset.findMany(),
-    //             this.prisma.assetType.findMany(),
-    //             this.prisma.app.findMany(),
-    //             this.prisma.mirror.findMany(),
-    //         ]);
+    async authenticateOIDC(data: OIDCAuthenticateDto, sessionId: string) {
+        const session = await this.db.Session.findOne({ where: { uuid: sessionId }, include: { account: true } });
+        if (!session) throw new NotFoundException("Couldn't resolve session");
 
-    //         return { account, session, accounts, assets, assetTypes, apps, mirrors };
-    //     } else {
-    //         const accounts = await this.prisma.account.findMany({
-    //             where: { id: { in: account.accounts as number[] } },
-    //             select: { id: true, name: true, email: true, api: true, accounts: true, permissions: true },
-    //         });
+        const app = await this.db.App.findOne({ where: { uuid: data.appUuid } });
+        if (!app) throw new NotFoundException("Couldn't resolve app");
+        if (!app.oidcAuthCodeCb) throw new BadRequestException('App does not support OIDC authorization code flow');
 
-    //         const apps = await this.prisma.app.findMany({
-    //             where: { id: { in: account.permissions.map(p => p.appId) } },
-    //         });
+        const authorizationCode = Utils.generateToken(64);
+        const challenge = await this.db.AuthorizationChallenge.createOne({
+            data: {
+                appUuid: data.appUuid,
+                sessionUuid: sessionId,
+                authCode: authorizationCode,
+                redirectUri: data.redirectUri,
+                created: new Date(),
+                challenge: '', // TODO PKCE
+            },
+        });
 
-    //         const assetIds = account.permissions
-    //             .map(p => p.assetId)
-    //             .filter((value, index, self) => value !== null && self.indexOf(value) === index) as number[];
-    //         const assets = await this.prisma.asset.findMany({
-    //             where: { id: { in: assetIds } },
-    //         });
+        return `${app.oidcAuthCodeCb}?code=${challenge.authCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}&redirectUri=${data.redirectUri}`;
+    }
 
-    //         const assetTypeIds = assets.map(a => a.typeId);
-    //         const assetTypes = await this.prisma.assetType.findMany({
-    //             where: { id: { in: assetTypeIds } },
-    //         });
+    async exchangeOIDCToken(code: string, app: App, redirectUri: string) {
+        const authChallenge = await this.db.AuthorizationChallenge.findOne({
+            where: { authorizationCode: code, redirectUri },
+            includes: { session_reference: { subject_account: true } },
+        });
+        if (!authChallenge) throw new NotFoundException("Couldn't resolve authorization challenge");
 
-    //         return { account, session, accounts, assets, assetTypes, apps, mirrors: [] };
-    //     }
-    // }
+        if (
+            dayjs(authChallenge.created)
+                .add(+(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5), 'minute')
+                .isBefore(dayjs())
+        ) {
+            await this.db.AuthorizationChallenge.deleteOne({ where: { uuid: authChallenge.uuid } });
+            throw new UnauthorizedException('Authorization challenge expired');
+        }
 
-    // async authenticateOIDC(data: OIDCAuthenticateDto, sessionId: string) {
-    //     const session = await this.prisma.session.findFirst({ where: { id: sessionId }, include: { account: true } });
-    //     if (!session) throw new NotFoundException("Couldn't resolve session");
+        if (dayjs.unix(authChallenge.session_reference.expire).isBefore(dayjs())) {
+            await this.db.AuthorizationChallenge.deleteMany({ where: { sessionUuid: authChallenge.sessionUuid } });
+            await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: authChallenge.sessionUuid } });
+            await this.db.Session.deleteOne({ where: { uuid: authChallenge.sessionUuid } });
+            throw new UnauthorizedException('Session expired');
+        }
 
-    //     const app = await this.prisma.app.findUnique({ where: { id: +data.appId } });
-    //     if (!app) throw new NotFoundException("Couldn't resolve app");
-    //     if (!app.oidcAuthCodeUrl) throw new BadRequestException('App does not support OIDC authorization code flow');
+        const payload = {
+            name: authChallenge.session_reference.subject_account.username,
+            email: authChallenge.session_reference.subject_account.email,
+            // more claims to come
+        };
 
-    //     const authorizationCode = Utils.generateToken(64);
-    //     const challenge = await this.prisma.authorizationChallenge.create({
-    //         data: {
-    //             appId: +data.appId,
-    //             sessionId,
-    //             authorizationCode,
-    //             redirectUri: data.redirectUri,
-    //         },
-    //     });
+        const accessToken = await new SignJWT(payload)
+            .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
+            .setIssuedAt()
+            .setSubject(String(authChallenge.session_reference.subject_account.uuid))
+            .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
+            .setAudience(app.name)
+            .setExpirationTime(
+                dayjs()
+                    .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
+                    .toDate(),
+            )
+            .sign(this.storage.AuthPrivateKey!);
 
-    //     return `${app.oidcAuthCodeUrl}?code=${challenge.authorizationCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}&redirectUri=${data.redirectUri}`;
-    // }
+        const instance = await this.db.AuthorizationInstance.createOne({
+            data: {
+                sessionUuid: authChallenge.sessionUuid,
+                appUuid: authChallenge.appUuid,
+                refreshToken: Utils.generateToken(64),
+                refreshTokenExpire: dayjs().unix() + 60 * 60 * 24 * +(process.env.OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET ?? 30),
+            },
+        });
 
-    // async exchangeOIDCToken(code: string, app: App, redirectUri: string) {
-    //     const authChallenge = await this.prisma.authorizationChallenge.findUnique({
-    //         where: { authorizationCode: code, redirectUri },
-    //         include: { session: { include: { account: true } } },
-    //     });
-    //     if (!authChallenge) throw new NotFoundException("Couldn't resolve authorization challenge");
+        await this.db.AuthorizationChallenge.deleteOne({ where: { uuid: authChallenge.uuid } });
+        return {
+            accessToken,
+            refreshToken: instance.refreshToken,
+        };
+    }
 
-    //     if (
-    //         dayjs(authChallenge.created)
-    //             .add(+(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5), 'minute')
-    //             .isBefore(dayjs())
-    //     ) {
-    //         await this.prisma.authorizationChallenge.delete({ where: { id: authChallenge.id } });
-    //         throw new UnauthorizedException('Authorization challenge expired');
-    //     }
+    async refreshOIDCToken(refreshToken: string, app: App) {
+        const instance = await this.db.AuthorizationInstance.findOne({
+            where: { refreshToken },
+            includes: { session_reference: { subject_account: true } },
+        });
+        if (!instance) throw new NotFoundException("Couldn't resolve authorization instance");
 
-    //     if (dayjs.unix(authChallenge.session.expire).isBefore(dayjs())) {
-    //         await this.prisma.authorizationChallenge.deleteMany({ where: { sessionId: authChallenge.sessionId } });
-    //         await this.prisma.authorizationInstance.deleteMany({ where: { sessionId: authChallenge.sessionId } });
-    //         await this.prisma.session.delete({ where: { id: authChallenge.sessionId } });
-    //         throw new UnauthorizedException('Session expired');
-    //     }
+        if (dayjs.unix(instance.refreshTokenExpire).isBefore(dayjs())) {
+            await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: instance.sessionUuid } });
+            throw new UnauthorizedException('Refresh token expired');
+        }
 
-    //     const payload = {
-    //         name: authChallenge.session.account.name,
-    //         email: authChallenge.session.account.email,
-    //         // more claims to come
-    //     };
+        if (dayjs.unix(instance.session_reference.expire).isBefore(dayjs())) {
+            await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: instance.sessionUuid } });
+            await this.db.Session.deleteOne({ where: { uuid: instance.sessionUuid } });
+            throw new UnauthorizedException('Session expired');
+        }
 
-    //     const accessToken = await new SignJWT(payload)
-    //         .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
-    //         .setIssuedAt()
-    //         .setSubject(String(authChallenge.session.account.id))
-    //         .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
-    //         .setAudience(app.name)
-    //         .setExpirationTime(
-    //             dayjs()
-    //                 .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
-    //                 .toDate(),
-    //         )
-    //         .sign(this.privateKey!);
+        const payload = {
+            name: instance.session_reference.subject_account.username,
+            email: instance.session_reference.subject_account.email,
+            // more claims to come
+        };
 
-    //     const instance = await this.prisma.authorizationInstance.create({
-    //         data: {
-    //             sessionId: authChallenge.sessionId,
-    //             appId: authChallenge.appId,
-    //             refreshToken: Utils.generateToken(64),
-    //             refreshTokenExpire: dayjs().unix() + 60 * 60 * 24 * +(process.env.OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET ?? 30),
-    //         },
-    //     });
+        const accessToken = await new SignJWT(payload)
+            .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
+            .setIssuedAt()
+            .setSubject(String(instance.session_reference.subject_account.uuid))
+            .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
+            .setAudience(app.name)
+            .setExpirationTime(
+                dayjs()
+                    .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
+                    .toDate(),
+            )
+            .sign(this.storage.AuthPrivateKey!);
 
-    //     await this.prisma.authorizationChallenge.delete({ where: { id: authChallenge.id } });
-    //     return {
-    //         accessToken,
-    //         refreshToken: instance.refreshToken,
-    //     };
-    // }
-
-    // async refreshOIDCToken(refreshToken: string, app: App) {
-    //     const instance = await this.prisma.authorizationInstance.findUnique({
-    //         where: { refreshToken },
-    //         include: { session: { include: { account: true } } },
-    //     });
-    //     if (!instance) throw new NotFoundException("Couldn't resolve authorization instance");
-
-    //     if (dayjs.unix(instance.refreshTokenExpire).isBefore(dayjs())) {
-    //         await this.prisma.authorizationInstance.deleteMany({ where: { sessionId: instance.sessionId } });
-    //         throw new UnauthorizedException('Refresh token expired');
-    //     }
-
-    //     if (dayjs.unix(instance.session.expire).isBefore(dayjs())) {
-    //         await this.prisma.authorizationInstance.deleteMany({ where: { sessionId: instance.sessionId } });
-    //         await this.prisma.session.delete({ where: { id: instance.sessionId } });
-    //         throw new UnauthorizedException('Session expired');
-    //     }
-
-    //     const payload = {
-    //         name: instance.session.account.name,
-    //         email: instance.session.account.email,
-    //         // more claims to come
-    //     };
-
-    //     const accessToken = await new SignJWT(payload)
-    //         .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
-    //         .setIssuedAt()
-    //         .setSubject(String(instance.session.account.id))
-    //         .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
-    //         .setAudience(app.name)
-    //         .setExpirationTime(
-    //             dayjs()
-    //                 .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
-    //                 .toDate(),
-    //         )
-    //         .sign(this.privateKey!);
-
-    //     return {
-    //         accessToken,
-    //         refreshToken: instance.refreshToken,
-    //     };
-    // }
+        return {
+            accessToken,
+            refreshToken: instance.refreshToken,
+        };
+    }
 
     // async hasPermission(dto: HasPermissionDto) {
     //     const parts = dto.permission.split(':');
@@ -316,19 +300,19 @@ export class AuthService {
     // }
 
     // public async getUserInfo(accessToken: string, app: App): Promise<UserInfo> {
-    //     const decoded = await jwtVerify(accessToken, this.publicKey!, {
+    //     const decoded = await jwtVerify(accessToken, this.storage.AuthPublicKey!, {
     //         audience: app.name,
     //         issuer: process.env.FRONTEND_URL || 'No issuer provided in env',
     //     });
 
     //     if (!decoded || decoded.payload.exp! < Date.now() / 1000) throw new UnauthorizedException('Invalid access token');
-    //     const tokenAccountId = +decoded.payload.sub!;
+    //     const tokenAccountId = decoded.payload.sub!;
 
-    //     const explicitPermissions = await this.prisma.permissionInstance.findMany({
+    //     const explicitPermissions = await this.db.Grant.findMany({
     //         where: {
     //             OR: [
-    //                 { accountId: tokenAccountId, appId: app.id },
-    //                 { accountId: tokenAccountId, appId: PROTECTED.App.id },
+    //                 { accountUuid: tokenAccountId, appUuid: app.uuid },
+    //                 { accountUuid: tokenAccountId, appUuid: this.storage.SigAuthAppUuid! },
     //             ],
     //         },
     //     });
@@ -338,3 +322,4 @@ export class AuthService {
     //     };
     // }
 }
+

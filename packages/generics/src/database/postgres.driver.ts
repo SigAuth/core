@@ -78,16 +78,6 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
         ]);
         if (!appType) throw new Error('Failed to create App asset type during initialization');
 
-        const mirrorType = await this.createAssetType('Mirror', [
-            { name: 'name', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'code', type: AssetFieldType.TEXT, required: true },
-            { name: 'autoRun', type: AssetFieldType.BOOLEAN, required: true },
-            { name: 'autoRunInterval', type: AssetFieldType.INTEGER },
-            { name: 'lastRun', type: AssetFieldType.DATE },
-            { name: 'lastResult', type: AssetFieldType.VARCHAR },
-        ]);
-        if (!mirrorType) throw new Error('Failed to create Mirror asset type during initialization');
-
         const authInstanceType = await this.createAssetType('AuthorizationInstance', [
             {
                 name: 'sessionUuid',
@@ -104,6 +94,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                 referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
             },
             { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
+            { name: 'refreshTokenExpire', type: AssetFieldType.INTEGER, required: true },
             { name: 'accessToken', type: AssetFieldType.VARCHAR, required: true },
         ]);
         if (!authInstanceType) throw new Error('Failed to create AuthorizationInstance asset type during initialization');
@@ -197,7 +188,6 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
             App: 'asset_' + appType.replaceAll('-', '_'),
             AuthorizationChallenge: 'asset_' + authChallengeType.replaceAll('-', '_'),
             AuthorizationInstance: 'asset_' + authInstanceType.replaceAll('-', '_'),
-            Mirror: 'asset_' + mirrorType.replaceAll('-', '_'),
 
             AppAccess: INTERNAL_APP_ACCESS_TABLE,
             Permission: INTERNAL_PERMISSION_TABLE,
@@ -517,7 +507,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                         .inTable(`asset_${relField.targetAssetType.replace(/-/g, '_')}`);
                     this.applyOnDeleteStrategy(refColumn, relField);
                     column = refColumn as unknown as Knex.ColumnBuilder;
-                } 
+                }
                 break;
             default:
                 throw new Error(`Unsupported field type: ${field.type}`);
@@ -668,6 +658,13 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
             .where({ uuid: assetUuid })
             .del()
             .then(count => count > 0);
+    }
+
+    getAssetsByType<T extends Asset>(typeUuid: string): Promise<T[]> {
+        if (!this.db) throw new Error('Database not connected');
+        const tableName = `asset_${typeUuid.replace(/-/g, '_')}`;
+
+        return this.db(tableName).select('*') as Promise<T[]>;
     }
 
     async getAssetTypeFields(uuid: string, externalJoinKeys?: string[]): Promise<AssetTypeField[]> {

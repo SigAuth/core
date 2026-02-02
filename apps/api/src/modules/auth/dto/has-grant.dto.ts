@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumberString, IsString, Matches } from 'class-validator';
+import { IsString, IsUUID, Matches } from 'class-validator';
 
 export class HasPermissionDto {
     @IsString()
@@ -14,7 +14,8 @@ export class HasPermissionDto {
     @ApiProperty({ description: 'The app token of the requesting app', example: '1234567890abcdef' })
     appToken!: string;
 
-    @IsNumberString()
-    @ApiProperty({ description: 'The ID of the OIDC app to authenticate with', example: 69 })
-    appId!: number;
+    @IsUUID('7')
+    @ApiProperty({ description: 'The UUID of the OIDC app to authenticate with', example: '550e8400-e29b-41d4-a716-446655440000' })
+    appUuid!: string;
 }
+

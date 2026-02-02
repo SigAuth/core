@@ -41,5 +41,7 @@ export abstract class GenericDatabaseGateway {
     ): Promise<T>;
 
     abstract deleteAsset(assetType: AssetType, assetUuid: string): Promise<boolean>;
+
+    abstract getAssetsByType<T extends Asset>(typeUuid: string): Promise<T[]>;
 }
 

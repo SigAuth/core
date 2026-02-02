@@ -58,8 +58,8 @@ export interface AuthorizationInstance {
     uuid: string;
     sessionUuid: string;
     appUuid: string;
+    refreshTokenExpire: number;
     refreshToken: string;
-    accessToken: string;
     /** These fields are only available when the relation is included in the query */
     session_reference?: Session;
     app_reference?: App;
