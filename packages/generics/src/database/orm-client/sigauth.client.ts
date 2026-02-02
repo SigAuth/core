@@ -594,7 +594,7 @@ type Scalar =
     | readonly Date[]
     | readonly symbol[];
 
-type ScalarKeys<T> = {
+export type ScalarKeys<T> = {
     [K in keyof T]: NonNullable<T[K]> extends Scalar ? K : never;
 }[keyof T];
 

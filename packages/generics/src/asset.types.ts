@@ -22,8 +22,15 @@ export type AssetTypeField = {
 
 export type AssetTypeRelationField = AssetTypeField & {
     targetAssetType: string; // UUID of AssetType that the relation points to
-    referentialIntegrityStrategy: 'CASCADE' | 'SET_NULL' | 'RESTRICT' | 'INVALIDATE';
+    referentialIntegrityStrategy: RelatiationIntegrityStrategy;
 };
+
+export enum RelatiationIntegrityStrategy {
+    CASCADE = 'CASCADE',
+    SET_NULL = 'SET_NULL',
+    RESTRICT = 'RESTRICT',
+    INVALIDATE = 'INVALIDATE',
+}
 
 export enum AssetFieldType {
     BOOLEAN = 0,
@@ -40,6 +47,6 @@ export enum AssetFieldType {
 export type Asset = {
     uuid: string;
     name: string;
-    [key: string]: string | number | boolean | Date | Asset | Asset[]; // fields with dynamic keys
+    [key: string]: string | number | boolean | Date; // fields with dynamic keys
 };
 

@@ -5,7 +5,7 @@ import { IsObject, IsString, IsUUID, MinLength, ValidateNested } from 'class-val
 export class CreateAssetDto {
     @IsUUID('7')
     @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000', type: 'string' })
-    asseTypeUuid!: string;
+    assetTypeUuid!: string;
 
     @IsString()
     @MinLength(4)

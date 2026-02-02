@@ -10,6 +10,7 @@ import {
     INTERNAL_ASSET_TYPE_TABLE,
     INTERNAL_GRANT_TABLE,
     INTERNAL_PERMISSION_TABLE,
+    RelatiationIntegrityStrategy,
     SELF_REFERENCE_ASSET_TYPE_UUID,
 } from '../asset.types.js';
 import { GenericDatabaseGateway } from './database.gateway.js';
@@ -62,7 +63,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: accountType,
-                referentialIntegrityStrategy: 'CASCADE',
+                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
             },
             { name: 'expire', type: AssetFieldType.INTEGER, required: true }, // todo is there a native way to expire rows in Postgres?
             { name: 'created', type: AssetFieldType.INTEGER, required: true },
@@ -93,14 +94,14 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: sessionType,
-                referentialIntegrityStrategy: 'CASCADE',
+                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
             },
             {
                 name: 'appUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: appType,
-                referentialIntegrityStrategy: 'CASCADE',
+                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
             },
             { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
             { name: 'accessToken', type: AssetFieldType.VARCHAR, required: true },
@@ -113,14 +114,14 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: sessionType,
-                referentialIntegrityStrategy: 'CASCADE',
+                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
             },
             {
                 name: 'appUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: appType,
-                referentialIntegrityStrategy: 'CASCADE',
+                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
             },
             { name: 'authCode', type: AssetFieldType.VARCHAR, required: true },
             { name: 'challenge', type: AssetFieldType.VARCHAR, required: true },
@@ -219,7 +220,6 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
         }
 
         // add asset_type entry
-
         const externalJoinKeys = fields
             .filter((f): f is Omit<AssetTypeRelationField, 'uuid'> => f.type === AssetFieldType.RELATION && !!f.allowMultiple)
             .map(
@@ -295,16 +295,258 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
         return uuid;
     }
 
-    editAssetType(uuid: string, name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<boolean> {
-        throw new Error('Method not implemented.');
+    async editAssetType(
+        uuid: string,
+        name: string,
+        fields: ((AssetTypeField | AssetTypeRelationField) & { updatedName: string })[],
+    ): Promise<AssetType> {
+        const type = await this.getAssetType(uuid);
+        if (!type) throw new Error('Asset type not found');
+
+        // Update name if changed
+        if (name !== type.name) {
+            await this.db!.table(INTERNAL_ASSET_TYPE_TABLE).where({ uuid }).update({ name });
+        }
+
+        const tableName = `asset_${uuid.replace(/-/g, '_')}`;
+        const existingFieldsMap = new Map(type.fields.map(f => [f.name, f]));
+        const processedOldFields = new Set<string>();
+        const newExternalKeys: string[] = [];
+
+        // Process all input fields (Updates & Creations)
+        for (const newField of fields) {
+            const oldField = existingFieldsMap.get(newField.name);
+            const isNewExternal = newField.type === AssetFieldType.RELATION && newField.allowMultiple;
+
+            // Track External Keys for metadata update
+            if (isNewExternal) {
+                const f = newField as AssetTypeRelationField & { updatedName: string };
+                newExternalKeys.push(
+                    f.updatedName +
+                        '#' +
+                        f.targetAssetType.replaceAll('-', '_') +
+                        '#' +
+                        (f.required ? '1' : '0') +
+                        '#' +
+                        (f.referentialIntegrityStrategy || RelatiationIntegrityStrategy.CASCADE),
+                );
+            }
+
+            if (oldField) {
+                processedOldFields.add(oldField.name);
+                const isOldExternal = oldField.type === AssetFieldType.RELATION && oldField.allowMultiple;
+
+                if (isOldExternal && isNewExternal) {
+                    // Update External Relation (Rename only)
+                    const oldRel = oldField as AssetTypeRelationField;
+                    const joinTable = this.getJoinTableName(uuid, oldRel.targetAssetType);
+
+                    if (newField.updatedName !== newField.name) {
+                        if (await this.db!.schema.hasTable(joinTable)) {
+                            await this.db!(joinTable).where({ field: newField.name }).update({ field: newField.updatedName });
+                        }
+                    }
+                } else if (!isOldExternal && !isNewExternal) {
+                    // Update Column Name
+                    if (newField.updatedName !== newField.name) {
+                        await this.db!.schema.alterTable(tableName, table => {
+                            table.renameColumn(newField.name, newField.updatedName);
+                        });
+                    }
+
+                    // Update Column Type/Constraints
+                    if (newField.type !== oldField.type || newField.required !== oldField.required) {
+                        await this.db!.schema.alterTable(tableName, table => {
+                            const col = this.addColumnToTable(table, { ...newField, name: newField.updatedName });
+                            if (col) {
+                                col.alter();
+                                if (newField.type !== oldField.type) {
+                                    switch (newField.type) {
+                                        case AssetFieldType.VARCHAR:
+                                            col.defaultTo('');
+                                            break;
+                                        case AssetFieldType.INTEGER:
+                                            col.defaultTo(0);
+                                            break;
+                                        case AssetFieldType.FLOAT8:
+                                            col.defaultTo(0.0);
+                                            break;
+                                        case AssetFieldType.BOOLEAN:
+                                            col.defaultTo(false);
+                                            break;
+                                        case AssetFieldType.TEXT:
+                                            col.defaultTo('');
+                                            break;
+                                        case AssetFieldType.DATE:
+                                            col.defaultTo(this.db!.fn.now());
+                                            break;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else if (isOldExternal && !isNewExternal) {
+                    // Conversion: External Relation -> Column
+                    const oldRel = oldField as AssetTypeRelationField;
+                    const joinTable = this.getJoinTableName(uuid, oldRel.targetAssetType);
+
+                    if (await this.db!.schema.hasTable(joinTable)) {
+                        await this.db!(joinTable).where({ field: newField.name }).del();
+                    }
+
+                    await this.db!.schema.alterTable(tableName, table => {
+                        this.addColumnToTable(table, { ...newField, name: newField.updatedName });
+                    });
+                } else if (!isOldExternal && isNewExternal) {
+                    // Conversion: Column -> External Relation
+                    await this.db!.schema.alterTable(tableName, table => {
+                        table.dropColumn(newField.name);
+                    });
+
+                    const f = newField as AssetTypeRelationField;
+                    await this.createJoinTable(uuid, f.targetAssetType, f);
+                }
+            } else {
+                // New Field
+                if (isNewExternal) {
+                    const f = newField as AssetTypeRelationField;
+                    await this.createJoinTable(uuid, f.targetAssetType, f);
+                } else {
+                    await this.db!.schema.alterTable(tableName, table => {
+                        this.addColumnToTable(table, { ...newField, name: newField.updatedName });
+                    });
+                }
+            }
+        }
+
+        // Process Deletions (Fields present in existing but not in input)
+        for (const oldField of type.fields) {
+            if (!processedOldFields.has(oldField.name)) {
+                if (oldField.type === AssetFieldType.RELATION && oldField.allowMultiple) {
+                    const oldRel = oldField as AssetTypeRelationField;
+                    const joinTable = this.getJoinTableName(uuid, oldRel.targetAssetType);
+                    if (await this.db!.schema.hasTable(joinTable)) {
+                        await this.db!(joinTable).where({ field: oldField.name }).del();
+                    }
+                } else {
+                    await this.db!.schema.alterTable(tableName, table => {
+                        table.dropColumn(oldField.name);
+                    });
+                }
+            }
+        }
+
+        // Update metadata
+        await this.db!.table(INTERNAL_ASSET_TYPE_TABLE).where({ uuid }).update({ externalJoinKeys: newExternalKeys });
+
+        // Garbage collect unused Join Tables
+        // Check all existing join tables starting with this source UUID
+        const sourcePart = uuid.replace(/-/g, '').substring(0, 16);
+        const relTables = await this.db!.select('tablename').from('pg_tables').where('schemaname', 'public');
+
+        for (const { tablename } of relTables) {
+            const expectedStart = `rel_${sourcePart}_`;
+            if (!tablename.startsWith(expectedStart)) continue;
+            const targetSimple = tablename.substring(expectedStart.length);
+
+            // Check if this relationship is still required by ANY field in the updated keys
+            const isUsed = newExternalKeys.some(k => {
+                const parts = k.split('#');
+                const tUuidSimple = parts[1].replace(/_/g, '').replace(/-/g, '').substring(0, 16);
+                return tUuidSimple === targetSimple;
+            });
+
+            if (!isUsed) {
+                this.logger.log(`Dropping unused relation table ${tablename}`);
+                await this.db!.schema.dropTable(tablename);
+            }
+        }
+
+        return (await this.getAssetType(uuid))!;
     }
 
-    deleteAssetType(uuid: string): Promise<boolean> {
-        throw new Error('Method not implemented.');
+    private getJoinTableName(sourceUuid: string, targetUuid: string): string {
+        const sourcePart = sourceUuid.replace(/-/g, '').substring(0, 16);
+        const targetPart = targetUuid.replace(/-/g, '').substring(0, 16);
+        return `rel_${sourcePart}_${targetPart}`;
     }
 
-    getAssetTypeFields(uuid: string): Promise<AssetTypeField[]> {
-        throw new Error('Method not implemented.');
+    // Updated helper to return the column builder
+    private addColumnToTable(
+        table: Knex.CreateTableBuilder | Knex.TableBuilder,
+        field: AssetTypeField | AssetTypeRelationField,
+    ): Knex.ColumnBuilder | undefined {
+        let column: Knex.ColumnBuilder | undefined;
+        switch (field.type) {
+            case AssetFieldType.VARCHAR:
+                if (field.allowMultiple) column = table.specificType(field.name, 'varchar[]');
+                else column = table.string(field.name);
+
+                break;
+            case AssetFieldType.BOOLEAN:
+                if (field.allowMultiple) column = table.specificType(field.name, 'boolean[]');
+                else column = table.boolean(field.name);
+
+                break;
+            case AssetFieldType.INTEGER:
+                if (field.allowMultiple) column = table.specificType(field.name, 'integer[]');
+                else column = table.integer(field.name);
+
+                break;
+            case AssetFieldType.TEXT:
+                if (field.allowMultiple) column = table.specificType(field.name, 'text[]');
+                else column = table.text(field.name);
+
+                break;
+            case AssetFieldType.FLOAT8:
+                if (field.allowMultiple) column = table.specificType(field.name, 'float8[]');
+                else column = table.float(field.name);
+
+                break;
+            case AssetFieldType.DATE:
+                if (field.allowMultiple) column = table.specificType(field.name, 'timestamptz[]');
+                else column = table.timestamp(field.name, { useTz: true });
+
+                break;
+            case AssetFieldType.RELATION:
+                const relField = field as AssetTypeRelationField;
+                if (!relField.allowMultiple) {
+                    const refColumn = table
+                        .uuid(field.name)
+                        .references('uuid')
+                        .inTable(`asset_${relField.targetAssetType.replace(/-/g, '_')}`);
+                    this.applyOnDeleteStrategy(refColumn, relField);
+                    column = refColumn as unknown as Knex.ColumnBuilder;
+                } 
+                break;
+            default:
+                throw new Error(`Unsupported field type: ${field.type}`);
+        }
+        if (column && field.required) column.notNullable();
+        return column;
+    }
+
+    async deleteAssetType(uuid: string) {
+        if (!this.db) throw new Error('Database not connected');
+
+        const tableName = `asset_${uuid.replace(/-/g, '_')}`;
+        const assetUuids = await this.db.table(tableName).count('uuid as count');
+        this.logger.log(`Deleting asset type table ${tableName} with ${assetUuids[0].count} assets`);
+
+        const allRelTablesNames = await this.db!.select('table_name')
+            .from('information_schema.tables')
+            .where('table_schema', 'public') // Falls du ein anderes Schema nutzt, hier anpassen
+            .andWhere('table_name', 'like', 'rel_%');
+
+        for (const relTable of allRelTablesNames) {
+            if (relTable.table_name.includes(uuid.replace(/-/g, '').substring(0, 16))) {
+                this.logger.log(`Dropping relation table ${relTable.table_name} related to asset type ${uuid}`);
+                await this.db.schema.dropTable(relTable.table_name);
+            }
+        }
+
+        await this.db.table(INTERNAL_ASSET_TYPE_TABLE).where({ uuid }).del();
+        await this.db.schema.dropTableIfExists(tableName);
     }
 
     async rawQuery<T>(queryString: string): Promise<T[]> {
@@ -322,6 +564,182 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
         }
     }
 
+    async createAsset<T extends Asset>(assetType: AssetType, name: string, fields: Record<string, any>): Promise<T> {
+        if (!this.db) throw new Error('Database not connected');
+        if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot set uuid field when creating asset, it is auto-generated');
+        const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
+
+        // TODO filter externalKEys and create join table entries
+        const externalFields = assetType.fields.filter(
+            (f): f is AssetTypeRelationField => f.type === AssetFieldType.RELATION && !!f.allowMultiple,
+        );
+
+        const asset = await this.db(tableName)
+            .insert({
+                name,
+                ...Object.fromEntries(Object.entries(fields).filter(([key]) => !externalFields.find(f => f.name === key))),
+            })
+            .returning('*')
+            .then(results => results[0] as T);
+
+        // handle join tables
+        for (const field of externalFields) {
+            const joinTableName = `rel_${assetType.uuid.replace(/-/g, '').substring(0, 16)}_${field.targetAssetType.replace(/-/g, '').substring(0, 16)}`;
+            const relatedUuids: string[] = fields[field.name] || [];
+
+            for (const targetUuid of relatedUuids) {
+                await this.db(joinTableName).insert({
+                    source: asset.uuid,
+                    target: targetUuid,
+                    field: field.name,
+                });
+            }
+        }
+
+        return {
+            uuid: asset.uuid,
+            name,
+            ...fields,
+        } as T;
+    }
+
+    async updateAsset<T extends Asset>(
+        assetType: AssetType,
+        assetUuid: string,
+        name: string | undefined,
+        fields: Record<string, any>,
+    ): Promise<T> {
+        if (!this.db) throw new Error('Database not connected');
+        if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot update uuid field of an asset');
+
+        const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
+        const updateData: Record<string, any> = { ...fields };
+        if (name !== undefined) updateData['name'] = name;
+
+        const asset = await this.db(tableName)
+            .where({ uuid: assetUuid })
+            .update(updateData)
+            .returning('*')
+            .then(results => {
+                if (results.length === 0) throw new Error(`Asset with UUID ${assetUuid} not found`);
+                return results[0] as T;
+            });
+
+        // handle join tables
+        const externalFields = assetType.fields.filter(
+            (f): f is AssetTypeRelationField => f.type === AssetFieldType.RELATION && !!f.allowMultiple,
+        );
+        for (const field of externalFields) {
+            const joinTableName = `rel_${assetType.uuid.replace(/-/g, '').substring(0, 16)}_${field.targetAssetType.replace(/-/g, '').substring(0, 16)}`;
+            const relatedUuids: string[] = fields[field.name] || [];
+
+            // TODO optimize this process by calculating diffs
+            // First, delete existing relations for this asset and field
+            await this.db(joinTableName).where({ source: assetUuid, field: field.name }).del();
+
+            // Then, insert the new relations
+            for (const targetUuid of relatedUuids) {
+                await this.db(joinTableName).insert({
+                    source: assetUuid,
+                    target: targetUuid,
+                    field: field.name,
+                });
+            }
+        }
+
+        return asset;
+    }
+
+    async deleteAsset(assetType: AssetType, assetUuid: string): Promise<boolean> {
+        if (!this.db) throw new Error('Database not connected');
+        const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
+
+        // delete in join tables handled by foreign key constraints
+        const externalFields = assetType.fields.filter(
+            (f): f is AssetTypeRelationField => f.type === AssetFieldType.RELATION && !!f.allowMultiple,
+        );
+        for (const field of externalFields) {
+            const joinTableName = `rel_${assetType.uuid.replace(/-/g, '').substring(0, 16)}_${field.targetAssetType.replace(/-/g, '').substring(0, 16)}`;
+            // delete existing relations for this asset and field
+            this.db(joinTableName).where({ source: assetUuid, field: field.name }).del();
+        }
+
+        return this.db(tableName)
+            .where({ uuid: assetUuid })
+            .del()
+            .then(count => count > 0);
+    }
+
+    async getAssetTypeFields(uuid: string, externalJoinKeys?: string[]): Promise<AssetTypeField[]> {
+        if (!this.db) throw new Error('Database not connected');
+        const tableName = `asset_${uuid.replace(/-/g, '_')}`;
+
+        const genericKeysRes = await this.db.raw(
+            `SELECT column_name, data_type, is_nullable, udt_name 
+                 FROM information_schema.columns 
+                 WHERE table_name = $1`,
+            [tableName],
+        );
+        const genericKeys = genericKeysRes.rows;
+
+        const foreignKeysRes = await this.db.raw(
+            `SELECT kcu.column_name, ccu.table_name as foreign_table_name, rc.delete_rule as on_delete
+                 FROM information_schema.key_column_usage as kcu
+                 JOIN information_schema.referential_constraints as rc ON kcu.constraint_name = rc.constraint_name
+                 JOIN information_schema.constraint_column_usage as ccu ON rc.unique_constraint_name = ccu.constraint_name
+                 WHERE kcu.table_name = $1`,
+            [tableName],
+        );
+        const foreignKeys = foreignKeysRes.rows;
+        const fields: AssetTypeField[] = [];
+
+        for (const key of genericKeys) {
+            const foreignKey = foreignKeys.find((fk: any) => fk.column_name === key.column_name);
+
+            const field: AssetTypeField = {
+                name: key.column_name,
+                type: foreignKey ? AssetFieldType.RELATION : this.mapPostgresTypeToAssetFieldType(key.udt_name),
+                required: key.is_nullable === 'NO',
+                allowMultiple: key.data_type.startsWith('ARRAY'),
+            };
+
+            if (foreignKey) {
+                (field as AssetTypeRelationField).referentialIntegrityStrategy = foreignKey.on_delete;
+                (field as AssetTypeRelationField).targetAssetType = foreignKey.foreign_table_name.replace('asset_', '').replace(/_/g, '-');
+            }
+            fields.push(field);
+        }
+
+        // check for join tables
+        if (externalJoinKeys) {
+            for (const externalJoinKey of externalJoinKeys) {
+                const [fieldName, targetAssetType, required, referentialIntegrityStrategy] = externalJoinKey.split('#');
+                fields.push({
+                    name: fieldName,
+                    type: AssetFieldType.RELATION,
+                    required: required == '1',
+                    allowMultiple: true,
+                    targetAssetType,
+                    referentialIntegrityStrategy: referentialIntegrityStrategy,
+                } as AssetTypeRelationField);
+            }
+        }
+        return fields;
+    }
+
+    async getAssetType(uuid: string): Promise<AssetType | null> {
+        if (!this.db) throw new Error('Database not connected');
+
+        const typeRow = (await this.db.raw('SELECT * FROM asset_types WHERE uuid = $1', [uuid])).rows[0];
+        if (!typeRow) return null;
+
+        return {
+            uuid: typeRow.uuid,
+            name: typeRow.name,
+            fields: await this.getAssetTypeFields(typeRow.uuid, typeRow.externalJoinKeys),
+        };
+    }
+
     async getAssetTypes(): Promise<AssetType[]> {
         if (!this.db) throw new Error('Database not connected');
 
@@ -329,67 +747,10 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
         const typeRes = await this.db.raw('SELECT * FROM asset_types');
 
         for (const row of typeRes.rows) {
-            // fetch table signature and fields
-            const tableName = `asset_${row.uuid.replace(/-/g, '_')}`;
-
-            const genericKeysRes = await this.db.raw(
-                `SELECT column_name, data_type, is_nullable, udt_name 
-                 FROM information_schema.columns 
-                 WHERE table_name = $1`,
-                [tableName],
-            );
-            const genericKeys = genericKeysRes.rows;
-
-            const foreignKeysRes = await this.db.raw(
-                `SELECT kcu.column_name, ccu.table_name as foreign_table_name, rc.delete_rule as on_delete
-                 FROM information_schema.key_column_usage as kcu
-                 JOIN information_schema.referential_constraints as rc ON kcu.constraint_name = rc.constraint_name
-                 JOIN information_schema.constraint_column_usage as ccu ON rc.unique_constraint_name = ccu.constraint_name
-                 WHERE kcu.table_name = $1`,
-                [tableName],
-            );
-            const foreignKeys = foreignKeysRes.rows;
-
-            const fields: AssetTypeField[] = [];
-
-            for (const key of genericKeys) {
-                const foreignKey = foreignKeys.find((fk: any) => fk.column_name === key.column_name);
-
-                const field: AssetTypeField = {
-                    name: key.column_name,
-                    type: foreignKey ? AssetFieldType.RELATION : this.mapPostgresTypeToAssetFieldType(key.udt_name),
-                    required: key.is_nullable === 'NO',
-                    allowMultiple: key.data_type.startsWith('ARRAY'),
-                };
-
-                if (foreignKey) {
-                    (field as AssetTypeRelationField).referentialIntegrityStrategy = foreignKey.on_delete;
-                    (field as AssetTypeRelationField).targetAssetType = foreignKey.foreign_table_name
-                        .replace('asset_', '')
-                        .replace(/_/g, '-');
-                }
-                fields.push(field);
-            }
-
-            // check for join tables
-            if (row.externalJoinKeys) {
-                for (const externalJoinKey of row.externalJoinKeys) {
-                    const [fieldName, targetAssetType, required, referentialIntegrityStrategy] = externalJoinKey.split('#');
-                    fields.push({
-                        name: fieldName,
-                        type: AssetFieldType.RELATION,
-                        required: required == '1',
-                        allowMultiple: true,
-                        targetAssetType,
-                        referentialIntegrityStrategy: referentialIntegrityStrategy,
-                    } as AssetTypeRelationField);
-                }
-            }
-
             types.push({
                 uuid: row.uuid,
                 name: row.name,
-                fields,
+                fields: await this.getAssetTypeFields(row.uuid, row.externaljoinkeys),
             });
         }
 

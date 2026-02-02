@@ -9,9 +9,9 @@ export abstract class GenericDatabaseGateway {
         this.logger = logger;
     }
 
-    abstract connect(connectionString?: string);
+    abstract connect(connectionString?: string): Promise<void>;
 
-    abstract disconnect();
+    abstract disconnect(): Promise<void>;
 
     abstract initializeSchema(): Promise<TableIdSignature>;
 
@@ -19,14 +19,27 @@ export abstract class GenericDatabaseGateway {
 
     abstract createAssetType(name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<string | undefined>;
 
-    abstract editAssetType(uuid: string, name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<boolean>;
+    abstract editAssetType(uuid: string, name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<AssetType>;
 
-    abstract deleteAssetType(uuid: string): Promise<boolean>;
+    abstract deleteAssetType(uuid: string): Promise<void>;
 
-    abstract getAssetTypeFields(uuid: string): Promise<AssetTypeField[]>;
+    abstract getAssetTypeFields(uuid: string, externalJoinKeys?: string[]): Promise<AssetTypeField[]>;
+
+    abstract getAssetType(uuid: string): Promise<AssetType | null>;
 
     abstract getAssetTypes(): Promise<AssetType[]>;
 
     abstract getAssetByUuid<T extends Asset>(typeUuid: string, assetUuid: string): Promise<T | null>;
+
+    abstract createAsset<T extends Asset>(assetType: AssetType, name: string, fields: Record<string, any>): Promise<T>;
+
+    abstract updateAsset<T extends Asset>(
+        assetType: AssetType,
+        assetUuid: string,
+        name: string | undefined,
+        fields: Record<string, any>,
+    ): Promise<T>;
+
+    abstract deleteAsset(assetType: AssetType, assetUuid: string): Promise<boolean>;
 }
 

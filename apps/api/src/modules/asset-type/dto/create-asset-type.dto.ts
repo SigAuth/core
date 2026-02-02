@@ -1,7 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AssetTypeField } from '@sigauth/generics/asset';
+import { AssetFieldType, AssetTypeField, RelatiationIntegrityStrategy } from '@sigauth/generics/asset';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Max, Min, MinLength, ValidateNested } from 'class-validator';
+import {
+    IsArray,
+    IsBoolean,
+    IsNumber,
+    IsOptional,
+    IsString,
+    IsUUID,
+    Matches,
+    Max,
+    MaxLength,
+    Min,
+    MinLength,
+    ValidateNested,
+} from 'class-validator';
 
 export class CreateAssetTypeDto {
     @ApiProperty({ example: 'Blog Post', type: 'string' })
@@ -23,8 +36,9 @@ export class CreateAssetTypeDto {
             },
             {
                 type: 4,
-                name: 'Type',
-                options: ['Office', 'Family', 'Block', 'Hotel'],
+                name: 'Owner',
+                referentialIntegrityStrategy: 'CASCADE',
+                targetAssetType: '550e8400-e29b-41d4-a716-446655440000',
                 required: true,
             },
         ],
@@ -36,43 +50,51 @@ export class CreateAssetTypeDto {
 }
 
 export class AssetTypeFieldDto {
-    @IsOptional()
-    @IsNumber()
-    @ApiProperty({ example: 1, type: 'number' })
-    fieldId!: number;
-
     @IsNumber()
     @Min(1)
     @Max(7)
-    @ApiProperty({ example: 1, enum: [1, 2, 3, 4, 5, 6, 7] })
-    fieldTypeId!: number;
+    @ApiProperty({ description: 'The datastructure used for the type', example: 1, enum: AssetFieldType })
+    type!: AssetFieldType;
 
     @IsString()
     @MinLength(4)
-    @ApiProperty({ example: 'Height', type: 'string' })
+    @MaxLength(64)
+    @Matches(/^[a-zA-Z_][a-zA-Z0-9_]{3,63}$/)
+    @ApiProperty({ description: 'The name of the field', example: 'Height', type: 'string' })
     name!: string;
 
     @IsBoolean()
-    @ApiProperty({ example: true, type: 'boolean' })
+    @ApiProperty({ description: 'Indicates if the field is required', example: true, type: 'boolean' })
     required!: boolean;
-
-    @IsOptional()
-    @IsString({ each: true })
-    @ApiProperty({ example: ['Option 1', 'Option 2', 'Option 3'], type: [String] })
-    items?: string[];
 
     @IsString()
     @IsOptional()
-    @ApiProperty({ example: 'CASCADE', enum: ['CASCADE', 'SET-NULL', 'RESTRICT', 'INVALIDATE'] })
-    referentialIntegrityStrategy?: 'CASCADE' | 'SET-NULL' | 'RESTRICT' | 'INVALIDATE';
+    @ApiProperty({
+        example: 'CASCADE',
+        enum: RelatiationIntegrityStrategy,
+        required: false,
+        description: 'Define the behaviour when a related asset is deleted (only relevant for relation fields)',
+    })
+    referentialIntegrityStrategy?: RelatiationIntegrityStrategy;
 
     @IsBoolean()
     @IsOptional()
-    @ApiProperty({ example: true, type: 'boolean' })
+    @ApiProperty({
+        example: true,
+        type: 'boolean',
+        description: 'Whether multiple assets can be related through that field (only relevant for relation fields)',
+        required: false,
+    })
     allowMultiple?: boolean;
 
     @IsOptional()
-    @IsNumber({}, { each: true })
-    @ApiProperty({ example: 2, type: 'number', description: 'The asset type IDs this relation can refer to' })
-    referencedAssetTypes?: number[];
+    @IsUUID('7')
+    @ApiProperty({
+        example: 2,
+        type: 'number',
+        required: false,
+        description: 'The asset type this relation is referring to (only relevant for relation fields)',
+    })
+    targetAssetType?: string;
 }
+
