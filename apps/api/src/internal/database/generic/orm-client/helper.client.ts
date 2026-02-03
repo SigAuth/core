@@ -1,13 +1,13 @@
 import { FindQuery, GlobalRealtionMap } from './sigauth.client.js';
 
-export const Utils = {
+export const ORMUtils = {
     simpleQs: (obj: Record<string, any>, prefix = ''): string => {
         const parts: string[] = [];
         for (const key in obj) {
             const value = obj[key];
             const param = prefix ? `${prefix}[${key}]` : key;
             if (typeof value === 'object' && value !== null) {
-                parts.push(Utils.simpleQs(value, param));
+                parts.push(ORMUtils.simpleQs(value, param));
             } else {
                 parts.push(`${encodeURIComponent(param)}=${encodeURIComponent(String(value))}`);
             }
@@ -17,7 +17,6 @@ export const Utils = {
 
     toSQL: (table: string, query: FindQuery<any>, relationMap: GlobalRealtionMap) => {
         const conditions: string[] = [];
-        const joins: string[] = [];
         const selections: string[] = [`"${table}".*`];
 
         if (query.where) {
@@ -70,12 +69,14 @@ export const Utils = {
                 .replace(/[-_]/g, '')
                 .substring(0, 16);
 
-        const processIncludes = (parentAlias: string, parentTableId: string, includes: any) => {
+        // Helper to generate subquery logic for relations
+        const processIncludes = (parentAlias: string, parentTableId: string, includes: any, isRoot = false): string[] => {
+            const subQueryParts: string[] = [];
+
             for (const [relationName, options] of Object.entries(includes)) {
                 if (!options) continue;
 
                 const parentRelations = relationMap[parentTableId];
-
                 if (!parentRelations) {
                     console.warn(`No relations found for table ID '${parentTableId}'.`);
                     continue;
@@ -88,67 +89,75 @@ export const Utils = {
                 }
 
                 const { table: targetTableId, joinType = 'forward', fieldName, usingJoinTable } = relationConfig;
+                const newAlias = `${parentAlias}_${relationName}`;
 
-                const newAlias = parentAlias === table ? relationName : `${parentAlias}_${relationName}`;
+                // 1. Recursive JSON building for nested includes
+                let itemSelect = `to_jsonb("${newAlias}".*)`;
+                if (typeof options === 'object') {
+                    const nested = processIncludes(newAlias, targetTableId, options);
+                    if (nested.length > 0) {
+                        // Merge current object with nested properties: json || jsonb_build_object('key', val)
+                        itemSelect = `(to_jsonb("${newAlias}".*) || jsonb_build_object(${nested.join(', ')}))`;
+                    }
+                }
+
+                // 2. Build Join/Where clauses for the subquery
+                let fromClause = `FROM "${targetTableId}" AS "${newAlias}"`;
+                let whereClause = '';
 
                 if (usingJoinTable) {
-                    // Handling N:M via Join Tables (rel_SOURCE16_TARGET16)
                     const parentHex = getShortId(parentTableId);
                     const targetHex = getShortId(targetTableId);
                     const relAlias = `rel_${newAlias}`;
 
                     if (joinType === 'forward') {
-                        // Forward with JoinTable: Parent is Source, Target is Target.
-                        // Join Table Name: rel_Parent_Target
-                        // Logic: Parent.uuid -> JoinTable.source AND JoinTable.target -> Target.uuid
                         const joinTableName = `rel_${parentHex}_${targetHex}`;
-
-                        joins.push(
-                            `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."source" = "${parentAlias}"."uuid" AND "${relAlias}"."field" = '${fieldName}'`,
-                        );
-                        joins.push(`LEFT JOIN "${targetTableId}" AS "${newAlias}" ON "${newAlias}"."uuid" = "${relAlias}"."target"`);
+                        fromClause += ` JOIN "${joinTableName}" AS "${relAlias}" ON "${newAlias}"."uuid" = "${relAlias}"."target"`;
+                        whereClause = `"${relAlias}"."source" = "${parentAlias}"."uuid" AND "${relAlias}"."field" = '${fieldName}'`;
                     } else {
-                        // Reverse with JoinTable: Parent is Target, Target (in config) is Source.
-                        // Join Table Name: rel_Target_Parent (Join table is always named Source_Target)
-                        // Logic: Parent.uuid -> JoinTable.target AND JoinTable.source -> Target.uuid
                         const joinTableName = `rel_${targetHex}_${parentHex}`;
-
-                        joins.push(
-                            `LEFT JOIN "${joinTableName}" AS "${relAlias}" ON "${relAlias}"."target" = "${parentAlias}"."uuid" AND "${relAlias}"."field" = '${fieldName}'`,
-                        );
-                        joins.push(`LEFT JOIN "${targetTableId}" AS "${newAlias}" ON "${newAlias}"."uuid" = "${relAlias}"."source"`);
+                        fromClause += ` JOIN "${joinTableName}" AS "${relAlias}" ON "${newAlias}"."uuid" = "${relAlias}"."source"`;
+                        whereClause = `"${relAlias}"."target" = "${parentAlias}"."uuid" AND "${relAlias}"."field" = '${fieldName}'`;
                     }
                 } else {
-                    // Direct 1:N or 1:1 Join
                     if (joinType === 'forward') {
-                        // Forward: Custom Field points to UUID (Parent.customField -> Target.uuid)
-                        // This side (Parent) holds the FK.
-                        joins.push(
-                            `LEFT JOIN "${targetTableId}" AS "${newAlias}" ON "${newAlias}"."uuid" = "${parentAlias}"."${fieldName}"`,
-                        );
+                        // Parent (N) -> Child (1)
+                        whereClause = `"${newAlias}"."uuid" = "${parentAlias}"."${fieldName}"`;
                     } else {
-                        // Reverse: UUID points to Custom Field (Parent.uuid -> Target.customField)
-                        // The other side (Target) holds the FK.
-                        joins.push(
-                            `LEFT JOIN "${targetTableId}" AS "${newAlias}" ON "${newAlias}"."${fieldName}" = "${parentAlias}"."uuid"`,
-                        );
+                        // Parent (1) -> Child (N)
+                        whereClause = `"${newAlias}"."${fieldName}" = "${parentAlias}"."uuid"`;
                     }
                 }
 
-                selections.push(`to_jsonb("${newAlias}".*) AS "${newAlias}"`);
+                // 3. Determine singular (Object) vs plural (Array) result
+                // 'forward' without join table implies N:1 (Object)
+                // Everything else (reverse, join table) implies 1:N or N:M (Array)
+                const isArray = usingJoinTable || joinType !== 'forward';
 
-                if (typeof options === 'object') {
-                    processIncludes(newAlias, targetTableId, options);
+                let selectionRef;
+                if (isArray) {
+                    // Return empty array instead of null if no matches
+                    selectionRef = `COALESCE((SELECT jsonb_agg(${itemSelect}) ${fromClause} WHERE ${whereClause}), '[]'::jsonb)`;
+                } else {
+                    selectionRef = `(SELECT ${itemSelect} ${fromClause} WHERE ${whereClause})`;
+                }
+
+                if (isRoot) {
+                    selections.push(`${selectionRef} AS "${relationName}"`);
+                } else {
+                    // For nested builds, we return key-value pairs for jsonb_build_object
+                    subQueryParts.push(`'${relationName}', ${selectionRef}`);
                 }
             }
+            return subQueryParts;
         };
 
         if (query.includes) {
-            processIncludes(table, table, query.includes);
+            processIncludes(table, table, query.includes, true);
         }
 
         const selectClause = `SELECT ${selections.join(', ')} FROM "${table}"`;
-        const joinClause = joins.length ? joins.join(' ') : '';
+        // No top-level JOINs anymore, everything is sub-selected
         const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
         const orderClause = query.orderBy
             ? 'ORDER BY ' +
@@ -158,39 +167,12 @@ export const Utils = {
             : '';
         const limitClause = query.limit ? `LIMIT ${query.limit}` : '';
 
-        return `${selectClause} ${joinClause} ${whereClause} ${orderClause} ${limitClause}`.replace(/\s+/g, ' ').trim();
+        return `${selectClause} ${whereClause} ${orderClause} ${limitClause}`.replace(/\s+/g, ' ').trim();
     },
 
     hydrateRow: (row: any, includes: any) => {
-        if (!row || !includes) return row;
-
-        const process = (target: any, inc: any, parentAlias: string | null) => {
-            for (const [relName, subInc] of Object.entries(inc)) {
-                if (!subInc) continue;
-
-                // Matches the alias logic in toSQL
-                const alias = parentAlias ? `${parentAlias}_${relName}` : relName;
-
-                // Check if the relation data exists in the root row
-                if (row[alias] !== undefined) {
-                    target[relName] = row[alias];
-
-                    // Cleanup: Remove the flattened key from the root row if it's a deep relation.
-                    // (Level 1 relations are both the key and the alias, so we keep them,
-                    // but deep relations like 'subject_account_grants' should be moved and removed).
-                    if (parentAlias) {
-                        delete row[alias];
-                    }
-
-                    // Recurse
-                    if (typeof subInc === 'object' && target[relName]) {
-                        process(target[relName], subInc, alias);
-                    }
-                }
-            }
-        };
-
-        process(row, includes, null);
+        // Since we now use JSON subqueries, proper structure and nesting is handled by DB.
+        // No manual hydration/flattening needed.
         return row;
     },
 };

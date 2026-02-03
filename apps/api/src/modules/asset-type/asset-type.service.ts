@@ -4,7 +4,7 @@ import { Utils } from '@/internal/utils';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AssetType } from '@sigauth/generics/asset';
+import { AssetType } from '../../../../../packages/sdk/dist/asset.types';
 
 @Injectable()
 export class AssetTypeService {

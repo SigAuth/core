@@ -1,3 +1,4 @@
+import { App } from '@/internal/database/generic/orm-client/types.client';
 import { AppsService } from '@/modules/app/app.service';
 import { CreateAppDto } from '@/modules/app/dto/create-app.dto';
 import { DeleteAppDto } from '@/modules/app/dto/delete-app.dto';
@@ -14,7 +15,6 @@ import {
     ApiRequestTimeoutResponse,
     ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
-import { App } from '@sigauth/generics/database/orm-client/types.client';
 
 @Controller('app')
 export class AppsController {

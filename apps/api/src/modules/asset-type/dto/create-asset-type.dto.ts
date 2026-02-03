@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AssetFieldType, AssetTypeField, RelatiationIntegrityStrategy } from '@sigauth/generics/asset';
 import { Type } from 'class-transformer';
 import {
     IsArray,
@@ -15,6 +14,7 @@ import {
     MinLength,
     ValidateNested,
 } from 'class-validator';
+import { AssetFieldType, AssetTypeField, RelationalIntegrityStrategy } from '../../../../../../packages/sdk/dist/asset.types';
 
 export class CreateAssetTypeDto {
     @ApiProperty({ example: 'Blog Post', type: 'string' })
@@ -71,11 +71,11 @@ export class AssetTypeFieldDto {
     @IsOptional()
     @ApiProperty({
         example: 'CASCADE',
-        enum: RelatiationIntegrityStrategy,
+        enum: RelationalIntegrityStrategy,
         required: false,
         description: 'Define the behaviour when a related asset is deleted (only relevant for relation fields)',
     })
-    referentialIntegrityStrategy?: RelatiationIntegrityStrategy;
+    referentialIntegrityStrategy?: RelationalIntegrityStrategy;
 
     @IsBoolean()
     @IsOptional()

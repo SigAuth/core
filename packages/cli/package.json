@@ -11,7 +11,7 @@
         "@oclif/core": "^4",
         "@oclif/plugin-help": "^6",
         "@oclif/plugin-plugins": "^5",
-        "@sigauth/generics": "workspace:*",
+        "@sigauth/sdk": "workspace:*",
         "chalk": "^5.6.2",
         "dotenv": "^17.2.3",
         "enquirer": "^2.4.1",
@@ -82,3 +82,4 @@
     },
     "types": "dist/index.d.ts"
 }
+

@@ -1,6 +1,7 @@
-import { INTERNAL_GRANT_TABLE } from '../../asset.types.js';
-import { GenericDatabaseGateway } from '../../database/database.gateway.js';
-import { Utils } from './helper.client.js';
+import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
+import { ORMUtils } from '@/internal/database/generic/orm-client/helper.client';
+import { INTERNAL_GRANT_TABLE } from '@sigauth/sdk/asset';
+import { TableIdSignature } from '@sigauth/sdk/protected';
 import {
     Account,
     App,
@@ -17,20 +18,6 @@ export type GlobalRealtionMap = Record<
     string,
     Record<string, { table: string; joinType?: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean }>
 >;
-
-export type TableIdSignature = {
-    Account: string;
-    Session: string;
-    App: string;
-    AuthorizationInstance: string;
-    AuthorizationChallenge: string;
-
-    // Internal
-    AssetType: string;
-    Grant: string;
-    AppAccess: string;
-    Permission: string;
-};
 
 const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
     return {
@@ -154,20 +141,20 @@ export class Model<T extends Record<string, any>> {
 
     async findOne<Q extends Omit<FindQuery<T>, 'limit'>>(query: Q): Promise<Payload<T, Q> | null> {
         (query as any).limit = 1;
-        const qsString = Utils.simpleQs(query);
-        const sql = Utils.toSQL(this.tableName, query, this.relations);
+        const qsString = ORMUtils.simpleQs(query);
+        const sql = ORMUtils.toSQL(this.tableName, query, this.relations);
 
         const result: any = await this.db.rawQuery(sql);
         if (!result[0]) return null;
-        return Utils.hydrateRow(result[0] as Payload<T, Q>, query.includes);
+        return ORMUtils.hydrateRow(result[0] as Payload<T, Q>, query.includes);
     }
 
     async findMany<Q extends FindQuery<T>>(query: Q): Promise<Payload<T, Q>[]> {
-        const qsString = Utils.simpleQs(query);
-        const sql = Utils.toSQL(this.tableName, query, this.relations);
+        const qsString = ORMUtils.simpleQs(query);
+        const sql = ORMUtils.toSQL(this.tableName, query, this.relations);
 
         const result: any = await this.db.rawQuery(sql);
-        return (result as Payload<T, Q>[]).map(r => Utils.hydrateRow(r, query.includes));
+        return (result as Payload<T, Q>[]).map(r => ORMUtils.hydrateRow(r, query.includes));
     }
 
     private getShortId(fullId: string) {

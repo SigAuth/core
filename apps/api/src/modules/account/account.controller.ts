@@ -1,3 +1,4 @@
+import { Account } from '@/internal/database/generic/orm-client/types.client';
 import { AccountService } from '@/modules/account/account.service';
 import { CreateAccountDto } from '@/modules/account/dto/create-account.dto';
 import { DeleteAccountDto } from '@/modules/account/dto/delete-account.dto';
@@ -7,7 +8,6 @@ import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { Account } from '@sigauth/generics/database/orm-client/types.client';
 
 /**
  * What is meant by "Change to proper permission"

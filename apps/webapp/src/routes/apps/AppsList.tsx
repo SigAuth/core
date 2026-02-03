@@ -110,18 +110,23 @@ export const AppsList = () => {
         {
             header: 'API Token',
             accessorKey: 'token',
-            cell: info => (
-                <>
-                    {`${info.getValue<string>().slice(0, 6)}...${info.getValue<string>().slice(-4)}`}
-                    <Button
-                        onClick={() => navigator.clipboard.writeText(info.getValue<string>())}
-                        className="ring-offset-background hover:ring-primary/90 transition-all duration-300 hover:ring-2 ml-3 hover:ring-offset-2"
-                        size="icon-sm"
-                    >
-                        <Copy />
-                    </Button>
-                </>
-            ),
+            cell: info => {
+                const hasToken = info.getValue<string>() && info.getValue<string>()!.length > 0;
+                return hasToken ? (
+                    <>
+                        {`${info.getValue() ? info.getValue<string>().slice(0, 6) : ''}...${info.getValue() ? info.getValue<string>().slice(-4) : ''}`}
+                        <Button
+                            onClick={() => navigator.clipboard.writeText(info.getValue<string>())}
+                            className="ring-offset-background hover:ring-primary/90 transition-all duration-300 hover:ring-2 ml-3 hover:ring-offset-2"
+                            size="icon-sm"
+                        >
+                            <Copy />
+                        </Button>
+                    </>
+                ) : (
+                    <>-</>
+                );
+            },
         },
         {
             header: 'Web Fetch',
@@ -158,7 +163,7 @@ export const AppsList = () => {
         {
             header: 'Permissions',
             // ${(app.permissions as AppPermission).asset.length} / ${(app.permissions as AppPermission).container.length} / ${(app.permissions as AppPermission).root.length}
-            accessorFn: app => `NO DATA`,
+            accessorFn: app => app.app_permissions.length,
         },
         {
             header: 'Actions',

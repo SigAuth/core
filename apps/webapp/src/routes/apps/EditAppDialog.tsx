@@ -63,7 +63,7 @@ export const EditAppDialog = ({ appUuids, open, setOpen }: { appUuids: string[];
             oidcAuthCodeUrl: app?.oidcAuthCodeCb || '',
             // webFetchEnabled: app ? (app.webFetch as AppWebFetch).enabled : false,
             nudge: false,
-            permissions: app.app_permissions as Permission[],
+            permissions: app?.app_permissions as Permission[],
         },
         mode: 'onChange',
     });

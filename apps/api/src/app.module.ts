@@ -41,3 +41,4 @@ const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
     providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
+

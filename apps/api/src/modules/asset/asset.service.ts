@@ -1,6 +1,6 @@
 import { ORMService } from '@/internal/database/orm.client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Asset, AssetType } from '@sigauth/generics/asset';
+import { Asset, AssetType } from '../../../../../packages/sdk/dist/asset.types';
 
 @Injectable()
 export class AssetService {

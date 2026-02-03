@@ -1,8 +1,14 @@
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { SigAuthPermissions } from '@sigauth/generics/protected';
+import { SigAuthPermissions } from '@sigauth/sdk/protected';
 import { Request } from 'express';
+
+// - database moved in nestapp
+// - cli & generics wird gemerged zu sdk
+// - sdk wird mit appToken initialisiert kann dann types genieren für user
+// - sdk served api wrapper für user
+// - admin dashboard wird mit sdk gebaut (läuft unter gleicher interner app)
 
 @Injectable()
 export class IsRoot implements CanActivate {

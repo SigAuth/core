@@ -1,5 +1,6 @@
-import knex, { Knex } from 'knex';
-import { TableIdSignature } from 'src/database/orm-client/sigauth.client.js';
+import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
+import { StorageService } from '@/internal/database/storage.service';
+import { Injectable } from '@nestjs/common';
 import {
     Asset,
     AssetFieldType,
@@ -10,13 +11,19 @@ import {
     INTERNAL_ASSET_TYPE_TABLE,
     INTERNAL_GRANT_TABLE,
     INTERNAL_PERMISSION_TABLE,
-    RelatiationIntegrityStrategy,
+    RelationalIntegrityStrategy,
     SELF_REFERENCE_ASSET_TYPE_UUID,
-} from '../asset.types.js';
-import { GenericDatabaseGateway } from './database.gateway.js';
+} from '@sigauth/sdk/asset';
+import { TableIdSignature } from '@sigauth/sdk/protected';
+import knex, { Knex } from 'knex';
 
-export class GenericPostgresDriver extends GenericDatabaseGateway {
-    protected db?: Knex;
+@Injectable()
+export class PostgresDriver extends GenericDatabaseGateway {
+    private db?: Knex;
+
+    constructor(private readonly storage: StorageService) {
+        super(PostgresDriver.name);
+    }
 
     async connect(connectionString: string) {
         if (!this.connect && !process.env.DATABASE_URL) throw new Error('DATABASE_URL not set in env');
@@ -26,6 +33,33 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
             connection: process.env.DATABASE_URL,
         });
         this.logger.log('Connected to Postgres database!');
+
+        const exists = await this.checkIfInstancedSchemaExists();
+        if (!exists) {
+            this.logger.log('Instanced schema not found, initializing database schema...');
+            const signatures = await this.initializeSchema();
+
+            this.storage.saveConfigFile({ signatures });
+            this.logger.log('Initialized database schema');
+        } else {
+            this.logger.log('Instanced schema found, skipping initialization.');
+        }
+    }
+
+    private async checkIfInstancedSchemaExists() {
+        if (!this.db) throw new Error('Database not connected');
+
+        const signature = this.storage.InstancedSignature;
+        if (!signature) return false;
+
+        for (const tableName of Object.values(signature)) {
+            const exists = await this.db.schema.hasTable(tableName);
+            if (!exists) {
+                this.logger.error(`Expected default table "${tableName}" to exist, but it does not.`);
+                throw new Error(`Expected default table "${tableName}" to exist, but it does not.`);
+            }
+        }
+        return true;
     }
 
     async initializeSchema(): Promise<TableIdSignature> {
@@ -63,7 +97,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: accountType,
-                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
+                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
             },
             { name: 'expire', type: AssetFieldType.INTEGER, required: true }, // todo is there a native way to expire rows in Postgres?
             { name: 'created', type: AssetFieldType.INTEGER, required: true },
@@ -84,14 +118,14 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: sessionType,
-                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
+                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
             },
             {
                 name: 'appUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: appType,
-                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
+                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
             },
             { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
             { name: 'refreshTokenExpire', type: AssetFieldType.INTEGER, required: true },
@@ -105,14 +139,14 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: sessionType,
-                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
+                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
             },
             {
                 name: 'appUuid',
                 type: AssetFieldType.RELATION,
                 required: true,
                 targetAssetType: appType,
-                referentialIntegrityStrategy: RelatiationIntegrityStrategy.CASCADE,
+                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
             },
             { name: 'authCode', type: AssetFieldType.VARCHAR, required: true },
             { name: 'challenge', type: AssetFieldType.VARCHAR, required: true },
@@ -318,7 +352,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                         '#' +
                         (f.required ? '1' : '0') +
                         '#' +
-                        (f.referentialIntegrityStrategy || RelatiationIntegrityStrategy.CASCADE),
+                        (f.referentialIntegrityStrategy || RelationalIntegrityStrategy.CASCADE),
                 );
             }
 

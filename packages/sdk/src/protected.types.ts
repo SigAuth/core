@@ -1,4 +1,16 @@
-import { TableIdSignature } from './database/orm-client/sigauth.client.js';
+export type TableIdSignature = {
+    Account: string;
+    Session: string;
+    App: string;
+    AuthorizationInstance: string;
+    AuthorizationChallenge: string;
+
+    // Internal
+    AssetType: string;
+    Grant: string;
+    AppAccess: string;
+    Permission: string;
+};
 
 export const SigAuthPermissions = {
     ROOT: 'root', // TODO root should be a group of all permissions and not be assignable directly
@@ -11,3 +23,4 @@ export type ProtectedData = {
     signatures: TableIdSignature;
     sigauthAppUuid: string;
 };
+

@@ -1,12 +1,12 @@
-import { TableIdSignature } from 'src/database/orm-client/sigauth.client.js';
-import { GenericLogger } from 'src/logger/logger.abstract.js';
-import { Asset, AssetType, AssetTypeField, AssetTypeRelationField } from '../asset.types.js';
+import { Logger } from '@nestjs/common';
+import { Asset, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/sdk/asset';
+import { TableIdSignature } from '@sigauth/sdk/protected';
 
 export abstract class GenericDatabaseGateway {
-    protected readonly logger: GenericLogger;
+    protected readonly logger: Logger;
 
-    constructor(logger: GenericLogger) {
-        this.logger = logger;
+    constructor(loggerName?: string) {
+        this.logger = new Logger(loggerName || GenericDatabaseGateway.name);
     }
 
     abstract connect(connectionString?: string): Promise<void>;

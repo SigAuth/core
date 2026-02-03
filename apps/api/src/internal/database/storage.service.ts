@@ -1,7 +1,6 @@
 import { Utils } from '@/internal/utils';
 import { Injectable, Logger } from '@nestjs/common';
-import { TableIdSignature } from '@sigauth/generics/database/orm-client/sigauth.client';
-import { ProtectedData } from '@sigauth/generics/protected';
+import { ProtectedData, TableIdSignature } from '@sigauth/sdk/protected';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'crypto';
 import fs from 'fs';
 

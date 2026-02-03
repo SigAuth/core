@@ -1,6 +1,6 @@
+import { Account } from '@/internal/database/generic/orm-client/types.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Account } from '@sigauth/generics/database/orm-client/types.client';
 import { Request } from 'express';
 
 @Injectable()

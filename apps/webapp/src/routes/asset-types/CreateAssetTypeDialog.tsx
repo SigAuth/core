@@ -18,7 +18,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useSession } from '@/context/SessionContext';
 import type { UpdatedTypeField } from '@/lib/constants';
 import { request } from '@/lib/utils';
-import { AssetFieldType } from '@sigauth/generics/asset';
+import { AssetFieldType, RelationalIntegrityStrategy } from '@sigauth/generics/asset';
 import { BadgePlus, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -92,6 +92,7 @@ export const CreateAssetTypeDialog = () => {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead>Options</TableHead>
+                                    <TableHead>Allow Multiple</TableHead>
                                     <TableHead>Required</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -138,16 +139,95 @@ export const CreateAssetTypeDialog = () => {
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectGroup>
-                                                        <SelectLabel>Field types</SelectLabel>
+                                                        <SelectLabel>Types</SelectLabel>
                                                         <SelectItem value={AssetFieldType.TEXT + ''}>Text</SelectItem>
-                                                        <SelectItem value={AssetFieldType.INTEGER + ''}>Number</SelectItem>
+                                                        <SelectItem value={AssetFieldType.VARCHAR + ''}>Varchar</SelectItem>
+
+                                                        <SelectItem value={AssetFieldType.FLOAT8 + ''}>Float 8</SelectItem>
+                                                        <SelectItem value={AssetFieldType.INTEGER + ''}>Integer</SelectItem>
+
                                                         <SelectItem value={AssetFieldType.BOOLEAN + ''}>Boolean</SelectItem>
+
+                                                        <SelectItem value={AssetFieldType.DATE + ''}>Date</SelectItem>
+                                                        <SelectItem value={AssetFieldType.RELATION + ''}>Relation</SelectItem>
                                                     </SelectGroup>
                                                 </SelectContent>
                                             </Select>
                                         </TableCell>
 
-                                        <TableCell>-</TableCell>
+                                        {field.type === AssetFieldType.RELATION ? (
+                                            <TableCell className="flex items-center gap-1">
+                                                <Select
+                                                    onValueChange={value => {
+                                                        const strat = value as RelationalIntegrityStrategy;
+                                                        setFields(
+                                                            fields.map(f =>
+                                                                f.id === field.id ? { ...f, referentialIntegrityStrategy: strat } : f,
+                                                            ),
+                                                        );
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="w-[150px]">
+                                                        <SelectValue placeholder="Delete Strategy" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectLabel>On Delete Strategies</SelectLabel>
+                                                            <SelectItem value={RelationalIntegrityStrategy.CASCADE + ''}>
+                                                                CASCADE
+                                                            </SelectItem>
+                                                            <SelectItem value={RelationalIntegrityStrategy.SET_NULL + ''}>
+                                                                SET NULL
+                                                            </SelectItem>
+                                                            <SelectItem value={RelationalIntegrityStrategy.RESTRICT + ''}>
+                                                                RESTRICT
+                                                            </SelectItem>
+                                                            <SelectItem value={RelationalIntegrityStrategy.INVALIDATE + ''}>
+                                                                INVALIDATE
+                                                            </SelectItem>
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+
+                                                <Select
+                                                    onValueChange={value => {
+                                                        const assetType = value as string;
+                                                        setFields(
+                                                            fields.map(
+                                                                (
+                                                                    f: any, // AssetTypeRelationField
+                                                                ) => (f.id === field.id ? { ...f, targetAssetType: assetType } : f),
+                                                            ),
+                                                        );
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="w-[150px]">
+                                                        <SelectValue placeholder="Target " />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectLabel>On Delete Strategies</SelectLabel>
+                                                            {session.assetTypes.map(at => (
+                                                                <SelectItem key={at.uuid} value={at.uuid}>
+                                                                    {at.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                        ) : (
+                                            <TableCell>-</TableCell>
+                                        )}
+
+                                        <TableCell>
+                                            <Switch
+                                                checked={field.allowMultiple || false}
+                                                onCheckedChange={checked => {
+                                                    setFields(fields.map(f => (f.id === field.id ? { ...f, allowMultiple: checked } : f)));
+                                                }}
+                                            />
+                                        </TableCell>
 
                                         <TableCell>
                                             <Switch

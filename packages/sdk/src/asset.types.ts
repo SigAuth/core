@@ -22,10 +22,10 @@ export type AssetTypeField = {
 
 export type AssetTypeRelationField = AssetTypeField & {
     targetAssetType: string; // UUID of AssetType that the relation points to
-    referentialIntegrityStrategy: RelatiationIntegrityStrategy;
+    referentialIntegrityStrategy: RelationalIntegrityStrategy;
 };
 
-export enum RelatiationIntegrityStrategy {
+export enum RelationalIntegrityStrategy {
     CASCADE = 'CASCADE',
     SET_NULL = 'SET_NULL',
     RESTRICT = 'RESTRICT',

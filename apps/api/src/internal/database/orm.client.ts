@@ -1,22 +1,22 @@
+import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
+import { SigauthClient } from '@/internal/database/generic/orm-client/sigauth.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/generics/asset';
-import { GenericDatabaseGateway } from '@sigauth/generics/database/database.gateway';
-import { SigauthClient } from '@sigauth/generics/database/orm-client/sigauth.client';
-import { SigAuthPermissions } from '@sigauth/generics/protected';
+import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/asset';
+import { SigAuthPermissions } from '@sigauth/sdk/protected';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ORMService extends SigauthClient implements OnApplicationBootstrap {
-    private readonly serviceLogger: Logger;
+    private readonly logger: Logger;
 
     constructor(
         private readonly db: GenericDatabaseGateway,
         private readonly storage: StorageService,
     ) {
         super();
-        this.serviceLogger = new Logger(ORMService.name);
+        this.logger = new Logger(ORMService.name);
     }
 
     async onApplicationBootstrap() {
@@ -28,7 +28,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
         this.init(this.storage.InstancedSignature, this.db);
 
         if (!this.storage.SigAuthAppUuid || !(await this.App.findOne({ where: { uuid: this.storage.SigAuthAppUuid } }))) {
-            this.serviceLogger.warn('SigAuth App not found in database. Creating default SigAuth App entry.');
+            this.logger.warn('SigAuth App not found in database. Creating default SigAuth App entry.');
 
             const app = await this.App.createOne({
                 data: {
@@ -64,7 +64,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
         const appId = this.storage.SigAuthAppUuid!;
         const accounts = await this.Account.findOne({});
         if (!accounts) {
-            this.serviceLogger.warn('No accounts found in database. Creating dummy account for initial setup.');
+            this.logger.warn('No accounts found in database. Creating dummy account for initial setup.');
             const account = await this.Account.createOne({
                 data: {
                     username: 'admin',

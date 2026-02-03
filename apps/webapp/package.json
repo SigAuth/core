@@ -25,7 +25,7 @@
         "@radix-ui/react-switch": "^1.2.6",
         "@radix-ui/react-tabs": "^1.1.13",
         "@radix-ui/react-tooltip": "^1.2.8",
-        "@sigauth/generics": "workspace:*",
+        "@sigauth/sdk": "workspace:*",
         "@tailwindcss/vite": "^4.1.13",
         "@tanstack/react-table": "^8.21.3",
         "class-variance-authority": "^0.7.1",
@@ -63,3 +63,4 @@
         "vite": "^7.1.2"
     }
 }
+

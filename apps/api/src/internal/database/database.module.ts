@@ -1,10 +1,10 @@
+import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
+import { PostgresDriver } from '@/internal/database/generic/postgres.driver';
 import { ORMService } from '@/internal/database/orm.client';
-import { PostgresDriver } from '@/internal/database/postgres.driver';
 import { StorageService } from '@/internal/database/storage.service';
 import { Global, Module } from '@nestjs/common';
-import { GenericDatabaseGateway } from '@sigauth/generics/database/database.gateway';
 
-@Global() // skips the need to import in other moduless
+@Global()
 @Module({
     providers: [
         {
