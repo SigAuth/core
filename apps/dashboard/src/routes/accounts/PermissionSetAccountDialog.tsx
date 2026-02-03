@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import type { App, Grant } from '@sigauth/generics/database/orm-client/types.client';
+import type { App, Grant } from '@sigauth/sdk/database/orm-client/types.client';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 

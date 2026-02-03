@@ -1,6 +1,6 @@
-import type { Asset, AssetType } from '@sigauth/generics/asset';
-import type { Account, App, Session } from '@sigauth/generics/database/orm-client/types.client';
-import type { ProtectedData } from '@sigauth/generics/protected';
+import type { Asset, AssetType } from '@sigauth/sdk/asset';
+import type { Account, App, Session } from '@sigauth/sdk/database/orm-client/types.client';
+import type { ProtectedData } from '@sigauth/sdksdked';
 import { createContext, use, useState, type ReactNode } from 'react';
 
 export type SessionStorage = {

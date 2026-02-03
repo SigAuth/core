@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Permission } from '@sigauth/generics/database/orm-client/types.client';
+import type { Permission } from '@sigauth/sdk/database/orm-client/types.client';
 import { Edit } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';

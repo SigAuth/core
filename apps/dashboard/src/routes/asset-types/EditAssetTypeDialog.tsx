@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/generics/asset';
+import { AssetFieldType, type AssetTypeField } from '@sigauth/sdk/asset';
 import { BadgePlus, Trash } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';

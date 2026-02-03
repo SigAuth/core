@@ -1,7 +1,9 @@
 {
-    "name": "webapp",
+    "name": "@sigauth/admin-dashboard",
     "version": "1.0.0",
     "type": "module",
+    "private": true,
+    "description": "SigAuth Admin Dashboard Application to manage your SigAuth instance",
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",

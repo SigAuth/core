@@ -1,4 +1,4 @@
-import type { AssetTypeField } from '@sigauth/generics/asset';
+import type { AssetTypeField } from '@sigauth/sdk/asset';
 
 export const LIST_DEFAULT_PAGE_SIZE = 25;
 

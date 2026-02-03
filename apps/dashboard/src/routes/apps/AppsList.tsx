@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { CreateAppDialog } from '@/routes/apps/CreateAppDialog';
 import { DeleteAppDialog } from '@/routes/apps/DeleteAppDialog';
 import { EditAppDialog } from '@/routes/apps/EditAppDialog';
-import type { App } from '@sigauth/generics/database/orm-client/types.client';
+import type { App } from '@sigauth/sdk/database/orm-client/types.client';
 import {
     type ColumnDef,
     flexRender,

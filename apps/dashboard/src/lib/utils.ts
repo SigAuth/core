@@ -1,4 +1,4 @@
-import type { JSONSerializable } from '@sigauth/generics/json-types';
+import type { JSONSerializable } from '@sigauth/sdk/json-types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -38,3 +38,4 @@ export async function logout() {
         window.location.reload();
     }
 }
+

@@ -18,7 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSession } from '@/context/SessionContext';
 import { cn, request } from '@/lib/utils';
 import { PopoverContent } from '@radix-ui/react-popover';
-import { AssetFieldType, type AssetType, type AssetTypeField } from '@sigauth/generics/asset';
+import { AssetFieldType, type AssetType, type AssetTypeField } from '@sigauth/sdk/asset';
 import { CommandEmpty } from 'cmdk';
 import { BadgePlus, Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
