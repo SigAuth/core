@@ -1,16 +1,4 @@
-import {
-    AppWindow,
-    ChevronDown,
-    Container,
-    FlipHorizontal,
-    Home,
-    Layers,
-    NotepadText,
-    Settings,
-    Stamp,
-    TriangleAlertIcon,
-    Users,
-} from 'lucide-react';
+import { AppWindow, ChevronDown, Home, Layers, NotepadText, Settings, Stamp, TriangleAlertIcon, Users } from 'lucide-react';
 
 import {
     AlertDialog,
@@ -76,16 +64,6 @@ export const sidebarItems: SidebarItem[] = [
         title: 'Apps',
         url: '/apps',
         icon: AppWindow,
-    },
-    {
-        title: 'Container',
-        url: '/container',
-        icon: Container,
-    },
-    {
-        title: 'Mirror',
-        url: '/mirror',
-        icon: FlipHorizontal,
     },
     {
         title: 'Settings',
@@ -194,3 +172,4 @@ export function AppSidebar() {
         </Sidebar>
     );
 }
+

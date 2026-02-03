@@ -16,26 +16,26 @@ import { Trash, TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const DeleteAccountDialog = ({
-    accountIds,
+    accountUuids,
     open,
     setOpen,
 }: {
-    accountIds?: number[];
+    accountUuids?: string[];
     open: boolean;
     setOpen: (open: boolean) => void;
 }) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        const accounts = session.accounts.filter(a => accountIds?.includes(a.id));
-        if (accounts.length != accountIds?.length || accounts.length == 0) return;
+        const accounts = session.accounts.filter(a => accountUuids?.includes(a.uuid));
+        if (accounts.length != accountUuids?.length || accounts.length == 0) return;
 
         const res = await request('POST', '/api/account/delete', {
-            accountIds,
+            accountUuids,
         });
 
         if (res.ok) {
-            setSession({ accounts: session.accounts.filter(a => !accountIds?.includes(a.id)) });
+            setSession({ accounts: session.accounts.filter(a => !accountUuids?.includes(a.uuid)) });
         } else {
             console.error(await res.text());
             throw new Error();
@@ -45,7 +45,7 @@ export const DeleteAccountDialog = ({
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon-lg" disabled={accountIds?.length === 0} className="w-fit">
+                <Button variant="ghost" size="icon-lg" disabled={accountUuids?.length === 0} className="w-fit">
                     <Trash />
                 </Button>
             </AlertDialogTrigger>
@@ -56,8 +56,8 @@ export const DeleteAccountDialog = ({
                     </div>
                     <AlertDialogTitle>Are you absolutely sure you want to delete?</AlertDialogTitle>
                     <AlertDialogDescription className="text-center">
-                        This action cannot be undone. This will permanently delete the selected {accountIds?.length ?? 0} account(s) and remove
-                        all related authorization data with it.
+                        This action cannot be undone. This will permanently delete the selected {accountUuids?.length ?? 0} account(s) and
+                        remove all related authorization data with it.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -81,3 +81,4 @@ export const DeleteAccountDialog = ({
         </AlertDialog>
     );
 };
+

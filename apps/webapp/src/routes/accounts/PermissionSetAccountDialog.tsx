@@ -1,44 +1,37 @@
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSession } from '@/context/SessionContext';
-import { cn, request } from '@/lib/utils';
-import type { AppPermission } from '@sigauth/generics/json-types';
-import type { App, PermissionInstance } from '@sigauth/generics/prisma-types';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { request } from '@/lib/utils';
+import type { App, Grant } from '@sigauth/generics/database/orm-client/types.client';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export const PermissionSetAccountDialog = ({
-    accountIds,
+    accountUuids,
     open,
     setOpen,
 }: {
-    accountIds: number[];
+    accountUuids: string[];
     open: boolean;
     setOpen: (open: boolean) => void;
 }) => {
     const { session, setSession } = useSession();
 
     const account = useMemo(() => {
-        if (accountIds.length !== 1) return undefined;
-        return session.accounts.find(a => a.id === accountIds[0]);
-    }, [accountIds, session.accounts]);
+        if (accountUuids.length !== 1) return undefined;
+        return session.accounts.find(a => a.uuid === accountUuids[0]);
+    }, [accountUuids, session.accounts]);
 
     const [currentApp, setCurrentApp] = useState<App | undefined>(undefined);
     const [currentContainer, setCurrentContainer] = useState<number | undefined>(undefined);
-    const [permissions, setPermissions] = useState<PermissionInstance[]>(account ? account.permissions : []);
+    const [permissions, setPermissions] = useState<Grant[]>(account ? account.account_grants : []);
 
     const [rootPermissionOpen, setRootPermissionOpen] = useState(false);
     const [containerPermissionOpen, setContainerPermissionOpen] = useState(false);
 
-    useEffect(() => setPermissions(account ? account.permissions : []), [account]);
+    useEffect(() => setPermissions(account ? account.account_grants : []), [account]);
     useEffect(() => {
         setCurrentContainer(undefined);
     }, [currentApp]);
@@ -47,24 +40,23 @@ export const PermissionSetAccountDialog = ({
         if (!account) throw new Error('No account selected');
 
         const res = await request('POST', '/api/account/permissions/set', {
-            accountId: account.id,
+            uuid: account.uuid,
             permissions,
         });
 
         if (res.ok) {
-            setSession({ accounts: session.accounts.map(a => (a.id === account.id ? { ...a, permissions } : a)) });
+            setSession({ accounts: session.accounts.map(a => (a.uuid === account.uuid ? { ...a, permissions } : a)) });
             close();
             return;
         }
         throw new Error('Failed to set permissions');
     };
 
-    const availableContainers = session.containers.filter(c => c.apps.includes(currentApp?.id || -1));
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Set explicit permissions for {account?.name}</DialogTitle>
+                    <DialogTitle>Set explicit permissions for {account?.username}</DialogTitle>
                     <DialogDescription>Specify the permissions you want to grant to this account.</DialogDescription>
                 </DialogHeader>
                 <div>
@@ -75,15 +67,15 @@ export const PermissionSetAccountDialog = ({
                             <span className="text-muted-foreground">Select the app to modify permissions</span>
                         </div>
                         <Select
-                            value={currentApp?.id + ''}
-                            onValueChange={id => setCurrentApp(session.apps.find(app => app.id + '' == id))}
+                            value={currentApp?.uuid + ''}
+                            onValueChange={id => setCurrentApp(session.apps.find(app => app.uuid + '' == id))}
                         >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select an app" />
                             </SelectTrigger>
                             <SelectContent>
                                 {session.apps.map(app => (
-                                    <SelectItem key={app.id} value={app.id + ''}>
+                                    <SelectItem key={app.uuid} value={app.uuid + ''}>
                                         {app.name}
                                     </SelectItem>
                                 ))}
@@ -92,7 +84,7 @@ export const PermissionSetAccountDialog = ({
                     </div>
 
                     {/* Root Permission Selection */}
-                    {currentApp && (
+                    {/* {currentApp && (
                         <div className="flex flex-col gap-2 mt-4">
                             <div className="flex flex-col">
                                 <p className="font-bold">Root Permissions</p>
@@ -159,35 +151,11 @@ export const PermissionSetAccountDialog = ({
                                 </Popover>
                             </div>
                         </div>
-                    )}
+                    )} */}
 
                     <Separator className="my-6" />
-                    {/* Container Selection */}
-                    {availableContainers.length > 0 && (
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-col">
-                                <p className="font-bold">Container</p>
-                                <span className="text-muted-foreground">Select the container you want to modify permissions for</span>
-                            </div>
-                            <Select
-                                value={currentContainer + ''}
-                                onValueChange={id => setCurrentContainer(session.containers.find(container => container.id + '' == id)?.id)}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select a container" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableContainers.map(container => (
-                                        <SelectItem key={container.id} value={container.id + ''}>
-                                            {container.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
 
-                    {/* Container & Asset Permission Selection */}
+                    {/* Container & Asset Permission Selection
                     {currentApp && currentContainer && (
                         <>
                             <div className="flex flex-col gap-2 mt-4">
@@ -265,7 +233,7 @@ export const PermissionSetAccountDialog = ({
                             </div>
 
                             <div>
-                                {/* TODO Scrollbar not styled */}
+                                {/* TODO Scrollbar not styled 
                                 <ScrollArea className="mt-2 max-h-[400px] overflow-auto">
                                     <Table>
                                         <TableCaption>Configure permissions for assets</TableCaption>
@@ -328,7 +296,7 @@ export const PermissionSetAccountDialog = ({
                                 </ScrollArea>
                             </div>
                         </>
-                    )}
+                    )} */}
 
                     <div className="mt-3">
                         <Button
@@ -349,3 +317,4 @@ export const PermissionSetAccountDialog = ({
         </Dialog>
     );
 };
+

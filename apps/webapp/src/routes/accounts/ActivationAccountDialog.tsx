@@ -14,11 +14,11 @@ import { request } from '@/lib/utils';
 import { TriangleAlertIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const ActivationAccountDialog = ({ open, setOpen }: { open: number; setOpen: (open: number) => void }) => {
+export const ActivationAccountDialog = ({ open, setOpen }: { open: string; setOpen: (open: string) => void }) => {
     const { session, setSession } = useSession();
 
     const handleSubmit = async () => {
-        const account = session.accounts.find(acc => acc.id === open);
+        const account = session.accounts.find(acc => acc.uuid === open);
         if (!account) throw new Error('Account not found in session');
         const res = await request('POST', `/api/account/edit`, {
             accountId: open,
@@ -29,17 +29,17 @@ export const ActivationAccountDialog = ({ open, setOpen }: { open: number; setOp
 
         if (res.ok) {
             setSession({
-                accounts: session.accounts.map(acc => (acc.id === open ? { ...acc, deactivated: !account.deactivated } : acc)),
+                accounts: session.accounts.map(acc => (acc.uuid === open ? { ...acc, deactivated: !account.deactivated } : acc)),
             });
-            setOpen(0);
+            setOpen('');
         } else {
             throw new Error(`Failed to update account activation (${await res.text()})`);
         }
     };
 
-    const isDeactivated = session.accounts.find(acc => acc.id === open)?.deactivated;
+    const isDeactivated = session.accounts.find(acc => acc.uuid === open)?.deactivated;
     return (
-        <AlertDialog open={open != 0} onOpenChange={() => setOpen(0)}>
+        <AlertDialog open={open !== ''} onOpenChange={() => setOpen('')}>
             <AlertDialogContent>
                 <AlertDialogHeader className="items-center">
                     <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
@@ -76,3 +76,4 @@ export const ActivationAccountDialog = ({ open, setOpen }: { open: number; setOp
         </AlertDialog>
     );
 };
+

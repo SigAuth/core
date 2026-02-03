@@ -103,7 +103,6 @@ export const AssetTypeList = () => {
                 ),
             enableSorting: false,
         },
-        { header: 'ID', accessorKey: 'id', maxSize: 1 },
         { header: 'Name', accessorKey: 'name', cell: info => info.getValue() },
         { header: 'Fields', accessorFn: row => (row.fields as AssetTypeField[]).length },
         { header: 'Assets Using Type', accessorFn: row => session.assets.filter(a => a.typeUuid === row.uuid).length },

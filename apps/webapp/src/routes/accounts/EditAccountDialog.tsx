@@ -13,34 +13,34 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 export const EditAccountDialog = ({
-    accountIds,
+    accountUuids,
     open,
     setOpen,
 }: {
-    accountIds: number[];
+    accountUuids: string[];
     open: boolean;
     setOpen: (open: boolean) => void;
 }) => {
     const { session, setSession } = useSession();
 
     const account = useMemo(() => {
-        if (accountIds.length !== 1) return undefined;
-        return session.accounts.find(a => a.id === accountIds[0]);
-    }, [accountIds, session.accounts]);
+        if (accountUuids.length !== 1) return undefined;
+        return session.accounts.find(a => a.uuid === accountUuids[0]);
+    }, [accountUuids, session.accounts]);
 
     const formSchema = z.object({
         name: z
             .string()
             .regex(/^[a-zA-Z0-9_-]+$/, 'Only Letters, Digits, - and _ allowed, no spaces')
             .min(4, 'Name must be at least 4 characters long')
-            .refine(val => session.accounts.findIndex(a => a.name === val && a.id !== account?.id) === -1, {
+            .refine(val => session.accounts.findIndex(a => a.username === val && a.uuid !== account?.uuid) === -1, {
                 message: 'An account with this name already exists',
             }),
         password: z.string().optional(),
         email: z
             .string()
             .email('Invalid email address')
-            .refine(val => session.accounts.findIndex(a => a.email === val && a.id !== account?.id) === -1, {
+            .refine(val => session.accounts.findIndex(a => a.email === val && a.uuid !== account?.uuid) === -1, {
                 message: 'An account with this email already exists',
             }),
         apiAccess: z.boolean(),
@@ -58,8 +58,8 @@ export const EditAccountDialog = ({
             );
         }
 
-        const updateData: { id: number; name?: string; password?: string; email?: string; apiAccess: boolean } = {
-            id: account.id,
+        const updateData: { uuid: string; name?: string; password?: string; email?: string; apiAccess: boolean } = {
+            uuid: account.uuid,
             apiAccess: values.apiAccess,
         };
         if (values.name && values.name.length > 0) updateData.name = values.name;
@@ -70,7 +70,7 @@ export const EditAccountDialog = ({
 
         if (res.ok) {
             const data = await res.json();
-            setSession({ accounts: session.accounts.map(a => (a.id === account.id ? data.account : a)) });
+            setSession({ accounts: session.accounts.map(a => (a.uuid === account.uuid ? data.account : a)) });
             setOpen(false);
             return;
         }
@@ -84,7 +84,7 @@ export const EditAccountDialog = ({
 
     useEffect(() => {
         form.reset({
-            name: account?.name,
+            name: account?.username,
             email: account?.email || '',
             password: '',
             apiAccess: !!account?.api || false,
@@ -94,15 +94,15 @@ export const EditAccountDialog = ({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" disabled={accountIds.length !== 1} size="icon-lg" className="w-fit">
+                <Button variant="ghost" disabled={accountUuids.length !== 1} size="icon-lg" className="w-fit">
                     <Edit />
                 </Button>
             </DialogTrigger>
             <DialogContent className="!max-w-fit">
                 <DialogHeader>
-                    <DialogTitle>Edit {account?.name}</DialogTitle>
+                    <DialogTitle>Edit {account?.username}</DialogTitle>
                     <DialogDescription>
-                        Update {account?.name} here. You can create as many accounts as you want and fill them with data.
+                        Update {account?.username} here. You can create as many accounts as you want and fill them with data.
                     </DialogDescription>
                 </DialogHeader>
                 <div>
@@ -201,3 +201,4 @@ export const EditAccountDialog = ({
         </Dialog>
     );
 };
+

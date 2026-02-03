@@ -32,7 +32,7 @@ export const SessionStorageContext = createContext<SessionContext | null>(null);
 
 // Context Provider
 export default function SessionContextProvider({ children, init }: { init: SessionStorage | null; children: ReactNode }) {
-    const [sessionStorage, setSessionState] = useState<SessionStorage>(init || defaultSessionContext);
+    const [sessionStorage, setSessionState] = useState<SessionStorage>({ ...defaultSessionContext, ...init });
 
     const setSession = (update: Partial<SessionStorage>) => {
         setSessionState(prev => ({ ...prev, ...update }));
