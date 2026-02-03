@@ -9,6 +9,8 @@ export const Utils = {
      */
     convertSignatureToUuid: (signature: string) => {
         if (!signature.startsWith('asset_')) {
+            if (signature.startsWith('_internal')) return signature;
+
             throw new Error('Invalid signature format');
         }
         const uuid = signature.slice(6, signature.length);

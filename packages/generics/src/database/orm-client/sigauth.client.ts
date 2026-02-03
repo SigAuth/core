@@ -1,4 +1,5 @@
-import { GenericDatabaseGateway } from 'src/database/database.gateway.js';
+import { INTERNAL_GRANT_TABLE } from '../../asset.types.js';
+import { GenericDatabaseGateway } from '../../database/database.gateway.js';
 import { Utils } from './helper.client.js';
 import {
     Account,
@@ -157,7 +158,8 @@ export class Model<T extends Record<string, any>> {
         const sql = Utils.toSQL(this.tableName, query, this.relations);
 
         const result: any = await this.db.rawQuery(sql);
-        return (result[0] as Payload<T, Q>) || null;
+        if (!result[0]) return null;
+        return Utils.hydrateRow(result[0] as Payload<T, Q>, query.includes);
     }
 
     async findMany<Q extends FindQuery<T>>(query: Q): Promise<Payload<T, Q>[]> {
@@ -165,7 +167,7 @@ export class Model<T extends Record<string, any>> {
         const sql = Utils.toSQL(this.tableName, query, this.relations);
 
         const result: any = await this.db.rawQuery(sql);
-        return result as Payload<T, Q>[];
+        return (result as Payload<T, Q>[]).map(r => Utils.hydrateRow(r, query.includes));
     }
 
     private getShortId(fullId: string) {
@@ -345,46 +347,46 @@ export class Model<T extends Record<string, any>> {
         return Array.isArray(result) ? result : [result];
     }
 
-    async updateAuthorization(input: {
-        where: FindWhere<T>;
-        authorization: {
-            userUuid: string;
-            appUuid: string;
-            scopes: string[];
-        };
-    }): Promise<void> {
-        const whereClause = this.buildWhereClause(input.where);
-        const { userUuid, appUuid, scopes } = input.authorization;
+    // async updateAuthorization(input: {
+    //     where: FindWhere<T>;
+    //     authorization: {
+    //         userUuid: string;
+    //         appUuid: string;
+    //         scopes: string[];
+    //     };
+    // }): Promise<void> {
+    //     const whereClause = this.buildWhereClause(input.where);
+    //     const { userUuid, appUuid, scopes } = input.authorization;
 
-        if (!scopes || scopes.length === 0) return;
+    //     if (!scopes || scopes.length === 0) return;
 
-        const scopesSql = this.formatValue(scopes); // returns formatted array string e.g. ARRAY['a','b']
+    //     const scopesSql = this.formatValue(scopes); // returns formatted array string e.g. ARRAY['a','b']
 
-        const sql = `
-            INSERT INTO "permission_instances" ("account", "app", "asset", "scope")
-            SELECT ${this.formatValue(userUuid)}, ${this.formatValue(appUuid)}, "uuid", unnest(${scopesSql})
-            FROM "${this.tableName}"
-            ${whereClause}
-            ON CONFLICT DO NOTHING
-        `;
+    //     const sql = `
+    //         INSERT INTO "permission_instances" ("account", "app", "asset", "scope")
+    //         SELECT ${this.formatValue(userUuid)}, ${this.formatValue(appUuid)}, "uuid", unnest(${scopesSql})
+    //         FROM "${this.tableName}"
+    //         ${whereClause}
+    //         ON CONFLICT DO NOTHING
+    //     `;
 
-        await this.db.rawQuery(sql);
-    }
+    //     await this.db.rawQuery(sql);
+    // }
 
     private async executeDelete(where: any, single: boolean): Promise<any> {
         const whereClause = this.buildWhereClause(where);
         const sql = `WITH deleted AS (DELETE FROM "${this.tableName}" ${whereClause} RETURNING *),
-perm_del AS (DELETE FROM "permission_instances" WHERE "asset" IN (SELECT "uuid" FROM deleted))
+perm_del AS (DELETE FROM ${INTERNAL_GRANT_TABLE} WHERE "assetUuid" IN (SELECT "uuid" FROM deleted))
 SELECT * FROM deleted`;
 
         const result: any = await this.db.rawQuery(sql);
 
         if (single) {
-            if (result.rowCount !== 1) {
-                if (result.rowCount === 0) {
+            if (result.length !== 1) {
+                if (result.length === 0) {
                     throw new Error(`Record to delete does not exist.`);
                 } else {
-                    throw new Error(`Delete operation failed. Expected 1 record to be deleted, but ${result.rowCount} were found.`);
+                    throw new Error(`Delete operation failed. Expected 1 record to be deleted, but ${result.length} were found.`);
                 }
             }
             return result[0] as T;

@@ -1,5 +1,4 @@
-
-import { GlobalRealtionMap, FindQuery } from './sigauth.client.js';
+import { FindQuery, GlobalRealtionMap } from './sigauth.client.js';
 
 export const Utils = {
     simpleQs: (obj: Record<string, any>, prefix = ''): string => {
@@ -136,7 +135,7 @@ export const Utils = {
                     }
                 }
 
-                selections.push(`"${newAlias}".*`);
+                selections.push(`to_jsonb("${newAlias}".*) AS "${newAlias}"`);
 
                 if (typeof options === 'object') {
                     processIncludes(newAlias, targetTableId, options);
@@ -153,12 +152,46 @@ export const Utils = {
         const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
         const orderClause = query.orderBy
             ? 'ORDER BY ' +
-            Object.entries(query.orderBy)
-                .map(([k, v]) => `"${table}"."${k}" ${v!.toUpperCase()}`)
-                .join(', ')
+              Object.entries(query.orderBy)
+                  .map(([k, v]) => `"${table}"."${k}" ${v!.toUpperCase()}`)
+                  .join(', ')
             : '';
         const limitClause = query.limit ? `LIMIT ${query.limit}` : '';
 
         return `${selectClause} ${joinClause} ${whereClause} ${orderClause} ${limitClause}`.replace(/\s+/g, ' ').trim();
     },
+
+    hydrateRow: (row: any, includes: any) => {
+        if (!row || !includes) return row;
+
+        const process = (target: any, inc: any, parentAlias: string | null) => {
+            for (const [relName, subInc] of Object.entries(inc)) {
+                if (!subInc) continue;
+
+                // Matches the alias logic in toSQL
+                const alias = parentAlias ? `${parentAlias}_${relName}` : relName;
+
+                // Check if the relation data exists in the root row
+                if (row[alias] !== undefined) {
+                    target[relName] = row[alias];
+
+                    // Cleanup: Remove the flattened key from the root row if it's a deep relation.
+                    // (Level 1 relations are both the key and the alias, so we keep them,
+                    // but deep relations like 'subject_account_grants' should be moved and removed).
+                    if (parentAlias) {
+                        delete row[alias];
+                    }
+
+                    // Recurse
+                    if (typeof subInc === 'object' && target[relName]) {
+                        process(target[relName], subInc, alias);
+                    }
+                }
+            }
+        };
+
+        process(row, includes, null);
+        return row;
+    },
 };
+

@@ -674,7 +674,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
         const genericKeysRes = await this.db.raw(
             `SELECT column_name, data_type, is_nullable, udt_name 
                  FROM information_schema.columns 
-                 WHERE table_name = $1`,
+                 WHERE table_name = ?`,
             [tableName],
         );
         const genericKeys = genericKeysRes.rows;
@@ -684,7 +684,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
                  FROM information_schema.key_column_usage as kcu
                  JOIN information_schema.referential_constraints as rc ON kcu.constraint_name = rc.constraint_name
                  JOIN information_schema.constraint_column_usage as ccu ON rc.unique_constraint_name = ccu.constraint_name
-                 WHERE kcu.table_name = $1`,
+                 WHERE kcu.table_name = ?`,
             [tableName],
         );
         const foreignKeys = foreignKeysRes.rows;
@@ -727,7 +727,8 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
     async getAssetType(uuid: string): Promise<AssetType | null> {
         if (!this.db) throw new Error('Database not connected');
 
-        const typeRow = (await this.db.raw('SELECT * FROM asset_types WHERE uuid = $1', [uuid])).rows[0];
+        const typeRow = (await this.db.raw(`SELECT * FROM ?? WHERE uuid = ?`, [INTERNAL_ASSET_TYPE_TABLE, uuid])).rows[0];
+
         if (!typeRow) return null;
 
         return {
@@ -741,7 +742,7 @@ export class GenericPostgresDriver extends GenericDatabaseGateway {
         if (!this.db) throw new Error('Database not connected');
 
         const types: AssetType[] = [];
-        const typeRes = await this.db.raw('SELECT * FROM asset_types');
+        const typeRes = await this.db.raw(`SELECT * FROM ??`, [INTERNAL_ASSET_TYPE_TABLE]);
 
         for (const row of typeRes.rows) {
             types.push({

@@ -13,7 +13,6 @@ export class AuthGuard implements CanActivate {
 
         const sid = (request.cookies as Record<string, string>)?.['sid'];
 
-        console.log(sid);
         if (!sid) {
             throw new UnauthorizedException('No session found');
         }
@@ -24,7 +23,6 @@ export class AuthGuard implements CanActivate {
                 subject_account: true,
             },
         });
-        console.log(session);
 
         if (!session || session.expire < Math.floor(Date.now() / 1000)) {
             throw new UnauthorizedException('Invalid session');
