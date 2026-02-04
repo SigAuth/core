@@ -1,3 +1,4 @@
+import { DatabaseModule } from '@/internal/database/database.module';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../auth.service';
 
@@ -6,6 +7,7 @@ describe('AuthService', () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [DatabaseModule],
             providers: [AuthService],
         }).compile();
 
@@ -16,3 +18,4 @@ describe('AuthService', () => {
         expect(service).toBeDefined();
     });
 });
+

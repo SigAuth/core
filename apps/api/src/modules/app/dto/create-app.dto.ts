@@ -56,5 +56,14 @@ export class CreateAppDto {
         ],
     })
     permissions!: PermissionsDto[];
+
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({
+        example: ['profile', 'email', 'address', 'blogs:admin'],
+        description: 'List of OAuth2/OIDC scopes requested by the app',
+        type: 'array',
+    })
+    scopes!: string[];
 }
 

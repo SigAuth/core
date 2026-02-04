@@ -112,6 +112,20 @@ export class PostgresDriver extends GenericDatabaseGateway {
         ]);
         if (!appType) throw new Error('Failed to create App asset type during initialization');
 
+        const scope = await this.createAssetType('AppScope', [
+            { name: 'name', type: AssetFieldType.VARCHAR, required: true },
+            { name: 'description', type: AssetFieldType.TEXT, required: true },
+            { name: 'public', type: AssetFieldType.BOOLEAN, required: true },
+            {
+                name: 'appUuids',
+                type: AssetFieldType.RELATION,
+                targetAssetType: appType,
+                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
+                allowMultiple: true,
+            },
+        ]);
+        if (!scope) throw new Error('Failed to create AppScope asset type during initialization');
+
         const authInstanceType = await this.createAssetType('AuthorizationInstance', [
             {
                 name: 'sessionUuid',
@@ -220,6 +234,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             Account: 'asset_' + accountType.replaceAll('-', '_'),
             Session: 'asset_' + sessionType.replaceAll('-', '_'),
             App: 'asset_' + appType.replaceAll('-', '_'),
+            AppScope: 'asset_' + scope.replaceAll('-', '_'),
             AuthorizationChallenge: 'asset_' + authChallengeType.replaceAll('-', '_'),
             AuthorizationInstance: 'asset_' + authInstanceType.replaceAll('-', '_'),
 

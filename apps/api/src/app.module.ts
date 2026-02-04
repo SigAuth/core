@@ -19,7 +19,7 @@ const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
 @Module({
     imports: [
         ServeStaticModule.forRoot({
-            rootPath: join(__dirname, '../..', 'webapp', 'dist'),
+            rootPath: join(__dirname, '../..', 'login-gateway', 'dist'),
         }),
         ScheduleModule.forRoot(),
         ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env'] }),

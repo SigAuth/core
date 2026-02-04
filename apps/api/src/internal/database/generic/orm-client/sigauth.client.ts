@@ -33,10 +33,14 @@ const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
         [signature.App]: {
             app_authorizationinstances: { table: signature.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
             app_authorizationchallenges: { table: signature.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
+            app_scopes: { table: signature.AppScope, joinType: 'reverse', fieldName: 'appUuids' },
 
             app_accesses: { table: signature.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
             app_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
             app_permissions: { table: signature.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+        },
+        [signature.AppScope]: {
+            app_references: { table: signature.App, joinType: 'forward', fieldName: 'appUuids' },
         },
         [signature.AuthorizationInstance]: {
             session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },

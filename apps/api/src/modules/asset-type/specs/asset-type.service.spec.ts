@@ -1,11 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { DatabaseModule } from '@/internal/database/database.module';
 import { AssetTypeService } from '@/modules/asset-type/asset-type.service';
+import { Test, TestingModule } from '@nestjs/testing';
 
 describe('AssetTypesService', () => {
     let service: AssetTypeService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [DatabaseModule],
             providers: [AssetTypeService],
         }).compile();
 
@@ -16,3 +18,4 @@ describe('AssetTypesService', () => {
         expect(service).toBeDefined();
     });
 });
+

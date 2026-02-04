@@ -42,6 +42,26 @@ export interface App {
     app_grants?: Grant[];
     /** Reverse relation from Permission.appUuid */
     app_permissions?: Permission[];
+    /** Reverse relation from AppScope.appUuids */
+    app_scopes?: AppScope[];
+}
+
+/**
+ * AppScope represents an OAuth2/OIDC scope that can be requested by applications.
+ * It is mainly for third party apps that manage their own permissions and only need to
+ * request scopes from the authorization server.
+ *
+ * If your app uses the sdk you likely won't need to use this type as the sdk manages scopes internally (AppAccess)
+ * and permissions via grants on the fly
+ */
+export interface AppScope {
+    name: string;
+    description: string;
+    public: boolean;
+    appUuids: string[];
+
+    /** These fields are only available when the relation is included in the query */
+    app_references?: App[];
 }
 
 export interface Mirror {

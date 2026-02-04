@@ -43,5 +43,14 @@ export class EditAppDto {
         description: 'Enable nudge (send push notification to the app)',
     })
     nudge!: boolean;
+
+    @IsArray()
+    @IsString({ each: true })
+    @ApiProperty({
+        example: ['profile', 'email', 'address', 'blogs:admin'],
+        description: 'List of OAuth2/OIDC scopes requested by the app',
+        type: 'array',
+    })
+    scopes!: string[];
 }
 

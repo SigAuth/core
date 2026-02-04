@@ -11,7 +11,6 @@ import { OIDCSignInPage } from '@/routes/auth/oidc/OIDCSignInPage';
 import HomePage from '@/routes/home/HomePage';
 import { SettingsPage } from '@/routes/settings/SettingsPage';
 import SignInPage from '@/routes/SignIn';
-import type { Session } from '@sigauth/sdk/database/orm-client/types.client';
 import dayjs from 'dayjs';
 import React, { StrictMode, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';

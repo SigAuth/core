@@ -2,6 +2,7 @@ export type TableIdSignature = {
     Account: string;
     Session: string;
     App: string;
+    AppScope: string;
     AuthorizationInstance: string;
     AuthorizationChallenge: string;
 

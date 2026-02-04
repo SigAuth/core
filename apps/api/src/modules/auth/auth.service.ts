@@ -4,7 +4,7 @@ import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
-import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AssetType } from '@sigauth/sdk/asset';
 import { ProtectedData, SigAuthPermissions } from '@sigauth/sdk/protected';
 import bcrypt from 'bcryptjs';
@@ -131,26 +131,23 @@ export class AuthService {
     }
 
     async authenticateOIDC(data: OIDCAuthenticateDto, sessionId: string) {
-        const session = await this.db.Session.findOne({ where: { uuid: sessionId }, include: { account: true } });
-        if (!session) throw new NotFoundException("Couldn't resolve session");
-
-        const app = await this.db.App.findOne({ where: { uuid: data.appUuid } });
-        if (!app) throw new NotFoundException("Couldn't resolve app");
-        if (!app.oidcAuthCodeCb) throw new BadRequestException('App does not support OIDC authorization code flow');
-
-        const authorizationCode = Utils.generateToken(64);
-        const challenge = await this.db.AuthorizationChallenge.createOne({
-            data: {
-                appUuid: data.appUuid,
-                sessionUuid: sessionId,
-                authCode: authorizationCode,
-                redirectUri: data.redirectUri,
-                created: new Date(),
-                challenge: '', // TODO PKCE
-            },
-        });
-
-        return `${app.oidcAuthCodeCb}?code=${challenge.authCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}&redirectUri=${data.redirectUri}`;
+        //     const session = await this.db.Session.findOne({ where: { uuid: sessionId }, include: { account: true } });
+        //     if (!session) throw new NotFoundException("Couldn't resolve session");
+        //     const app = await this.db.App.findOne({ where: { uuid: data.appUuid } });
+        //     if (!app) throw new NotFoundException("Couldn't resolve app");
+        //     if (!app.oidcAuthCodeCb) throw new BadRequestException('App does not support OIDC authorization code flow');
+        //     const authorizationCode = Utils.generateToken(64);
+        //     const challenge = await this.db.AuthorizationChallenge.createOne({
+        //         data: {
+        //             appUuid: data.appUuid,
+        //             sessionUuid: sessionId,
+        //             authCode: authorizationCode,
+        //             redirectUri: data.redirectUri,
+        //             created: new Date(),
+        //             challenge: '', // TODO PKCE
+        //         },
+        //     });
+        //     return `${app.oidcAuthCodeCb}?code=${challenge.authCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}&redirectUri=${data.redirectUri}`;
     }
 
     async exchangeOIDCToken(code: string, app: App, redirectUri: string) {

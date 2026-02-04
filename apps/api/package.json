@@ -77,13 +77,28 @@
         "rootDir": "src",
         "testRegex": ".*\\.spec\\.ts$",
         "transform": {
-            "^.+\\.(t|j)s$": "ts-jest"
+            "^.+\\.(t|j)s$": [
+                "ts-jest",
+                {
+                    "tsconfig": {
+                        "module": "commonjs"
+                    }
+                }
+            ]
         },
+        "transformIgnorePatterns": [
+            "node_modules/(?!.*jose)"
+        ],
         "collectCoverageFrom": [
             "**/*.(t|j)s"
         ],
         "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
+        "testEnvironment": "node",
+        "moduleNameMapper": {
+            "^@/(.*)$": "<rootDir>/$1",
+            "^@sigauth/sdk/asset$": "<rootDir>/../../../packages/sdk/src/asset.types.ts",
+            "^@sigauth/sdk/protected$": "<rootDir>/../../../packages/sdk/src/protected.types.ts"
+        }
     }
 }
 
