@@ -25,6 +25,10 @@ export class PostgresDriver extends GenericDatabaseGateway {
         super(PostgresDriver.name);
     }
 
+    async onModuleDestroy() {
+        await this.disconnect();
+    }
+
     async connect(connectionString: string) {
         if (!this.connect && !process.env.DATABASE_URL) throw new Error('DATABASE_URL not set in env');
 
@@ -337,7 +341,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
     async editAssetType(
         uuid: string,
         name: string,
-        fields: ((AssetTypeField | AssetTypeRelationField) & { updatedName: string })[],
+        fields: ((AssetTypeField | AssetTypeRelationField) & { originalName?: string })[],
     ): Promise<AssetType> {
         const type = await this.getAssetType(uuid);
         if (!type) throw new Error('Asset type not found');
@@ -354,14 +358,16 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
         // Process all input fields (Updates & Creations)
         for (const newField of fields) {
-            const oldField = existingFieldsMap.get(newField.name);
+            const oldField = newField.originalName ? existingFieldsMap.get(newField.originalName) : undefined;
+            if (newField.originalName && !oldField) throw new Error();
+
             const isNewExternal = newField.type === AssetFieldType.RELATION && newField.allowMultiple;
 
             // Track External Keys for metadata update
             if (isNewExternal) {
-                const f = newField as AssetTypeRelationField & { updatedName: string };
+                const f = newField as AssetTypeRelationField;
                 newExternalKeys.push(
-                    f.updatedName +
+                    f.name +
                         '#' +
                         f.targetAssetType.replaceAll('-', '_') +
                         '#' +
@@ -380,23 +386,23 @@ export class PostgresDriver extends GenericDatabaseGateway {
                     const oldRel = oldField as AssetTypeRelationField;
                     const joinTable = this.getJoinTableName(uuid, oldRel.targetAssetType);
 
-                    if (newField.updatedName !== newField.name) {
+                    if (newField.name !== oldField.name) {
                         if (await this.db!.schema.hasTable(joinTable)) {
-                            await this.db!(joinTable).where({ field: newField.name }).update({ field: newField.updatedName });
+                            await this.db!(joinTable).where({ field: newField.name }).update({ field: newField.name });
                         }
                     }
                 } else if (!isOldExternal && !isNewExternal) {
                     // Update Column Name
-                    if (newField.updatedName !== newField.name) {
+                    if (newField.name !== oldField.name) {
                         await this.db!.schema.alterTable(tableName, table => {
-                            table.renameColumn(newField.name, newField.updatedName);
+                            table.renameColumn(oldField.name, newField.name);
                         });
                     }
 
                     // Update Column Type/Constraints
                     if (newField.type !== oldField.type || newField.required !== oldField.required) {
                         await this.db!.schema.alterTable(tableName, table => {
-                            const col = this.addColumnToTable(table, { ...newField, name: newField.updatedName });
+                            const col = this.addColumnToTable(table, newField);
                             if (col) {
                                 col.alter();
                                 if (newField.type !== oldField.type) {
@@ -430,16 +436,16 @@ export class PostgresDriver extends GenericDatabaseGateway {
                     const joinTable = this.getJoinTableName(uuid, oldRel.targetAssetType);
 
                     if (await this.db!.schema.hasTable(joinTable)) {
-                        await this.db!(joinTable).where({ field: newField.name }).del();
+                        await this.db!(joinTable).where({ field: oldField.name }).del();
                     }
 
                     await this.db!.schema.alterTable(tableName, table => {
-                        this.addColumnToTable(table, { ...newField, name: newField.updatedName });
+                        this.addColumnToTable(table, newField);
                     });
                 } else if (!isOldExternal && isNewExternal) {
                     // Conversion: Column -> External Relation
                     await this.db!.schema.alterTable(tableName, table => {
-                        table.dropColumn(newField.name);
+                        table.dropColumn(oldField.name);
                     });
 
                     const f = newField as AssetTypeRelationField;
@@ -452,7 +458,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
                     await this.createJoinTable(uuid, f.targetAssetType, f);
                 } else {
                     await this.db!.schema.alterTable(tableName, table => {
-                        this.addColumnToTable(table, { ...newField, name: newField.updatedName });
+                        this.addColumnToTable(table, newField);
                     });
                 }
             }
@@ -740,6 +746,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         const fields: AssetTypeField[] = [];
 
         for (const key of genericKeys) {
+            if (key.column_name === 'uuid') continue; // skip primary key because only custom fields are relevant
             const foreignKey = foreignKeys.find((fk: any) => fk.column_name === key.column_name);
 
             const field: AssetTypeField = {

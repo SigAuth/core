@@ -12,8 +12,7 @@ export class UpdateAssetTypeFieldDto extends AssetTypeFieldDto {
     @MinLength(4)
     @MaxLength(64)
     @Matches(/^[a-zA-Z_][a-zA-Z0-9_]{3,63}$/)
-    @ApiProperty({ example: 'Updated Field Name', type: 'string', required: false })
-    updatedName!: string;
+    originalName?: string;
 }
 
 export class EditAssetTypeDto {

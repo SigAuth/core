@@ -38,5 +38,9 @@ export class AssetTypeService {
             await this.db.DBClient.deleteAssetType(uuid);
         }
     }
+
+    async getAssetType(uuid: string): Promise<AssetType | null> {
+        return this.db.DBClient.getAssetType(uuid);
+    }
 }
 
