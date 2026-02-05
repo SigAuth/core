@@ -165,7 +165,7 @@ export class Model<T extends Record<string, any>> {
         return fullId
             .replace(/^asset[-_]/, '')
             .replace(/[-_]/g, '')
-            .substring(0, 16);
+            .substring(16);
     }
 
     async createOne(input: CreateInput<T>): Promise<T> {
@@ -652,4 +652,3 @@ export type DeleteInput<T> = {
 export type DeleteManyInput<T> = {
     where: FindWhere<T>;
 };
-

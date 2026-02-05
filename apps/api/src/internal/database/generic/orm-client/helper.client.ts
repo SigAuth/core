@@ -67,7 +67,7 @@ export const ORMUtils = {
             fullId
                 .replace(/^asset[-_]/, '')
                 .replace(/[-_]/g, '')
-                .substring(0, 16);
+                .substring(16);
 
         // Helper to generate subquery logic for relations
         const processIncludes = (parentAlias: string, parentTableId: string, includes: any, isRoot = false): string[] => {
@@ -176,4 +176,3 @@ export const ORMUtils = {
         return row;
     },
 };
-
