@@ -486,7 +486,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
         // Garbage collect unused Join Tables
         // Check all existing join tables starting with this source UUID
-        const sourcePart = uuid.replace(/-/g, '').substring(0, 16);
+        const sourcePart = this.getJoinTablePart(uuid);
         const relTables = await this.db!.select('tablename').from('pg_tables').where('schemaname', 'public');
 
         for (const { tablename } of relTables) {
@@ -497,7 +497,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             // Check if this relationship is still required by ANY field in the updated keys
             const isUsed = newExternalKeys.some(k => {
                 const parts = k.split('#');
-                const tUuidSimple = parts[1].replace(/_/g, '').replace(/-/g, '').substring(0, 16);
+                const tUuidSimple = this.getJoinTablePart(parts[1]);
                 return tUuidSimple === targetSimple;
             });
 
@@ -510,9 +510,15 @@ export class PostgresDriver extends GenericDatabaseGateway {
         return (await this.getAssetType(uuid))!;
     }
 
+    // Use the last 16 hex digits of uuid v7 to keep table name within Postgres 63-byte limit and ensure uniqueness.
+    private getJoinTablePart(uuid: string): string {
+        return uuid.replace(/_/g, '').replace(/-/g, '').substring(16);
+    }
+
+    // Format: rel_SOURCE16_TARGET16 (Length: 4 + 16 + 1 + 16 = 37 chars)
     private getJoinTableName(sourceUuid: string, targetUuid: string): string {
-        const sourcePart = sourceUuid.replace(/-/g, '').substring(0, 16);
-        const targetPart = targetUuid.replace(/-/g, '').substring(0, 16);
+        const sourcePart = this.getJoinTablePart(sourceUuid);
+        const targetPart = this.getJoinTablePart(targetUuid);
         return `rel_${sourcePart}_${targetPart}`;
     }
 
@@ -584,7 +590,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             .andWhere('table_name', 'like', 'rel_%');
 
         for (const relTable of allRelTablesNames) {
-            if (relTable.table_name.includes(uuid.replace(/-/g, '').substring(0, 16))) {
+            if (relTable.table_name.includes(this.getJoinTablePart(uuid))) {
                 this.logger.log(`Dropping relation table ${relTable.table_name} related to asset type ${uuid}`);
                 await this.db.schema.dropTable(relTable.table_name);
             }
@@ -626,11 +632,11 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
         // handle join tables
         for (const field of externalFields) {
-            const joinTableName = `rel_${assetType.uuid.replace(/-/g, '').substring(0, 16)}_${field.targetAssetType.replace(/-/g, '').substring(0, 16)}`;
+            const joinTable = this.getJoinTableName(assetType.uuid, field.targetAssetType);
             const relatedUuids: string[] = fields[field.name] || [];
 
             for (const targetUuid of relatedUuids) {
-                await this.db(joinTableName).insert({
+                await this.db(joinTable).insert({
                     source: asset.uuid,
                     target: targetUuid,
                     field: field.name,
@@ -665,16 +671,16 @@ export class PostgresDriver extends GenericDatabaseGateway {
             (f): f is AssetTypeRelationField => f.type === AssetFieldType.RELATION && !!f.allowMultiple,
         );
         for (const field of externalFields) {
-            const joinTableName = `rel_${assetType.uuid.replace(/-/g, '').substring(0, 16)}_${field.targetAssetType.replace(/-/g, '').substring(0, 16)}`;
+            const joinTable = this.getJoinTableName(assetType.uuid, field.targetAssetType);
             const relatedUuids: string[] = fields[field.name] || [];
 
             // TODO optimize this process by calculating diffs
             // First, delete existing relations for this asset and field
-            await this.db(joinTableName).where({ source: assetUuid, field: field.name }).del();
+            await this.db(joinTable).where({ source: assetUuid, field: field.name }).del();
 
             // Then, insert the new relations
             for (const targetUuid of relatedUuids) {
-                await this.db(joinTableName).insert({
+                await this.db(joinTable).insert({
                     source: assetUuid,
                     target: targetUuid,
                     field: field.name,
@@ -694,9 +700,9 @@ export class PostgresDriver extends GenericDatabaseGateway {
             (f): f is AssetTypeRelationField => f.type === AssetFieldType.RELATION && !!f.allowMultiple,
         );
         for (const field of externalFields) {
-            const joinTableName = `rel_${assetType.uuid.replace(/-/g, '').substring(0, 16)}_${field.targetAssetType.replace(/-/g, '').substring(0, 16)}`;
+            const joinTable = this.getJoinTableName(assetType.uuid, field.targetAssetType);
             // delete existing relations for this asset and field
-            this.db(joinTableName).where({ source: assetUuid, field: field.name }).del();
+            this.db(joinTable).where({ source: assetUuid, field: field.name }).del();
         }
 
         return this.db(tableName)
@@ -810,18 +816,14 @@ export class PostgresDriver extends GenericDatabaseGateway {
     }
 
     private async createJoinTable(sourceTypeUuid: string, targetTypeUuid: string, field: AssetTypeRelationField): Promise<void> {
-        // Use the first 16 hex digits (high 64 bits) to keep table name within Postgres 63-byte limit.
-        // Format: rel_SOURCE16_TARGET16 (Length: 4 + 16 + 1 + 16 = 37 chars)
-        const sourcePart = sourceTypeUuid.replace(/-/g, '').substring(0, 16);
-        const targetPart = targetTypeUuid.replace(/-/g, '').substring(0, 16);
-        const joinTableName = `rel_${sourcePart}_${targetPart}`;
+        const joinTable = this.getJoinTableName(sourceTypeUuid, targetTypeUuid);
 
-        if (await this.db!.schema.hasTable(joinTableName)) {
-            this.logger.log(`Join table for relations ${joinTableName} already exists, skipping creation.`);
+        if (await this.db!.schema.hasTable(joinTable)) {
+            this.logger.log(`Join table for relations ${joinTable} already exists, skipping creation.`);
             return;
         }
 
-        await this.db!.schema.createTable(joinTableName, table => {
+        await this.db!.schema.createTable(joinTable, table => {
             const sourceColumn = table
                 .uuid('source')
                 .notNullable()
@@ -876,4 +878,3 @@ export class PostgresDriver extends GenericDatabaseGateway {
         throw new Error(`Unsupported Postgres type: ${pgType}`);
     }
 }
-
