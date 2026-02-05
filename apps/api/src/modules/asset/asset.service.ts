@@ -8,7 +8,7 @@ export class AssetService {
     async createOrUpdateAsset(
         assetUuid: string | undefined,
         assetTypeUuid: string,
-        fields: Record<string, string | number | boolean | Date>,
+        fields: Record<string, string[] | string | number | boolean | Date>,
     ): Promise<Asset> {
         const assetType = await this.db.AssetType.findOne({ where: { uuid: assetTypeUuid } });
         if (!assetType) throw new NotFoundException('Invalid asset type');
@@ -81,4 +81,3 @@ export class AssetService {
         return this.db.DBClient.getAssetByUuid<T>(typeUuid, assetUuid);
     }
 }
-

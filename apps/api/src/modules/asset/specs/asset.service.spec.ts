@@ -4,7 +4,7 @@ import { AssetService } from '@/modules/asset/asset.service';
 import { BadRequestException } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssetFieldType, AssetType } from '@sigauth/sdk/asset';
+import { AssetFieldType, AssetType, AssetTypeRelationField, RelationalIntegrityStrategy } from '@sigauth/sdk/asset';
 
 describe('AssetService', () => {
     let assetService: AssetService;
@@ -108,9 +108,121 @@ describe('AssetService', () => {
         ).rejects.toThrow();
     });
 
+    it('should create a simple link type', async () => {
+        const linkTypeUuid = await typeService.createAssetType({
+            name: 'Test Link Type',
+            fields: [
+                { name: 'likes', type: AssetFieldType.INTEGER, required: false },
+                {
+                    name: 'linkedAsset',
+                    type: AssetFieldType.RELATION,
+                    required: false,
+                    allowMultiple: false,
+                    targetAssetType: assetType!.uuid,
+                    referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
+                },
+            ],
+        });
+        expect(linkTypeUuid).toBeDefined();
+
+        const linkType = await typeService.getAssetType(linkTypeUuid!);
+        expect(linkType).toBeDefined();
+        expect(linkType!.fields).toHaveLength(2);
+        expect(linkType?.fields).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ name: 'likes', type: AssetFieldType.INTEGER, required: false }),
+                expect.objectContaining({
+                    name: 'linkedAsset',
+                    type: AssetFieldType.RELATION,
+                    required: false,
+                    allowMultiple: false,
+                    targetAssetType: assetType!.uuid,
+                    referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
+                }),
+            ]),
+        );
+
+        const testAsset = await assetService.createOrUpdateAsset(undefined, assetType!.uuid, {
+            title: 'Test Asset for Link',
+        });
+
+        const linkAsset = await assetService.createOrUpdateAsset(undefined, linkTypeUuid!, {
+            likes: 10,
+            linkedAsset: testAsset!.uuid,
+        });
+
+        expect(linkAsset).toBeDefined();
+        const forwardCheck = await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid);
+        expect(forwardCheck).toBeDefined();
+        expect(forwardCheck!.likes as any).toBe(10);
+        expect(forwardCheck!.linkedAsset as any).toBe(testAsset!.uuid);
+
+        // Deletion
+        const deletedLinkAsset = await assetService.deleteAssets([
+            { uuid: linkAsset!.uuid, typeUuid: linkTypeUuid! },
+            { uuid: testAsset!.uuid, typeUuid: assetType!.uuid },
+        ]);
+        expect(deletedLinkAsset).toEqual([linkAsset, testAsset]);
+        expect(await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid)).toBeNull();
+
+        await typeService.deleteAssetType([linkTypeUuid!]);
+    });
+
+    it('should create a bidirectional link type', async () => {
+        const linkTypeUuid = await typeService.createAssetType({
+            name: 'Test Link Type',
+            fields: [
+                { name: 'likes', type: AssetFieldType.INTEGER, required: false },
+                {
+                    name: 'linkedAsset',
+                    type: AssetFieldType.RELATION,
+                    required: false,
+                    allowMultiple: true,
+                    targetAssetType: assetType!.uuid,
+                    referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
+                },
+            ],
+        });
+        expect(linkTypeUuid).toBeDefined();
+
+        const linkType = await typeService.getAssetType(linkTypeUuid!);
+        expect(linkType).toBeDefined();
+        expect(linkType!.fields).toHaveLength(2);
+        expect(linkType!.fields[1].type).toBe(AssetFieldType.RELATION);
+        expect((linkType!.fields[1] as AssetTypeRelationField).targetAssetType).toBe(assetType!.uuid);
+
+        const testAsset1 = await assetService.createOrUpdateAsset(undefined, assetType!.uuid, {
+            title: 'Test Asset for Link 1',
+        });
+
+        const testAsset2 = await assetService.createOrUpdateAsset(undefined, assetType!.uuid, {
+            title: 'Test Asset for Link 2',
+        });
+
+        const linkAsset = await assetService.createOrUpdateAsset(undefined, linkTypeUuid!, {
+            likes: 10,
+            linkedAsset: [testAsset1!.uuid, testAsset2!.uuid],
+        });
+
+        expect(linkAsset).toBeDefined();
+        const forwardCheck = await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid);
+        expect(forwardCheck).toBeDefined();
+        expect(forwardCheck).toEqual(linkAsset);
+        expect(forwardCheck!.likes as any).toBe(10);
+        expect(forwardCheck!.linkedAsset as any).toEqual([testAsset1!.uuid, testAsset2!.uuid]);
+
+        // Deletion
+        const deletedLinkAsset = await assetService.deleteAssets([
+            { uuid: linkAsset!.uuid, typeUuid: linkTypeUuid! },
+            { uuid: testAsset1!.uuid, typeUuid: assetType!.uuid },
+            { uuid: testAsset2!.uuid, typeUuid: assetType!.uuid },
+        ]);
+        expect(deletedLinkAsset).toEqual([linkAsset, testAsset1, testAsset2]);
+        expect(await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid)).toBeNull();
+    });
+
     afterEach(async () => {
         await typeService.deleteAssetType([assetType!.uuid]);
         await module.close();
     });
 });
-

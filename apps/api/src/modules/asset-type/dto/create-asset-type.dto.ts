@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { AssetFieldType, AssetTypeField, AssetTypeRelationField, RelationalIntegrityStrategy } from '@sigauth/sdk/asset';
 import { Type } from 'class-transformer';
 import {
     IsArray,
@@ -14,7 +15,6 @@ import {
     MinLength,
     ValidateNested,
 } from 'class-validator';
-import { AssetFieldType, AssetTypeField, RelationalIntegrityStrategy } from '../../../../../../packages/sdk/dist/asset.types';
 
 export class CreateAssetTypeDto {
     @ApiProperty({ example: 'Blog Post', type: 'string' })
@@ -46,7 +46,7 @@ export class CreateAssetTypeDto {
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => AssetTypeFieldDto)
-    fields!: AssetTypeField[];
+    fields!: (AssetTypeField | AssetTypeRelationField)[];
 }
 
 export class AssetTypeFieldDto {
@@ -97,4 +97,3 @@ export class AssetTypeFieldDto {
     })
     targetAssetType?: string;
 }
-

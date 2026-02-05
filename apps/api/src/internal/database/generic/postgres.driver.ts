@@ -265,16 +265,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         // add asset_type entry
         const externalJoinKeys = fields
             .filter((f): f is Omit<AssetTypeRelationField, 'uuid'> => f.type === AssetFieldType.RELATION && !!f.allowMultiple)
-            .map(
-                f =>
-                    f.name +
-                    '#' +
-                    f.targetAssetType.replaceAll('-', '_') +
-                    '#' +
-                    (f.required ? '1' : '0') +
-                    '#' +
-                    f.referentialIntegrityStrategy,
-            );
+            .map(f => f.name + '#' + f.targetAssetType + '#' + (f.required ? '1' : '0') + '#' + f.referentialIntegrityStrategy);
         const [{ uuid }] = await this.db(INTERNAL_ASSET_TYPE_TABLE).insert({ name, externalJoinKeys }).returning('uuid');
         const tableName = `asset_${uuid.replace(/-/g, '_')}`;
         await this.db.schema.createTable(tableName, async table => {
@@ -369,7 +360,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
                 newExternalKeys.push(
                     f.name +
                         '#' +
-                        f.targetAssetType.replaceAll('-', '_') +
+                        f.targetAssetType +
                         '#' +
                         (f.required ? '1' : '0') +
                         '#' +
