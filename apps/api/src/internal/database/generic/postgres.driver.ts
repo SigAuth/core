@@ -644,10 +644,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             }
         }
 
-        return {
-            uuid: asset.uuid,
-            ...fields,
-        } as T;
+        return (await this.getAssetByUuid<T>(assetType.uuid, asset.uuid)) as T;
     }
 
     async updateAsset<T extends Asset>(assetType: AssetType, assetUuid: string, fields: Record<string, any>): Promise<T> {
