@@ -7,7 +7,6 @@ export class AssetService {
     constructor(private readonly db: ORMService) {}
     async createOrUpdateAsset(
         assetUuid: string | undefined,
-        name: string,
         assetTypeUuid: string,
         fields: Record<string, string | number | boolean | Date>,
     ): Promise<Asset> {
@@ -49,9 +48,9 @@ export class AssetService {
             if (!assetType) throw new NotFoundException('Asset type not found');
 
             if (assetUuid) {
-                return this.db.DBClient.updateAsset<Asset>(assetType, assetUuid, name, fields);
+                return this.db.DBClient.updateAsset<Asset>(assetType, assetUuid, fields);
             } else {
-                return this.db.DBClient.createAsset<Asset>(assetType, name, fields);
+                return this.db.DBClient.createAsset<Asset>(assetType, fields);
             }
         } catch (e: any) {
             throw new BadRequestException('One or more fields have invalid types or values' + e.message);
@@ -76,6 +75,10 @@ export class AssetService {
         }
 
         return assets;
+    }
+
+    async getAsset<T extends Asset>(typeUuid: string, assetUuid: string): Promise<T | null> {
+        return this.db.DBClient.getAssetByUuid<T>(typeUuid, assetUuid);
     }
 }
 

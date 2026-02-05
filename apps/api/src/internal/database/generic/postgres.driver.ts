@@ -609,7 +609,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         }
     }
 
-    async createAsset<T extends Asset>(assetType: AssetType, name: string, fields: Record<string, any>): Promise<T> {
+    async createAsset<T extends Asset>(assetType: AssetType, fields: Record<string, any>): Promise<T> {
         if (!this.db) throw new Error('Database not connected');
         if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot set uuid field when creating asset, it is auto-generated');
         const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
@@ -620,10 +620,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         );
 
         const asset = await this.db(tableName)
-            .insert({
-                name,
-                ...Object.fromEntries(Object.entries(fields).filter(([key]) => !externalFields.find(f => f.name === key))),
-            })
+            .insert(Object.fromEntries(Object.entries(fields).filter(([key]) => !externalFields.find(f => f.name === key))))
             .returning('*')
             .then(results => results[0] as T);
 
@@ -643,23 +640,16 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
         return {
             uuid: asset.uuid,
-            name,
             ...fields,
         } as T;
     }
 
-    async updateAsset<T extends Asset>(
-        assetType: AssetType,
-        assetUuid: string,
-        name: string | undefined,
-        fields: Record<string, any>,
-    ): Promise<T> {
+    async updateAsset<T extends Asset>(assetType: AssetType, assetUuid: string, fields: Record<string, any>): Promise<T> {
         if (!this.db) throw new Error('Database not connected');
         if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot update uuid field of an asset');
 
         const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
         const updateData: Record<string, any> = { ...fields };
-        if (name !== undefined) updateData['name'] = name;
 
         const asset = await this.db(tableName)
             .where({ uuid: assetUuid })

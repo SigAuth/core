@@ -49,12 +49,7 @@ export class AssetController {
         },
     })
     async createAsset(@Body() createAssetDto: CreateAssetDto): Promise<{ asset: Asset }> {
-        const asset = await this.assetsService.createOrUpdateAsset(
-            undefined,
-            createAssetDto.name,
-            createAssetDto.assetTypeUuid,
-            createAssetDto.fields,
-        );
+        const asset = await this.assetsService.createOrUpdateAsset(undefined, createAssetDto.assetTypeUuid, createAssetDto.fields);
 
         return { asset };
     }
@@ -85,12 +80,7 @@ export class AssetController {
     })
     @ApiNotFoundResponse({ description: 'Container, asset or asset type not found' })
     async editAsset(@Body() editAssetDto: EditAssetDto): Promise<{ asset: Asset }> {
-        const asset = await this.assetsService.createOrUpdateAsset(
-            editAssetDto.uuid,
-            editAssetDto.name,
-            editAssetDto.assetTypeUuid,
-            editAssetDto.fields,
-        );
+        const asset = await this.assetsService.createOrUpdateAsset(editAssetDto.uuid, editAssetDto.assetTypeUuid, editAssetDto.fields);
 
         return { asset };
     }

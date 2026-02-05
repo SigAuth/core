@@ -31,14 +31,9 @@ export abstract class GenericDatabaseGateway {
 
     abstract getAssetByUuid<T extends Asset>(typeUuid: string, assetUuid: string): Promise<T | null>;
 
-    abstract createAsset<T extends Asset>(assetType: AssetType, name: string, fields: Record<string, any>): Promise<T>;
+    abstract createAsset<T extends Asset>(assetType: AssetType, fields: Record<string, any>): Promise<T>;
 
-    abstract updateAsset<T extends Asset>(
-        assetType: AssetType,
-        assetUuid: string,
-        name: string | undefined,
-        fields: Record<string, any>,
-    ): Promise<T>;
+    abstract updateAsset<T extends Asset>(assetType: AssetType, assetUuid: string, fields: Record<string, any>): Promise<T>;
 
     abstract deleteAsset(assetType: AssetType, assetUuid: string): Promise<boolean>;
 

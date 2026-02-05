@@ -103,8 +103,6 @@ describe('AssetTypesService', () => {
         expect(deletedAssetType).toBeNull();
     });
 
-
-
     afterEach(async () => {
         // delete all asset types created during tests
         const allTypes = await service['db'].DBClient.getAssetTypes();
@@ -117,3 +115,4 @@ describe('AssetTypesService', () => {
         await module.close();
     });
 });
+

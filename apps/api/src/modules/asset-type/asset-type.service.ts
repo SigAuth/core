@@ -29,7 +29,7 @@ export class AssetTypeService {
 
     async deleteAssetType(uuids: string[]) {
         if (!this.storage.InstancedSignature) throw new Error('Storage service not initialized yet');
-        const criticalTypes = Object.values(this.storage.InstancedSignature).map(s => Utils.convertPermissionNameToIdent(s));
+        const criticalTypes = Object.values(this.storage.InstancedSignature).map(s => Utils.convertSignatureToUuid(s));
 
         for (const uuid of uuids) {
             if (criticalTypes.includes(uuid)) {
