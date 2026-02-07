@@ -55,6 +55,7 @@ export interface App {
  * and permissions via grants on the fly
  */
 export interface AppScope {
+    uuid: string;
     name: string;
     description: string;
     public: boolean;

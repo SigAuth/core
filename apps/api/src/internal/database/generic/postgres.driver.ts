@@ -800,7 +800,25 @@ export class PostgresDriver extends GenericDatabaseGateway {
         if (!this.db) throw new Error('Database not connected');
 
         const asset = await this.db(tableName).where({ uuid: assetUuid }).first();
-        return asset ? (asset as T) : null;
+        if (!asset) return null;
+
+        const assetType = await this.db(INTERNAL_ASSET_TYPE_TABLE).where({ uuid: typeUuid }).first();
+        if (!assetType) throw new Error('Asset type not found for asset');
+        const externalJoinKeys: string[] = assetType.externalJoinKeys || [];
+
+        for (const key of externalJoinKeys) {
+            const [fieldName, targetAssetType] = key.split('#');
+            const joinTable = this.getJoinTableName(typeUuid, targetAssetType);
+
+            const relations = await this.db(joinTable).select('target').where({
+                source: assetUuid,
+                field: fieldName,
+            });
+
+            (asset as any)[fieldName] = relations.map((row: any) => row.target);
+        }
+
+        return asset as T;
     }
 
     private async createJoinTable(sourceTypeUuid: string, targetTypeUuid: string, field: AssetTypeRelationField): Promise<void> {
@@ -814,17 +832,23 @@ export class PostgresDriver extends GenericDatabaseGateway {
         await this.db!.schema.createTable(joinTable, table => {
             const sourceColumn = table
                 .uuid('source')
-                .notNullable()
                 .references('uuid')
                 .inTable(`asset_${sourceTypeUuid.replace(/-/g, '_')}`);
             this.applyOnDeleteStrategy(sourceColumn, field);
 
             const targetColumn = table
                 .uuid('target')
-                .notNullable()
                 .references('uuid')
                 .inTable(`asset_${targetTypeUuid.replace(/-/g, '_')}`);
             this.applyOnDeleteStrategy(targetColumn, field);
+
+            // A join table row cannot have a null target because that would not make sense in the context of a relation,
+            // so we use CASCADE to ensure referential integrity. If the target asset is deleted, the relation should be deleted as well.
+            if (field.referentialIntegrityStrategy === 'SET_NULL') {
+                targetColumn.onDelete('CASCADE');
+            } else {
+                this.applyOnDeleteStrategy(targetColumn, field);
+            }
 
             table.string('field').notNullable();
             table.primary(['source', 'target', 'field']);
@@ -866,3 +890,4 @@ export class PostgresDriver extends GenericDatabaseGateway {
         throw new Error(`Unsupported Postgres type: ${pgType}`);
     }
 }
+

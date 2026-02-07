@@ -14,7 +14,7 @@ describe('AssetService', () => {
 
     let assetType: AssetType | null;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [DatabaseModule, ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env'] })],
             providers: [AssetService, AssetTypeService],
@@ -170,7 +170,7 @@ describe('AssetService', () => {
 
     it('should create a bidirectional link type', async () => {
         const linkTypeUuid = await typeService.createAssetType({
-            name: 'Test Link Type',
+            name: 'Test Link Type 2',
             fields: [
                 { name: 'likes', type: AssetFieldType.INTEGER, required: false },
                 {
@@ -221,8 +221,137 @@ describe('AssetService', () => {
         expect(await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid)).toBeNull();
     });
 
-    afterEach(async () => {
-        await typeService.deleteAssetType([assetType!.uuid]);
+    it('should enforce cascade referential integrity on delete for single relation', async () => {
+        const linkTypeUuid = await typeService.createAssetType({
+            name: 'Test Link Type 3',
+            fields: [
+                { name: 'likes', type: AssetFieldType.INTEGER, required: false },
+                {
+                    name: 'linkedAsset',
+                    type: AssetFieldType.RELATION,
+                    required: false,
+                    allowMultiple: false,
+                    targetAssetType: assetType!.uuid,
+                    referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
+                },
+            ],
+        });
+        expect(linkTypeUuid).toBeDefined();
+
+        const testAsset = await assetService.createOrUpdateAsset(undefined, assetType!.uuid, {
+            title: 'Test Asset for Cascade Delete',
+        });
+
+        const linkAsset = await assetService.createOrUpdateAsset(undefined, linkTypeUuid!, {
+            likes: 10,
+            linkedAsset: testAsset!.uuid,
+        });
+
+        // Delete the linked asset and expect the link asset to be deleted as well due to cascade strategy
+        const deletedAssets = await assetService.deleteAssets([{ uuid: testAsset!.uuid, typeUuid: assetType!.uuid }]);
+        expect(deletedAssets).toEqual([testAsset]);
+        expect(await assetService.getAsset(assetType!.uuid, testAsset!.uuid)).toBeNull();
+        expect(await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid)).toBeNull();
+
+        await typeService.deleteAssetType([linkTypeUuid!]);
+    });
+
+    it('should enforce setnull referential integrity on delete for single relations', async () => {
+        const linkTypeUuid = await typeService.createAssetType({
+            name: 'Test Link Type 5',
+            fields: [
+                { name: 'likes', type: AssetFieldType.INTEGER, required: false },
+                {
+                    name: 'linkedAsset',
+                    type: AssetFieldType.RELATION,
+                    required: false,
+                    allowMultiple: false,
+                    targetAssetType: assetType!.uuid,
+                    referentialIntegrityStrategy: RelationalIntegrityStrategy.SET_NULL,
+                },
+            ],
+        });
+        expect(linkTypeUuid).toBeDefined();
+
+        const testAsset = await assetService.createOrUpdateAsset(undefined, assetType!.uuid, {
+            title: 'Test Asset for SetNull Cascade Delete',
+        });
+
+        const linkAsset = await assetService.createOrUpdateAsset(undefined, linkTypeUuid!, {
+            likes: 10,
+            linkedAsset: testAsset!.uuid,
+        });
+
+        // Delete the linked asset and expect the linkedAsset field in the link asset to be set to null
+        const deletedAssets = await assetService.deleteAssets([{ uuid: testAsset!.uuid, typeUuid: assetType!.uuid }]);
+        expect(deletedAssets).toEqual([testAsset]);
+        expect(await assetService.getAsset(assetType!.uuid, testAsset!.uuid)).toBeNull();
+
+        const updatedLinkAsset = await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid);
+        expect(updatedLinkAsset).toBeDefined();
+        expect(updatedLinkAsset!.linkedAsset).toBeNull();
+
+        // Cleanup
+        await assetService.deleteAssets([{ uuid: linkAsset!.uuid, typeUuid: linkTypeUuid! }]);
+        await typeService.deleteAssetType([linkTypeUuid!]);
+    });
+
+    it('should enforce setnull|cascade referential integrity on cascade delete for multiple relations', async () => {
+        const linkTypeUuid = await typeService.createAssetType({
+            name: 'Test Link Type 4',
+            fields: [
+                { name: 'likes', type: AssetFieldType.INTEGER, required: false },
+                {
+                    name: 'linkedAsset',
+                    type: AssetFieldType.RELATION,
+                    required: false,
+                    allowMultiple: true,
+                    targetAssetType: assetType!.uuid,
+                    referentialIntegrityStrategy: RelationalIntegrityStrategy.SET_NULL,
+                },
+            ],
+        });
+
+        const testAsset1 = await assetService.createOrUpdateAsset(undefined, assetType!.uuid, {
+            title: 'Test Asset for SetNull 1',
+        });
+
+        const testAsset2 = await assetService.createOrUpdateAsset(undefined, assetType!.uuid, {
+            title: 'Test Asset for SetNull 2',
+        });
+
+        const linkAsset = await assetService.createOrUpdateAsset(undefined, linkTypeUuid!, {
+            likes: 10,
+            linkedAsset: [testAsset1!.uuid, testAsset2!.uuid],
+        });
+
+        // Delete one of the linked assets and expect the relation to be set to null for that asset in the link asset
+        const deletedAssets = await assetService.deleteAssets([{ uuid: testAsset1!.uuid, typeUuid: assetType!.uuid }]);
+        expect(deletedAssets).toEqual([testAsset1]);
+        expect(await assetService.getAsset(assetType!.uuid, testAsset1!.uuid)).toBeNull();
+
+        let updatedLinkAsset = await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid);
+        expect(updatedLinkAsset).toBeDefined();
+        expect(updatedLinkAsset!.linkedAsset as any).toEqual([testAsset2!.uuid]);
+
+        await assetService.deleteAssets([{ uuid: testAsset2!.uuid, typeUuid: assetType!.uuid }]);
+        expect(await assetService.getAsset(assetType!.uuid, testAsset2!.uuid)).toBeNull();
+
+        updatedLinkAsset = await assetService.getAsset(linkTypeUuid!, linkAsset!.uuid);
+        expect(updatedLinkAsset).toBeDefined();
+        expect(updatedLinkAsset!.linkedAsset as any).toEqual([]);
+
+        await typeService.deleteAssetType([linkTypeUuid!]);
+    });
+
+    afterAll(async () => {
+        const allTypes = await typeService['db'].DBClient.getAssetTypes();
+        for (const type of allTypes) {
+            if (type.name.startsWith('Test')) {
+                await typeService.deleteAssetType([type.uuid]);
+            }
+        }
         await module.close();
     });
 });
+

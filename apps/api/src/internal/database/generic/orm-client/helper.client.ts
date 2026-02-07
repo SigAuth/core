@@ -19,6 +19,40 @@ export const ORMUtils = {
         const conditions: string[] = [];
         const selections: string[] = [`"${table}".*`];
 
+        const getShortId = (fullId: string) =>
+            fullId
+                .replace(/^asset[-_]/, '')
+                .replace(/[-_]/g, '')
+                .substring(16);
+
+        // Join rel tables automatically to fill base join fields (e.g. appUuids)
+        if (relationMap && relationMap[table]) {
+            for (const relationConfig of Object.values(relationMap[table])) {
+                if (relationConfig.usingJoinTable) {
+                    const { table: targetTableId, joinType = 'forward', fieldName } = relationConfig;
+                    const parentHex = getShortId(table);
+                    const targetHex = getShortId(targetTableId);
+
+                    let joinTableName = '';
+                    let whereParam = '';
+
+                    if (joinType === 'forward') {
+                        joinTableName = `rel_${parentHex}_${targetHex}`;
+                        whereParam = `"source" = "${table}"."uuid" AND "field" = '${fieldName}'`;
+                        selections.push(
+                            `COALESCE((SELECT jsonb_agg("target") FROM "${joinTableName}" WHERE ${whereParam}), '[]'::jsonb) AS "${fieldName}"`,
+                        );
+                    } else {
+                        joinTableName = `rel_${targetHex}_${parentHex}`;
+                        whereParam = `"target" = "${table}"."uuid" AND "field" = '${fieldName}'`;
+                        selections.push(
+                            `COALESCE((SELECT jsonb_agg("source") FROM "${joinTableName}" WHERE ${whereParam}), '[]'::jsonb) AS "${fieldName}"`,
+                        );
+                    }
+                }
+            }
+        }
+
         if (query.where) {
             const parseWhere = (where: any): string[] => {
                 const parts: string[] = [];
@@ -36,6 +70,47 @@ export const ORMUtils = {
                             if (subs.length > 0) {
                                 parts.push(`(${subs.join(` ${key} `)})`);
                             }
+                        }
+                        continue;
+                    }
+
+                    // Check if field is a relation mapping first
+                    const relationConfig =
+                        relationMap && relationMap[table] ? Object.values(relationMap[table]).find(r => r.fieldName === key) : null;
+
+                    if (relationConfig && relationConfig.usingJoinTable) {
+                        const { table: targetTableId, joinType = 'forward' } = relationConfig;
+                        const parentHex = getShortId(table);
+                        const targetHex = getShortId(targetTableId);
+
+                        let joinTableName = '';
+                        let parentCol = '';
+                        let valCol = '';
+
+                        if (joinType === 'forward') {
+                            joinTableName = `rel_${parentHex}_${targetHex}`;
+                            parentCol = 'source';
+                            valCol = 'target';
+                        } else {
+                            joinTableName = `rel_${targetHex}_${parentHex}`;
+                            parentCol = 'target';
+                            valCol = 'source';
+                        }
+
+                        let valuesToCheck: any[] = [];
+                        if (Array.isArray(value)) {
+                            valuesToCheck = value;
+                        } else if (typeof value === 'object' && value !== null && 'in' in value) {
+                            valuesToCheck = (value as any).in;
+                        } else if (typeof value !== 'object' && value !== null) {
+                            valuesToCheck = [value];
+                        }
+
+                        if (valuesToCheck.length > 0) {
+                            const valList = valuesToCheck.map(v => `'${v}'`).join(',');
+                            parts.push(
+                                `EXISTS (SELECT 1 FROM "${joinTableName}" WHERE "${joinTableName}"."${parentCol}" = "${table}"."uuid" AND "${joinTableName}"."field" = '${key}' AND "${joinTableName}"."${valCol}" IN (${valList}))`,
+                            );
                         }
                         continue;
                     }
@@ -62,12 +137,6 @@ export const ORMUtils = {
 
             conditions.push(...parseWhere(query.where));
         }
-
-        const getShortId = (fullId: string) =>
-            fullId
-                .replace(/^asset[-_]/, '')
-                .replace(/[-_]/g, '')
-                .substring(16);
 
         // Helper to generate subquery logic for relations
         const processIncludes = (parentAlias: string, parentTableId: string, includes: any, isRoot = false): string[] => {
@@ -132,7 +201,7 @@ export const ORMUtils = {
                 // 3. Determine singular (Object) vs plural (Array) result
                 // 'forward' without join table implies N:1 (Object)
                 // Everything else (reverse, join table) implies 1:N or N:M (Array)
-                const isArray = usingJoinTable || joinType !== 'forward';
+                const isArray = usingJoinTable || joinType === 'reverse';
 
                 let selectionRef;
                 if (isArray) {
@@ -171,8 +240,7 @@ export const ORMUtils = {
     },
 
     hydrateRow: (row: any, includes: any) => {
-        // Since we now use JSON subqueries, proper structure and nesting is handled by DB.
-        // No manual hydration/flattening needed.
         return row;
     },
 };
+

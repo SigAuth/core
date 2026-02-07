@@ -42,17 +42,42 @@ export class AppsService {
             },
         });
 
-        const perms = await this.db.Permission.createMany({
+        await this.db.Permission.createMany({
             data: createAppDto.permissions.flatMap(type =>
                 type.permissions.map(perm => ({
                     appUuid: app.uuid,
-                    type: type.typeUuid,
+                    typeUuid: type.typeUuid,
                     permission: perm,
                 })),
             ),
         });
 
-        return app;
+        const exisitngScopes = await this.db.AppScope.findMany({
+            where: { name: { in: createAppDto.scopes } },
+        });
+        const uniqueScopes = [...new Set(createAppDto.scopes)];
+        for (const scopeName of uniqueScopes) {
+            if (!exisitngScopes.find(s => s.name === scopeName)) {
+                await this.db.AppScope.createOne({
+                    data: {
+                        name: scopeName,
+                        appUuids: [app.uuid],
+                        description: '',
+                        public: false,
+                    },
+                });
+            } else {
+                const scope = exisitngScopes.find(s => s.name === scopeName)!;
+                if (!scope.appUuids.includes(app.uuid)) {
+                    await this.db.AppScope.updateOne({
+                        where: { name: scope.name },
+                        data: { appUuids: [...scope.appUuids, app.uuid] },
+                    });
+                }
+            }
+        }
+
+        return this.getApp(app.uuid) as Promise<App>;
     }
 
     async editApp(editAppDto: EditAppDto): Promise<App> {
@@ -140,6 +165,10 @@ export class AppsService {
         ) {
             throw new UnprocessableEntityException('Duplicate permissions in the same category');
         }
+    }
+
+    async getApp(uuid: string): Promise<App | null> {
+        return this.db.App.findOne({ where: { uuid }, includes: { app_permissions: true, app_scopes: true } });
     }
 
     // async getAppInfo(app: App): Promise<AppInfo> {

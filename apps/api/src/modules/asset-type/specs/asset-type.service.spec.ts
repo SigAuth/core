@@ -8,7 +8,7 @@ describe('AssetTypesService', () => {
     let service: AssetTypeService;
     let module: TestingModule;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [DatabaseModule, ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env'] })],
             providers: [AssetTypeService],
@@ -103,7 +103,7 @@ describe('AssetTypesService', () => {
         expect(deletedAssetType).toBeNull();
     });
 
-    afterEach(async () => {
+    afterAll(async () => {
         // delete all asset types created during tests
         const allTypes = await service['db'].DBClient.getAssetTypes();
         for (const type of allTypes) {

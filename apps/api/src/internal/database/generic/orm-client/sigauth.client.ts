@@ -1,11 +1,13 @@
 import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
 import { ORMUtils } from '@/internal/database/generic/orm-client/helper.client';
-import { INTERNAL_GRANT_TABLE } from '@sigauth/sdk/asset';
+import { Utils } from '@/internal/utils';
+import { INTERNAL_ASSET_TYPE_TABLE, INTERNAL_GRANT_TABLE } from '@sigauth/sdk/asset';
 import { TableIdSignature } from '@sigauth/sdk/protected';
 import {
     Account,
     App,
     AppAccess,
+    AppScope,
     AssetType,
     AuthorizationChallenge,
     AuthorizationInstance,
@@ -33,14 +35,14 @@ const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
         [signature.App]: {
             app_authorizationinstances: { table: signature.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
             app_authorizationchallenges: { table: signature.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
-            app_scopes: { table: signature.AppScope, joinType: 'reverse', fieldName: 'appUuids' },
+            app_scopes: { table: signature.AppScope, joinType: 'reverse', fieldName: 'appUuids', usingJoinTable: true },
 
             app_accesses: { table: signature.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
             app_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
             app_permissions: { table: signature.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
         },
         [signature.AppScope]: {
-            app_references: { table: signature.App, joinType: 'forward', fieldName: 'appUuids' },
+            app_references: { table: signature.App, joinType: 'forward', fieldName: 'appUuids', usingJoinTable: true },
         },
         [signature.AuthorizationInstance]: {
             session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },
@@ -109,6 +111,10 @@ export class SigauthClient {
     }
     get App() {
         return this.getModel<App>('App', Model);
+    }
+
+    get AppScope() {
+        return this.getModel<AppScope>('AppScope', Model);
     }
 
     get AuthorizationInstance() {
@@ -366,9 +372,89 @@ export class Model<T extends Record<string, any>> {
 
     private async executeDelete(where: any, single: boolean): Promise<any> {
         const whereClause = this.buildWhereClause(where);
-        const sql = `WITH deleted AS (DELETE FROM "${this.tableName}" ${whereClause} RETURNING *),
-perm_del AS (DELETE FROM ${INTERNAL_GRANT_TABLE} WHERE "assetUuid" IN (SELECT "uuid" FROM deleted))
-SELECT * FROM deleted`;
+        const thisShort = this.getShortId(this.tableName);
+
+        // Pre-calculation of relations to check
+        const relationChecks: string[] = [];
+        const relationDeletes: string[] = [];
+
+        const relationConfigs = this.relations[this.tableName] || {};
+        const assetTypeUuid = Utils.convertSignatureToUuid(this.tableName);
+
+        let relIndex = 0;
+        for (const [key, config] of Object.entries(relationConfigs)) {
+            if (config.usingJoinTable) {
+                const otherShort = this.getShortId(config.table);
+                const fieldName = config.fieldName;
+
+                let joinTableName: string, sourceCol: string, targetCol: string;
+
+                if (config.joinType === 'forward') {
+                    joinTableName = `rel_${thisShort}_${otherShort}`;
+                    sourceCol = 'source';
+                    targetCol = 'target';
+                } else {
+                    // reverse
+                    joinTableName = `rel_${otherShort}_${thisShort}`;
+                    sourceCol = 'target';
+                    targetCol = 'source';
+                }
+
+                // CTE to identify candidate records on the other side of the relation BEFORE they are unlinked
+                relationChecks.push(`
+                    candidates_${relIndex} AS (
+                        SELECT DISTINCT "${targetCol}" as "candidateUuid" 
+                        FROM "${joinTableName}" 
+                        WHERE "${sourceCol}" IN (SELECT "uuid" FROM targets)
+                        AND "field" = '${fieldName}'
+                    )
+                 `);
+
+                // Extract strategy from externalJoinKeys array (format: keys are "field#target#req#strategy")
+                const stratCheck = `(
+                    SELECT split_part(k, '#', 4)
+                    FROM (
+                        SELECT unnest("externalJoinKeys") as k 
+                        FROM ${INTERNAL_ASSET_TYPE_TABLE} 
+                        WHERE "uuid" = '${config.joinType == 'forward' ? assetTypeUuid : Utils.convertSignatureToUuid(config.table)}'
+                    ) as sub
+                    WHERE k LIKE '${fieldName}#%'
+                    LIMIT 1
+                )`;
+
+                // CTE to delete orphans if the strategy is 'cascade' and no other links exist
+                relationDeletes.push(`cleanup_${relIndex} AS (
+                    DELETE FROM "${config.table}"
+                    WHERE "uuid" IN (
+                        SELECT "candidateUuid" FROM candidates_${relIndex} c
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM "${joinTableName}" jt
+                            WHERE jt."target" = c."candidateUuid" 
+                            AND jt."field" = '${fieldName}'
+                            AND jt."source" NOT IN (SELECT "uuid" FROM targets)
+                        )
+                    )
+                    AND ${stratCheck} = 'CASCADE'
+                )`);
+
+                relIndex++;
+            }
+        }
+
+        let sql = `WITH targets AS (SELECT "uuid" FROM "${this.tableName}" ${whereClause})`;
+
+        if (relationChecks.length > 0) {
+            sql += `,\n${relationChecks.join(',\n')}`;
+        }
+
+        sql += `,\ndeleted AS (DELETE FROM "${this.tableName}" WHERE "uuid" IN (SELECT "uuid" FROM targets) RETURNING *)`;
+        sql += `,\nperm_del AS (DELETE FROM ${INTERNAL_GRANT_TABLE} WHERE "assetUuid" IN (SELECT "uuid" FROM deleted))`;
+
+        if (relationDeletes.length > 0) {
+            sql += `,\n${relationDeletes.join(',\n')}`;
+        }
+
+        sql += `\nSELECT * FROM deleted`;
 
         const result: any = await this.db.rawQuery(sql);
 
@@ -436,7 +522,7 @@ SELECT * FROM deleted`;
                 joinTableOps.push(`del_${opIndex} AS (DELETE FROM "${joinTableName}" WHERE ${deleteCondition} RETURNING 1)`);
                 // CTE for INSERT (Add new relations)
                 joinTableOps.push(
-                    `ins_${opIndex} AS (INSERT INTO "${joinTableName}" ("source", "target", "field") ${insertSelect} RETURNING 1)`,
+                    `ins_${opIndex} AS (INSERT INTO "${joinTableName}" ("source", "target", "field") ${insertSelect} ON CONFLICT ON CONSTRAINT "${joinTableName}_pkey" DO NOTHING RETURNING 1)`,
                 );
                 opIndex++;
 
@@ -652,3 +738,4 @@ export type DeleteInput<T> = {
 export type DeleteManyInput<T> = {
     where: FindWhere<T>;
 };
+
