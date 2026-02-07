@@ -55,3 +55,4 @@ coverage/
 .tmp/
 **/generated/
 /packages/prisma-wrapper/src/prisma-generated
+*.pem
