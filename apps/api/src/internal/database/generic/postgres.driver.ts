@@ -690,8 +690,10 @@ export class PostgresDriver extends GenericDatabaseGateway {
         for (const field of externalFields) {
             const joinTable = this.getJoinTableName(assetType.uuid, field.targetAssetType);
             // delete existing relations for this asset and field
-            this.db(joinTable).where({ source: assetUuid, field: field.name }).del();
+            await this.db(joinTable).where({ source: assetUuid, field: field.name }).del();
         }
+
+        await this.db.table(INTERNAL_GRANT_TABLE).where({ assetUuid, typeUuid: assetType.uuid }).del();
 
         return this.db(tableName)
             .where({ uuid: assetUuid })

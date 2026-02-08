@@ -57,6 +57,8 @@ export const ORMUtils = {
             const parseWhere = (where: any): string[] => {
                 const parts: string[] = [];
                 for (const [key, value] of Object.entries(where)) {
+                    if (value === undefined) continue;
+
                     if (key === 'OR' || key === 'AND') {
                         if (Array.isArray(value)) {
                             const subs = value
@@ -129,7 +131,11 @@ export const ORMUtils = {
                             parts.push(`${col} = '${value}'`);
                         }
                     } else {
-                        parts.push(`${col} = '${value}'`);
+                        if (value === null) {
+                            parts.push(`${col} IS NULL`);
+                        } else {
+                            parts.push(`${col} = '${value}'`);
+                        }
                     }
                 }
                 return parts;

@@ -47,8 +47,8 @@ export class AccountService {
         let account = await this.db.Account.findOne({
             where: { uuid: editAccountDto.uuid },
         });
-
         if (!account) throw new NotFoundException('Account does not exist');
+
         if (editAccountDto.username || editAccountDto.email) {
             const orConditions: FindWhere<Account>[] = [];
             if (editAccountDto.username) orConditions.push({ username: editAccountDto.username });
@@ -77,7 +77,7 @@ export class AccountService {
 
         // when deativated is toggled to true log out all sessions
         if (editAccountDto.deactivated && !account.deactivated) {
-            // await this.logOutAll(editAccountDto.id);
+            await this.logOutAll(editAccountDto.uuid);
         }
 
         const updated = await this.db.Account.updateOne({
@@ -89,11 +89,8 @@ export class AccountService {
     }
 
     async deleteAccount(deleteAccountDto: DeleteAccountDto) {
-        await this.db.Grant.deleteMany({
-            where: { accountUuid: { in: deleteAccountDto.accountUuid } },
-        });
         await this.db.Account.deleteMany({
-            where: { uuid: { in: deleteAccountDto.accountUuid } },
+            where: { uuid: { in: deleteAccountDto.accountUuids } },
         });
     }
 
@@ -121,7 +118,7 @@ export class AccountService {
                 const permission = await this.db.Permission.findOne({
                     where: {
                         appUuid: app.uuid,
-                        typeUuid: perm.typeUuid,
+                        typeUuid: perm.typeUuid ? perm.typeUuid : undefined,
                         permission: perm.permission,
                     },
                 });
@@ -168,10 +165,20 @@ export class AccountService {
         }
 
         // remove all grants that were not part of the new set
-        this.db.Grant.deleteMany({
-            where: {
-                OR: remove,
-            },
+        if (remove.length > 0) {
+            const deleted = await this.db.Grant.deleteMany({
+                where: {
+                    OR: remove,
+                },
+            });
+
+        }
+    }
+
+    getAccount(accountUuid: string, includePermissions = false): Promise<Account | null> {
+        return this.db.Account.findOne({
+            where: { uuid: accountUuid },
+            includes: { account_grants: includePermissions },
         });
     }
 

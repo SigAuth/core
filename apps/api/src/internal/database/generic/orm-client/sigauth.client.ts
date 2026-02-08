@@ -371,6 +371,18 @@ export class Model<T extends Record<string, any>> {
     // }
 
     private async executeDelete(where: any, single: boolean): Promise<any> {
+        if (this.tableName.startsWith('_internal')) {
+            // Special handling for internal types to also clean up grants and relations
+            const whereClause = this.buildWhereClause(where);
+            const sql = `DELETE FROM "${this.tableName}" ${whereClause} RETURNING *`;
+            const result: any[] = await this.db.rawQuery(sql);
+            if (single) {
+                if (result.length === 0) throw new Error('Record to delete does not exist.');
+                return result[0];
+            }
+            return result;
+        }
+
         const whereClause = this.buildWhereClause(where);
         const thisShort = this.getShortId(this.tableName);
 
@@ -631,7 +643,11 @@ updated AS (UPDATE "${this.tableName}" SET ${updateSet} WHERE "uuid" IN (SELECT 
                         if (val.gt !== undefined) conditions.push(`${col} > ${this.formatValue(val.gt)}`);
                     }
                 } else {
-                    conditions.push(`${col} = ${this.formatValue(value)}`);
+                    if (value === null) {
+                        conditions.push(`${col} IS NULL`);
+                    } else {
+                        conditions.push(`${col} = ${this.formatValue(value)}`);
+                    }
                 }
             }
             return conditions;
