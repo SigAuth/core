@@ -21,10 +21,6 @@ export default defineConfig({
                 target: 'http://localhost:4000', // local nest app
                 changeOrigin: true,
             },
-            '/admin': {
-                target: 'http://localhost:5174', // local admin dashboard
-                changeOrigin: true,
-            },
         },
     },
 });

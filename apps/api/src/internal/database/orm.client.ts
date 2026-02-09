@@ -34,8 +34,15 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
                 data: {
                     name: 'SigAuth Internal App',
                     url: 'http://localhost',
+                    token: Utils.generateToken(64),
                 },
             });
+
+            this.logger.log('-------------------------------------------------------');
+            this.logger.log(`SigAuth App UUID: ${app.uuid}`);
+            this.logger.log(`SigAuth App Token: ${app.token}`);
+            this.logger.log('Please save the above token securely. And use it to configure your SigAuth admin Dashboard instance.');
+            this.logger.log('-------------------------------------------------------');
 
             // adding default sigauth scopes
             const sigauthScopes = await this.Permission.createMany({

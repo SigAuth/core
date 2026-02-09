@@ -7,6 +7,7 @@ package-lock.json
 dist/
 keys/
 **/api/config/**
+**/sigauth.config.ts
 build/
 .next/
 out/
