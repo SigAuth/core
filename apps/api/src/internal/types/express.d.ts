@@ -5,8 +5,8 @@ declare global {
         interface Request {
             account?: Account;
             sigauthApp?: App;
+            internalAccountAuthorization?: boolean;
             cookies: Record<string, string>;
-            authMethod: 'session' | 'api-token';
         }
     }
 }

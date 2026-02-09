@@ -4,8 +4,8 @@ import { CreateAccountDto } from '@/modules/account/dto/create-account.dto';
 import { DeleteAccountDto } from '@/modules/account/dto/delete-account.dto';
 import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
 import { PermissionSetDto } from '@/modules/account/dto/permission-set.dto';
-import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
+import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
@@ -19,7 +19,7 @@ import { ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkRe
  */
 
 @Controller('account')
-@UseGuards(AuthGuard)
+@UseGuards(SDKGuard)
 export class AccountController {
     constructor(private readonly accountService: AccountService) {}
 

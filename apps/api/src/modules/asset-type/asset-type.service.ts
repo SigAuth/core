@@ -42,5 +42,9 @@ export class AssetTypeService {
     async getAssetType(uuid: string): Promise<AssetType | null> {
         return this.db.DBClient.getAssetType(uuid);
     }
+
+    async getAllAssetTypes(): Promise<AssetType[]> {
+        return this.db.DBClient.getAssetTypes();
+    }
 }
 

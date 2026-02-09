@@ -3,8 +3,8 @@ import { AppsService } from '@/modules/app/app.service';
 import { CreateAppDto } from '@/modules/app/dto/create-app.dto';
 import { DeleteAppDto } from '@/modules/app/dto/delete-app.dto';
 import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
-import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
+import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import {
     ApiCreatedResponse,
@@ -17,11 +17,12 @@ import {
 } from '@nestjs/swagger';
 
 @Controller('app')
+@UseGuards(SDKGuard)
 export class AppsController {
     constructor(private readonly appsService: AppsService) {}
 
     @Post('create')
-    @UseGuards(AuthGuard, IsRoot)
+    @UseGuards(IsRoot)
     @ApiCreatedResponse({
         description: 'App created successfully',
         example: {
@@ -47,7 +48,7 @@ export class AppsController {
     }
 
     @Post('edit')
-    @UseGuards(AuthGuard, IsRoot)
+    @UseGuards(IsRoot)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'App updated successfully',
@@ -75,7 +76,7 @@ export class AppsController {
     }
 
     @Post('delete')
-    @UseGuards(AuthGuard, IsRoot)
+    @UseGuards(IsRoot)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNoContentResponse({ description: 'Apps deleted successfully' })
     @ApiNotFoundResponse({ description: 'Not all apps found or invalid ids provided' })

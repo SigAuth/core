@@ -1,4 +1,3 @@
-import { UnauthorizedExceptionFilter } from '@/internal/filters/unauthorized-exception.filter';
 import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -14,7 +13,6 @@ async function bootstrap() {
         exclude: [{ path: '.well-known/*path', method: RequestMethod.GET }],
     });
     app.useGlobalPipes(new ValidationPipe());
-    app.useGlobalFilters(new UnauthorizedExceptionFilter());
     app.use(cookieParser());
 
     if (process.env.EXPOSE_SWAGGER === 'true') {

@@ -2,9 +2,9 @@ import { AssetTypeService } from '@/modules/asset-type/asset-type.service';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { DeleteAssetTypeDto } from '@/modules/asset-type/dto/delete-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
-import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
-import { Body, Controller, HttpCode, HttpStatus, InternalServerErrorException, Post, UseGuards } from '@nestjs/common';
+import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
+import { Body, Controller, Get, HttpCode, HttpStatus, InternalServerErrorException, Post, UseGuards } from '@nestjs/common';
 import {
     ApiConflictResponse,
     ApiCreatedResponse,
@@ -16,7 +16,7 @@ import {
 import { AssetType } from '@sigauth/sdk/asset';
 
 @Controller('asset-type')
-@UseGuards(AuthGuard, IsRoot)
+@UseGuards(SDKGuard, IsRoot)
 @ApiUnauthorizedResponse({ description: "Thrown when the user isn't authenticated" })
 @ApiForbiddenResponse({ description: 'This route can only be called from accounts with root access' })
 export class AssetTypeController {
@@ -76,6 +76,31 @@ export class AssetTypeController {
     async deleteAssetType(@Body() deleteAssetTypeDto: DeleteAssetTypeDto) {
         await this.assetTypesService.deleteAssetType(deleteAssetTypeDto.assetTypeUuids);
         return;
+    }
+
+    @Get('all')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'Asset types fetched successfully',
+        example: {
+            assetTypes: [
+                {
+                    id: 1,
+                    name: 'test',
+                    fields: [
+                        {
+                            type: 2,
+                            name: 'Text',
+                            required: true,
+                        },
+                    ],
+                },
+            ],
+        },
+    })
+    async getAllAssetTypes(): Promise<{ assetTypes: AssetType[] }> {
+        const assetTypes = await this.assetTypesService.getAllAssetTypes();
+        return { assetTypes };
     }
 }
 

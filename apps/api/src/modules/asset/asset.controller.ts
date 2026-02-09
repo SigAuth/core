@@ -2,8 +2,8 @@ import { AssetService } from '@/modules/asset/asset.service';
 import { CreateAssetDto } from '@/modules/asset/dto/create-asset.dto';
 import { DeleteAssetDto } from '@/modules/asset/dto/delete-asset.dto';
 import { EditAssetDto } from '@/modules/asset/dto/edit-asset.dto';
-import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
+import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -17,7 +17,7 @@ import {
 import { Asset } from '../../../../../packages/sdk/dist/asset.types';
 
 @Controller('asset')
-@UseGuards(AuthGuard)
+@UseGuards(SDKGuard)
 @ApiUnauthorizedResponse({ description: "Thrown when the user isn't authenticated" })
 @ApiForbiddenResponse({ description: 'This route can only be called from accounts with root access' })
 export class AssetController {

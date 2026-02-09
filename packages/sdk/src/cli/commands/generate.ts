@@ -1,7 +1,9 @@
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import ora from 'ora';
+import { AssetType } from '../../asset.types.js';
 import { Config } from '../config/config.js';
+import { sigauthRequest } from '../utils.js';
 
 export default class GenerateTypes extends Command {
     static description = 'Generates types based of asset types defined in sigauth instance';
@@ -51,6 +53,15 @@ export default class GenerateTypes extends Command {
                 msg('Establishing connection to Sigauth API...');
                 spinner.start();
             }
+
+            const typeRes = await sigauthRequest('GET', `${config.get('issuer')}/api/asset-type/all`, {
+                config,
+                internalAuthorization: false,
+            });
+            this.log(chalk.blue('Received response from Sigauth API. Processing asset types...'));
+
+            const types: AssetType[] = await typeRes.json();
+            console.log('Response Body:', types);
 
             spinner.succeed(chalk.green('Types successfully generated!'));
         } catch (error) {

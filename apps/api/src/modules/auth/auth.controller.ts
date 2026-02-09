@@ -3,8 +3,8 @@ import { AuthService } from '@/modules/auth/auth.service';
 import { HasPermissionDto } from '@/modules/auth/dto/has-grant.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
-import { ApiAppGuard } from '@/modules/auth/guards/api-app.guard';
-import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
+import { HasAccount } from '@/modules/auth/guards/authentication.force-account.guard';
+import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
@@ -31,7 +31,7 @@ export class AuthController {
 
     @Get('oidc/exchange')
     @HttpCode(HttpStatus.OK)
-    @UseGuards(ApiAppGuard)
+    @UseGuards(SDKGuard)
     @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
@@ -48,7 +48,7 @@ export class AuthController {
 
     @Get('oidc/refresh')
     @HttpCode(HttpStatus.OK)
-    @UseGuards(ApiAppGuard)
+    @UseGuards(SDKGuard)
     @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
@@ -83,7 +83,7 @@ export class AuthController {
     }
 
     @Get('logout')
-    @UseGuards(AuthGuard)
+    @UseGuards(SDKGuard, HasAccount)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ description: 'Session deleted and cookie cleared. No content.' })
     async logout(@Req() req: Request, @Res() res: Response) {
@@ -95,7 +95,7 @@ export class AuthController {
 
     @Get('/oidc/has-permission')
     @HttpCode(HttpStatus.OK)
-    @UseGuards(ApiAppGuard)
+    @UseGuards(SDKGuard)
     @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiOkResponse({
         description: 'Permission check result.',
@@ -123,8 +123,8 @@ export class AuthController {
     //     return await this.authService.getUserInfo(accessToken, req.sigauthApp!);
     // }
 
-    @Get('init')
-    @UseGuards(AuthGuard)
+    @Get('base-data')
+    @UseGuards(SDKGuard, HasAccount)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'Session validated and general information to run the dashboard fetched successfully.',
