@@ -1,4 +1,4 @@
-import { JSONSerializable } from 'src/asset.types.js';
+import { JSONSerializable } from 'src/asset-type.architecture.js';
 import { Config } from '../cli/config/config.js';
 
 export type SigAuthRequestOptions = {

@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
-import { Asset, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/sdk/asset';
-import { TableIdSignature } from '@sigauth/sdk/protected';
+import { Asset, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/sdk/architecture';
+import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
 
 export abstract class GenericDatabaseGateway {
     protected readonly logger: Logger;
@@ -13,7 +13,7 @@ export abstract class GenericDatabaseGateway {
 
     abstract disconnect(): Promise<void>;
 
-    abstract initializeSchema(): Promise<TableIdSignature>;
+    abstract initializeSchema(): Promise<FundamentalAssetTypeMapping>;
 
     abstract rawQuery<T>(queryString: string): Promise<T[]>;
 

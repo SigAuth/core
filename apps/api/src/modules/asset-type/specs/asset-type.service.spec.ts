@@ -2,7 +2,7 @@ import { DatabaseModule } from '@/internal/database/database.module';
 import { AssetTypeService } from '@/modules/asset-type/asset-type.service';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssetFieldType } from '@sigauth/sdk/asset';
+import { AssetFieldType } from '@sigauth/sdk/architecture';
 
 describe('AssetTypesService', () => {
     let service: AssetTypeService;

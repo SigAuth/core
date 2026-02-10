@@ -65,16 +65,6 @@ export interface AppScope {
     app_references?: App[];
 }
 
-export interface Mirror {
-    autoRun: boolean;
-    uuid: string;
-    autoRunInterval?: number;
-    lastRun?: Date;
-    name: string;
-    code: string;
-    lastResult?: string;
-}
-
 export interface AuthorizationInstance {
     uuid: string;
     sessionUuid: string;

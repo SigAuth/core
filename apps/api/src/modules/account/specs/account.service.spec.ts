@@ -6,7 +6,7 @@ import { AssetService } from '@/modules/asset/asset.service';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssetFieldType, SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/asset';
+import { AssetFieldType, SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/architecture';
 
 describe('AccountService', () => {
     let service: AccountService;

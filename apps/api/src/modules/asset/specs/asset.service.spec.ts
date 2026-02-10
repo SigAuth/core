@@ -4,7 +4,7 @@ import { AssetService } from '@/modules/asset/asset.service';
 import { BadRequestException } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssetFieldType, AssetType, AssetTypeRelationField, RelationalIntegrityStrategy } from '@sigauth/sdk/asset';
+import { AssetFieldType, AssetType, AssetTypeRelationField, RelationalIntegrityStrategy } from '@sigauth/sdk/architecture';
 
 describe('AssetService', () => {
     let assetService: AssetService;

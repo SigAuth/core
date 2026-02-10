@@ -13,8 +13,8 @@ import {
     INTERNAL_PERMISSION_TABLE,
     RelationalIntegrityStrategy,
     SELF_REFERENCE_ASSET_TYPE_UUID,
-} from '@sigauth/sdk/asset';
-import { TableIdSignature } from '@sigauth/sdk/protected';
+} from '@sigauth/sdk/architecture';
+import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
 import knex, { Knex } from 'knex';
 
 @Injectable()
@@ -41,9 +41,9 @@ export class PostgresDriver extends GenericDatabaseGateway {
         const exists = await this.checkIfInstancedSchemaExists();
         if (!exists) {
             this.logger.log('Instanced schema not found, initializing database schema...');
-            const signatures = await this.initializeSchema();
+            const mapping = await this.initializeSchema();
 
-            this.storage.saveConfigFile({ signatures });
+            this.storage.saveConfigFile({ mapping });
             this.logger.log('Initialized database schema');
         } else {
             this.logger.log('Instanced schema found, skipping initialization.');
@@ -53,10 +53,10 @@ export class PostgresDriver extends GenericDatabaseGateway {
     private async checkIfInstancedSchemaExists() {
         if (!this.db) throw new Error('Database not connected');
 
-        const signature = this.storage.InstancedSignature;
-        if (!signature) return false;
+        const mapping = this.storage.FundamentalAssetTypeMapping;
+        if (!mapping) return false;
 
-        for (const tableName of Object.values(signature)) {
+        for (const tableName of Object.values(mapping)) {
             const exists = await this.db.schema.hasTable(tableName);
             if (!exists) {
                 this.logger.error(`Expected default table "${tableName}" to exist, but it does not.`);
@@ -66,7 +66,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         return true;
     }
 
-    async initializeSchema(): Promise<TableIdSignature> {
+    async initializeSchema(): Promise<FundamentalAssetTypeMapping> {
         if (!this.db) throw new Error('Database not connected');
 
         // generate base table to maintain asset types
@@ -234,7 +234,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             });
         }
 
-        const signatures: TableIdSignature = {
+        const mapping: FundamentalAssetTypeMapping = {
             Account: 'asset_' + accountType.replaceAll('-', '_'),
             Session: 'asset_' + sessionType.replaceAll('-', '_'),
             App: 'asset_' + appType.replaceAll('-', '_'),
@@ -247,7 +247,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             AssetType: INTERNAL_ASSET_TYPE_TABLE,
             Grant: INTERNAL_GRANT_TABLE,
         };
-        return signatures;
+        return mapping;
     }
 
     async createAssetType(

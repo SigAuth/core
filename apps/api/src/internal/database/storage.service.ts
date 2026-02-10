@@ -1,6 +1,6 @@
 import { Utils } from '@/internal/utils';
 import { Injectable, Logger } from '@nestjs/common';
-import { ProtectedData, TableIdSignature } from '@sigauth/sdk/protected';
+import { FundamentalAssetTypeMapping, ProtectedData } from '@sigauth/sdk/protected';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'crypto';
 import fs from 'fs';
 
@@ -9,7 +9,7 @@ export class StorageService {
     private readonly logger = new Logger(StorageService.name);
     private readonly PATH = './config';
 
-    private instancedSignature: TableIdSignature | null = null;
+    private fundamentalAssetTypeMapping: FundamentalAssetTypeMapping | null = null;
 
     private authPublicKey: KeyObject | null = null;
     private authPrivateKey: KeyObject | null = null;
@@ -30,16 +30,16 @@ export class StorageService {
         this.loadConfigFile();
     }
 
-    public saveConfigFile(props: { signatures?: TableIdSignature; sigauthAppUuid?: string }) {
+    public saveConfigFile(props: { mapping?: FundamentalAssetTypeMapping; sigauthAppUuid?: string }) {
         const path = `${this.getPath()}/sigauth-config.json`;
         const config = {
-            signatures: props.signatures || this.instancedSignature,
+            mapping: props.mapping || this.fundamentalAssetTypeMapping,
             sigauthAppUuid: props.sigauthAppUuid || this.sigauthAppUuid,
         };
 
         fs.writeFileSync(path, JSON.stringify(config, null, 2));
 
-        this.instancedSignature = props.signatures || this.instancedSignature;
+        this.fundamentalAssetTypeMapping = props.mapping || this.fundamentalAssetTypeMapping;
         this.sigauthAppUuid = props.sigauthAppUuid || this.sigauthAppUuid;
     }
 
@@ -49,7 +49,7 @@ export class StorageService {
         if (fs.existsSync(path)) {
             this.logger.log('Loading instance signature from config.');
             const data = JSON.parse(fs.readFileSync(path, 'utf-8'));
-            this.instancedSignature = data.signatures as TableIdSignature;
+            this.fundamentalAssetTypeMapping = data.mapping as FundamentalAssetTypeMapping;
             this.sigauthAppUuid = data.sigauthAppUuid;
         }
     }
@@ -77,9 +77,9 @@ export class StorageService {
     }
 
     public getProtectedData(): ProtectedData {
-        if (!this.instancedSignature || !this.sigauthAppUuid) throw new Error('Storage service not initialized yet');
+        if (!this.fundamentalAssetTypeMapping || !this.sigauthAppUuid) throw new Error('Storage service not initialized yet');
 
-        const criticalUuids = structuredClone(this.instancedSignature);
+        const criticalUuids = structuredClone(this.fundamentalAssetTypeMapping);
 
         Object.keys(criticalUuids).forEach(key => {
             const k = key as keyof typeof criticalUuids;
@@ -87,13 +87,13 @@ export class StorageService {
         });
 
         return {
-            signatures: criticalUuids,
+            mapping: criticalUuids,
             sigauthAppUuid: this.sigauthAppUuid!,
         };
     }
 
-    get InstancedSignature(): TableIdSignature | null {
-        return this.instancedSignature;
+    get FundamentalAssetTypeMapping(): FundamentalAssetTypeMapping | null {
+        return this.fundamentalAssetTypeMapping;
     }
 
     get AuthPrivateKey(): KeyObject | null {

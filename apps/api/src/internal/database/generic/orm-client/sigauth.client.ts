@@ -1,8 +1,7 @@
 import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
 import { ORMUtils } from '@/internal/database/generic/orm-client/helper.client';
 import { Utils } from '@/internal/utils';
-import { INTERNAL_ASSET_TYPE_TABLE, INTERNAL_GRANT_TABLE } from '@sigauth/sdk/asset';
-import { TableIdSignature } from '@sigauth/sdk/protected';
+import { INTERNAL_ASSET_TYPE_TABLE, INTERNAL_GRANT_TABLE } from '@sigauth/sdk/architecture';
 import {
     Account,
     App,
@@ -14,62 +13,63 @@ import {
     Grant,
     Permission,
     Session,
-} from './types.client.js';
+} from '@sigauth/sdk/fundamentals';
+import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
 
 export type GlobalRealtionMap = Record<
     string,
     Record<string, { table: string; joinType?: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean }>
 >;
 
-const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
+const buildTypeRelations = (mapping: FundamentalAssetTypeMapping): GlobalRealtionMap => {
     return {
-        [signature.Account]: {
-            subject_sessions: { table: signature.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
-            account_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'accountUuid' }, // Internal
+        [mapping.Account]: {
+            subject_sessions: { table: mapping.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
+            account_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'accountUuid' }, // Internal
         },
-        [signature.Session]: {
-            subject_account: { table: signature.Account, joinType: 'forward', fieldName: 'subjectUuid' },
-            session_authorizationinstances: { table: signature.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
-            session_authorizationchallenges: { table: signature.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' },
+        [mapping.Session]: {
+            subject_account: { table: mapping.Account, joinType: 'forward', fieldName: 'subjectUuid' },
+            session_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
+            session_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' },
         },
-        [signature.App]: {
-            app_authorizationinstances: { table: signature.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
-            app_authorizationchallenges: { table: signature.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
-            app_scopes: { table: signature.AppScope, joinType: 'reverse', fieldName: 'appUuids', usingJoinTable: true },
+        [mapping.App]: {
+            app_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
+            app_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
+            app_scopes: { table: mapping.AppScope, joinType: 'reverse', fieldName: 'appUuids', usingJoinTable: true },
 
-            app_accesses: { table: signature.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-            app_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-            app_permissions: { table: signature.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+            app_accesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+            app_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+            app_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
         },
-        [signature.AppScope]: {
-            app_references: { table: signature.App, joinType: 'forward', fieldName: 'appUuids', usingJoinTable: true },
+        [mapping.AppScope]: {
+            app_references: { table: mapping.App, joinType: 'forward', fieldName: 'appUuids', usingJoinTable: true },
         },
-        [signature.AuthorizationInstance]: {
-            session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+        [mapping.AuthorizationInstance]: {
+            session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
         },
-        [signature.AuthorizationChallenge]: {
-            session_reference: { table: signature.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
+        [mapping.AuthorizationChallenge]: {
+            session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
         },
         // Internal
-        [signature.AssetType]: {
-            type_grants: { table: signature.Grant, joinType: 'reverse', fieldName: 'typeUuid' },
-            type_appAccesses: { table: signature.AppAccess, joinType: 'reverse', fieldName: 'typeUuid' },
-            type_permissions: { table: signature.Permission, joinType: 'reverse', fieldName: 'typeUuid' },
+        [mapping.AssetType]: {
+            type_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'typeUuid' },
+            type_appAccesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'typeUuid' },
+            type_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'typeUuid' },
         },
-        [signature.Grant]: {
-            account_reference: { table: signature.Account, joinType: 'forward', fieldName: 'accountUuid' },
-            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
-            type_reference: { table: signature.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+        [mapping.Grant]: {
+            account_reference: { table: mapping.Account, joinType: 'forward', fieldName: 'accountUuid' },
+            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+            type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
         },
-        [signature.AppAccess]: {
-            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
-            type_reference: { table: signature.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+        [mapping.AppAccess]: {
+            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+            type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
         },
-        [signature.Permission]: {
-            app_reference: { table: signature.App, joinType: 'forward', fieldName: 'appUuid' },
-            type_reference: { table: signature.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+        [mapping.Permission]: {
+            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+            type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
         },
     };
 };
@@ -77,28 +77,28 @@ const buildTypeRelations = (signature: TableIdSignature): GlobalRealtionMap => {
 export class SigauthClient {
     private relations?: GlobalRealtionMap;
     private models: Partial<Record<string, Model<any>>> = {};
-    private signature?: TableIdSignature;
+    private mapping?: FundamentalAssetTypeMapping;
     private client?: GenericDatabaseGateway;
 
-    init(signature: TableIdSignature, client: GenericDatabaseGateway) {
-        this.signature = signature;
+    init(mapping: FundamentalAssetTypeMapping, client: GenericDatabaseGateway) {
+        this.mapping = mapping;
         this.client = client;
-        this.relations = buildTypeRelations(signature);
+        this.relations = buildTypeRelations(mapping);
     }
 
     private ensureInitialized() {
-        if (!this.signature || !this.client || !this.relations) {
+        if (!this.mapping || !this.client || !this.relations) {
             throw new Error('SigauthClient not initialized. Call init() first.');
         }
     }
 
     private getModel<T extends object>(
-        key: keyof TableIdSignature & string,
+        key: keyof FundamentalAssetTypeMapping & string,
         Type: new (table: any, rels: GlobalRealtionMap, client: GenericDatabaseGateway) => Model<T>,
     ): Model<T> {
         this.ensureInitialized();
         if (!this.models[key]) {
-            this.models[key] = new Type(this.signature![key], this.relations!, this.client!);
+            this.models[key] = new Type(this.mapping![key], this.relations!, this.client!);
         }
         return this.models[key] as Model<T>;
     }

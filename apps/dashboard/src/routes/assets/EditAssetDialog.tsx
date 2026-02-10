@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSession } from '@/context/SessionContext';
 import { request } from '@/lib/utils';
-import { AssetFieldType, type AssetTypeField } from '@sigauth/sdk/asset';
+import { AssetFieldType, type AssetTypeField } from '@sigauth/sdk/architecture';
 import { Edit } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';

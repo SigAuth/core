@@ -1,11 +1,11 @@
-import { Account, App, Session } from '@/internal/database/generic/orm-client/types.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { AssetType } from '@sigauth/sdk/asset';
+import { AssetType } from '@sigauth/sdk/architecture';
+import { Account, App, Session } from '@sigauth/sdk/fundamentals';
 import { ProtectedData, SigAuthPermissions } from '@sigauth/sdk/protected';
 import bcrypt from 'bcryptjs';
 import dayjs from 'dayjs';

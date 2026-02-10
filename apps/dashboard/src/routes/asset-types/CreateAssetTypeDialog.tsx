@@ -18,7 +18,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { useSession } from '@/context/SessionContext';
 import type { UpdatedTypeField } from '@/lib/constants';
 import { request } from '@/lib/utils';
-import { AssetFieldType, RelationalIntegrityStrategy } from '@sigauth/sdk/asset';
+import { AssetFieldType, RelationalIntegrityStrategy } from '@sigauth/sdk/architecture';
 import { BadgePlus, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';

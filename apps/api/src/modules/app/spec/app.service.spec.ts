@@ -4,7 +4,7 @@ import { AssetTypeService } from '@/modules/asset-type/asset-type.service';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssetFieldType, AssetType } from '@sigauth/sdk/asset';
+import { AssetFieldType, AssetType } from '@sigauth/sdk/architecture';
 
 describe('AppService', () => {
     let appService: AppsService;

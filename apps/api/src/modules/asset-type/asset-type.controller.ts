@@ -13,7 +13,7 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AssetType } from '@sigauth/sdk/asset';
+import { AssetType } from '@sigauth/sdk/architecture';
 
 @Controller('asset-type')
 @UseGuards(SDKGuard, IsRoot)
@@ -98,9 +98,8 @@ export class AssetTypeController {
             ],
         },
     })
-    async getAllAssetTypes(): Promise<{ assetTypes: AssetType[] }> {
-        const assetTypes = await this.assetTypesService.getAllAssetTypes();
-        return { assetTypes };
+    async getAllAssetTypes(): Promise<AssetType[]> {
+        return await this.assetTypesService.getAllAssetTypes();
     }
 }
 

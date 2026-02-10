@@ -1,17 +1,18 @@
-export type TableIdSignature = {
-    Account: string;
-    Session: string;
-    App: string;
-    AppScope: string;
-    AuthorizationInstance: string;
-    AuthorizationChallenge: string;
+export const FundamentalAssetTypes = [
+    'Account',
+    'Session',
+    'App',
+    'AppScope',
+    'AuthorizationInstance',
+    'AuthorizationChallenge',
+    'AssetType',
+    'Grant',
+    'AppAccess',
+    'Permission',
+] as const;
 
-    // Internal
-    AssetType: string;
-    Grant: string;
-    AppAccess: string;
-    Permission: string;
-};
+export type FundamentalAssetType = (typeof FundamentalAssetTypes)[number];
+export type FundamentalAssetTypeMapping = Record<FundamentalAssetType, string>;
 
 export const SigAuthPermissions = {
     ROOT: 'root', // TODO root should be a group of all permissions and not be assignable directly
@@ -21,7 +22,7 @@ export const SigAuthPermissions = {
 };
 
 export type ProtectedData = {
-    signatures: TableIdSignature;
+    mapping: FundamentalAssetTypeMapping;
     sigauthAppUuid: string;
 };
 

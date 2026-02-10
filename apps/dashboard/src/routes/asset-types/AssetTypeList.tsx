@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { CreateAssetTypeDialog } from '@/routes/asset-types/CreateAssetTypeDialog';
 import { DeleteAssetTypeDialog } from '@/routes/asset-types/DeleteAssetTypeDialog';
 import { EditAssetTypeDialog } from '@/routes/asset-types/EditAssetTypeDialog';
-import type { AssetType, AssetTypeField } from '@sigauth/sdk/asset';
+import type { AssetType, AssetTypeField } from '@sigauth/sdk/architecture';
 import {
     type ColumnDef,
     flexRender,

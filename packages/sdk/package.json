@@ -37,15 +37,15 @@
             "import": "./dist/protected.types.js",
             "default": "./dist/protected.types.js"
         },
-        "./mirror": {
-            "types": "./dist/mirror.types.d.ts",
-            "import": "./dist/mirror.types.js",
-            "default": "./dist/mirror.types.js"
+        "./architecture": {
+            "types": "./dist/asset-type.architecture.d.ts",
+            "import": "./dist/asset-type.architecture.js",
+            "default": "./dist/asset-type.architecture.js"
         },
-        "./asset": {
-            "types": "./dist/asset.types.d.ts",
-            "import": "./dist/asset.types.js",
-            "default": "./dist/asset.types.js"
+        "./fundamentals": {
+            "types": "./dist/asset-type.fundamentals.d.ts",
+            "import": "./dist/asset-type.fundamentals.js",
+            "default": "./dist/asset-type.fundamentals.js"
         },
         "./config": {
             "types": "./dist/cli/config/config.types.d.ts",

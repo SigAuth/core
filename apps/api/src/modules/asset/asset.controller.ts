@@ -14,7 +14,7 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Asset } from '../../../../../packages/sdk/dist/asset.types';
+import { Asset } from '@sigauth/sdk/architecture';
 
 @Controller('asset')
 @UseGuards(SDKGuard)

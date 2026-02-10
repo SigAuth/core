@@ -1,7 +1,7 @@
-import { App } from '@/internal/database/generic/orm-client/types.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { BadRequestException, CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { App } from '@sigauth/sdk/fundamentals';
 import { jwtVerify } from 'jose';
 
 @Injectable()

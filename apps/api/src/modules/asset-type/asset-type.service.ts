@@ -4,7 +4,7 @@ import { Utils } from '@/internal/utils';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AssetType } from '../../../../../packages/sdk/dist/asset.types';
+import { AssetType } from '@sigauth/sdk/architecture';
 
 @Injectable()
 export class AssetTypeService {
@@ -28,8 +28,8 @@ export class AssetTypeService {
     }
 
     async deleteAssetType(uuids: string[]) {
-        if (!this.storage.InstancedSignature) throw new Error('Storage service not initialized yet');
-        const criticalTypes = Object.values(this.storage.InstancedSignature).map(s => Utils.convertSignatureToUuid(s));
+        if (!this.storage.FundamentalAssetTypeMapping) throw new Error('Storage service not initialized yet');
+        const criticalTypes = Object.values(this.storage.FundamentalAssetTypeMapping).map(s => Utils.convertSignatureToUuid(s));
 
         for (const uuid of uuids) {
             if (criticalTypes.includes(uuid)) {

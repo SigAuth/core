@@ -33,3 +33,4 @@ export class TypeGenerator {
         new ClientGenerator(this.project, this.assetTypes, this.outPath).generate();
     }
 }
+

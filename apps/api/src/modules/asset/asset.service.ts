@@ -1,6 +1,6 @@
 import { ORMService } from '@/internal/database/orm.client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Asset, AssetType } from '../../../../../packages/sdk/dist/asset.types';
+import { Asset, AssetType } from '@sigauth/sdk/architecture';
 
 @Injectable()
 export class AssetService {
@@ -81,3 +81,4 @@ export class AssetService {
         return this.db.DBClient.getAssetByUuid<T>(typeUuid, assetUuid);
     }
 }
+

@@ -3,7 +3,7 @@ import { SigauthClient } from '@/internal/database/generic/orm-client/sigauth.cl
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/asset';
+import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/architecture';
 import { SigAuthPermissions } from '@sigauth/sdk/protected';
 import bcrypt from 'bcryptjs';
 
@@ -22,10 +22,10 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
     async onApplicationBootstrap() {
         await this.db.connect();
 
-        if (!this.storage.InstancedSignature) {
+        if (!this.storage.FundamentalAssetTypeMapping) {
             throw new Error('Cannot initialize ORMService without instance signature loaded in StorageService.');
         }
-        this.init(this.storage.InstancedSignature, this.db);
+        this.init(this.storage.FundamentalAssetTypeMapping, this.db);
 
         if (!this.storage.SigAuthAppUuid || !(await this.App.findOne({ where: { uuid: this.storage.SigAuthAppUuid } }))) {
             this.logger.warn('SigAuth App not found in database. Creating default SigAuth App entry.');
@@ -95,7 +95,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
                         accountUuid: account.uuid,
                         appUuid: appId,
                         typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID,
-                        assetUuid: Utils.convertSignatureToUuid(this.storage.InstancedSignature.Account),
+                        assetUuid: Utils.convertSignatureToUuid(this.storage.FundamentalAssetTypeMapping.Account),
                         permission: SigAuthPermissions.CREATE_ASSET,
                         grantable: true,
                     },

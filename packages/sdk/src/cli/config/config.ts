@@ -33,7 +33,7 @@ export class Config {
         const project = new Project();
 
         const sourceFile = project.createSourceFile(this.configPath, {}, { overwrite: true });
-        const configData: SigAuthConfig = { issuer, appId, appToken };
+        const configData: SigAuthConfig = { issuer, appId, appToken, out: 'src/sigauth/generated' };
 
         sourceFile.addVariableStatement({
             declarationKind: VariableDeclarationKind.Const,

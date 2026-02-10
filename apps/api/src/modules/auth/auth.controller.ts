@@ -1,4 +1,3 @@
-import { Account } from '@/internal/database/generic/orm-client/types.client';
 import { AuthService } from '@/modules/auth/auth.service';
 import { HasPermissionDto } from '@/modules/auth/dto/has-grant.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
@@ -15,6 +14,7 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Account } from '@sigauth/sdk/fundamentals';
 import { type Request, type Response } from 'express';
 
 @Controller('auth')

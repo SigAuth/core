@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AssetFieldType, AssetTypeField, AssetTypeRelationField, RelationalIntegrityStrategy } from '@sigauth/sdk/asset';
+import { AssetFieldType, AssetTypeField, AssetTypeRelationField, RelationalIntegrityStrategy } from '@sigauth/sdk/architecture';
 import { Type } from 'class-transformer';
 import {
     IsArray,
@@ -97,3 +97,4 @@ export class AssetTypeFieldDto {
     })
     targetAssetType?: string;
 }
+

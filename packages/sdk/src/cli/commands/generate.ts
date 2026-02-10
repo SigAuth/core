@@ -1,8 +1,9 @@
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import ora from 'ora';
-import { AssetType } from '../../asset.types.js';
+import { AssetType } from '../../asset-type.architecture.js';
 import { Config } from '../config/config.js';
+import { SDKGenerator } from '../generator/generator.builder.js';
 import { sigauthRequest } from '../utils.js';
 
 export default class GenerateTypes extends Command {
@@ -58,10 +59,21 @@ export default class GenerateTypes extends Command {
                 config,
                 internalAuthorization: false,
             });
-            this.log(chalk.blue('Received response from Sigauth API. Processing asset types...'));
+
+            if (!typeRes.ok || !config.get('out')) {
+                spinner.fail(chalk.red('Failed to fetch asset types or output path not defined.'));
+                if (!typeRes.ok) this.error(chalk.red(`API Error: ${typeRes.status} ${typeRes.statusText}`));
+                if (!config.get('out'))
+                    this.error(
+                        chalk.red(
+                            'Error: Output path not defined in config. Please set the "out" property in your sigauth.config.ts file.',
+                        ),
+                    );
+            }
 
             const types: AssetType[] = await typeRes.json();
-            console.log('Response Body:', types);
+            const generator = new SDKGenerator(types, config.get('out')!);
+            generator.generate();
 
             spinner.succeed(chalk.green('Types successfully generated!'));
         } catch (error) {

@@ -1,4 +1,4 @@
-import type { JSONSerializable } from '@sigauth/sdk/asset';
+import type { JSONSerializable } from '@sigauth/sdk/architecture';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

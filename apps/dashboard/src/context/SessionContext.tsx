@@ -1,4 +1,4 @@
-import type { Asset, AssetType } from '@sigauth/sdk/asset';
+import type { Asset, AssetType } from '@sigauth/sdk/architecture';
 import type { Account, App, Session } from '@sigauth/sdk/database/orm-client/types.client';
 import type { ProtectedData } from '@sigauth/sdksdked';
 import { createContext, use, useState, type ReactNode } from 'react';
