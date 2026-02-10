@@ -1,3 +1,4 @@
+import { FindQuery } from '@/internal/database/generic/orm-client/sigauth.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Asset, AssetType } from '@sigauth/sdk/architecture';
@@ -79,6 +80,10 @@ export class AssetService {
 
     async getAsset<T extends Asset>(typeUuid: string, assetUuid: string): Promise<T | null> {
         return this.db.DBClient.getAssetByUuid<T>(typeUuid, assetUuid);
+    }
+
+    async findAsset(typeUuid: string, query: FindQuery<any>): Promise<Asset[]> {
+        return [];
     }
 }
 

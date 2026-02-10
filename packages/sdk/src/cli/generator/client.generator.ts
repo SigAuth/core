@@ -1,17 +1,20 @@
 import { Project, Scope } from 'ts-morph';
 import { AssetType } from '../../asset-type.architecture.js';
-import { FundamentalAssetTypes } from '../../protected.types.js';
+import { AccessableFundamentals, FundamentalAssetTypes } from '../../protected.types.js';
 
 export const generateClient = (project: Project, assetTypes: AssetType[], outPath: string) => {
     const clientFile = project.createSourceFile(`${outPath}/sigauth.client.ts`, '', { overwrite: true });
 
+    assetTypes = assetTypes.filter(
+        t => !(FundamentalAssetTypes.includes(t.name as any) && !AccessableFundamentals.includes(t.name as any)),
+    );
     const assetNames = assetTypes
         .map(t => t.name)
         .filter(name => !FundamentalAssetTypes.includes(name as any))
         .join(', ');
 
     clientFile.addStatements(`import { ${assetNames} } from './asset-types';`);
-    clientFile.addStatements(`import type { ${FundamentalAssetTypes.join(', ')} } from '@sigauth/sdk/fundamentals';`);
+    clientFile.addStatements(`import type { ${AccessableFundamentals.join(', ')} } from '@sigauth/sdk/fundamentals';`);
     clientFile.addStatements(`import type { SigAuthConfig } from '@sigauth/sdk/config';`);
     clientFile.addStatements(`import { sigauthRequest } from '@sigauth/sdk/utils';`);
     clientFile.addStatements(`import type { AssetTypeField, AssetTypeRelationField } from '@sigauth/sdk/architecture';`);
@@ -149,12 +152,16 @@ export const generateClient = (project: Project, assetTypes: AssetType[], outPat
                 this.config = config;    
             }
 
-            async findOne<Q extends Omit<FindQuery<T>, 'limit'>>(query: Q): Promise<Payload<T, Q> | null> {
-                return null; 
-            }
-
-            async findMany<Q extends FindQuery<T>>(query: Q): Promise<Payload<T, Q>[]> {
-                return [] as Payload<T, Q>[];
+            async find<Q extends FindQuery<T>>(query: Q): Promise<Payload<T, Q>[]> {
+                const res = await sigauthRequest("GET", \`/api/asset/find?type=\${this.typeUuid}&query=\${encodeURIComponent(JSON.stringify(query))}\`, {
+                    config: this.config,
+                    internalAuthorization: query.internalAuthorization,
+                })
+                if (res.ok) {
+                    return res.json() as any as Payload<T, Q>[];
+                } else {
+                    throw new Error(\`Failed to fetch asset: \${res.status} \${res.statusText}\`);
+                }
             }
 
             async createOne(input: CreateInput<T>): Promise<T> {
@@ -169,7 +176,7 @@ export const generateClient = (project: Project, assetTypes: AssetType[], outPat
                 return {} as T;
             }
 
-            async updateMany(input: UpdateManyInput<T>): Promise<T[]> {
+            async updateMany(input: UpdateInput<T>): Promise<T[]> {
                 return [] as T[];
             }
 
@@ -177,7 +184,7 @@ export const generateClient = (project: Project, assetTypes: AssetType[], outPat
                 return {} as T;
             }
 
-            async deleteMany(input: DeleteManyInput<T>): Promise<T[]> {
+            async deleteMany(input: DeleteInput<T>): Promise<T[]> {
                 return [] as T[];
             }
         }    
@@ -237,6 +244,7 @@ export const generateClient = (project: Project, assetTypes: AssetType[], outPat
             };
             where?: FindWhere<T>;
             limit?: number;
+            internalAuthorization?: boolean;
             orderBy?: Partial<Record<keyof T, 'asc' | 'desc'>>;
             includes?: FindIncludesQuery<T>;
         };
@@ -248,6 +256,7 @@ export const generateClient = (project: Project, assetTypes: AssetType[], outPat
         export type CreateInput<T> = {
             data: CreateQuery<T>;
             select?: (keyof T)[];
+            internalAuthorization?: boolean;
         };
 
         export type CreateQuery<T> = Omit<Pick<T, ScalarKeys<T>>, 'uuid'>;
@@ -255,19 +264,12 @@ export const generateClient = (project: Project, assetTypes: AssetType[], outPat
         export type UpdateInput<T> = {
             where: FindWhere<T>;
             data: Partial<CreateQuery<T>>;
-        };
-
-        export type UpdateManyInput<T> = {
-            where: FindWhere<T>;
-            data: Partial<CreateQuery<T>>;
+            internalAuthorization?: boolean;
         };
 
         export type DeleteInput<T> = {
             where: FindWhere<T>;
-        };
-
-        export type DeleteManyInput<T> = {
-            where: FindWhere<T>;
+            internalAuthorization?: boolean;
         };
     `);
 

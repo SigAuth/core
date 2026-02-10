@@ -11,6 +11,8 @@ export const FundamentalAssetTypes = [
     'Permission',
 ] as const;
 
+export const AccessableFundamentals = ['Account', 'App'] as const;
+
 export type FundamentalAssetType = (typeof FundamentalAssetTypes)[number];
 export type FundamentalAssetTypeMapping = Record<FundamentalAssetType, string>;
 

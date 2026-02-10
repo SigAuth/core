@@ -2,9 +2,10 @@ import { AssetService } from '@/modules/asset/asset.service';
 import { CreateAssetDto } from '@/modules/asset/dto/create-asset.dto';
 import { DeleteAssetDto } from '@/modules/asset/dto/delete-asset.dto';
 import { EditAssetDto } from '@/modules/asset/dto/edit-asset.dto';
+import { FindAssetDto } from '@/modules/asset/dto/find-asset.dto';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -92,6 +93,12 @@ export class AssetController {
     @ApiNotFoundResponse({ description: 'Not all asset found or invalid ids provided' })
     async deleteAssets(@Body() deleteAssetsDto: DeleteAssetDto) {
         return await this.assetsService.deleteAssets(deleteAssetsDto.data);
+    }
+
+    @Get('find')
+    @UseGuards(SDKGuard)
+    async findAsset(@Query() q: FindAssetDto) {
+        
     }
 }
 

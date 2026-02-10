@@ -52,6 +52,7 @@ const buildTypeRelations = (mapping: FundamentalAssetTypeMapping): GlobalRealtio
             session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
         },
+        
         // Internal
         [mapping.AssetType]: {
             type_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'typeUuid' },
