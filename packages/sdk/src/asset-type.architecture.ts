@@ -7,7 +7,7 @@ export const INTERNAL_PERMISSION_TABLE = '_internal_permissions';
 
 export type JSONSerializable = string | number | boolean | null | { [key: string]: JSONSerializable } | JSONSerializable[];
 
-export type AssetType = {
+export type DefinitiveAssetType = {
     uuid: string;
     name: string;
     fields: (AssetTypeField | AssetTypeRelationField)[];

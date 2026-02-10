@@ -4,7 +4,7 @@ import { Utils } from '@/internal/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { AssetType } from '@sigauth/sdk/architecture';
+import { DefinitiveAssetType } from '@sigauth/sdk/architecture';
 import { Account, App, Session } from '@sigauth/sdk/fundamentals';
 import { ProtectedData, SigAuthPermissions } from '@sigauth/sdk/protected';
 import bcrypt from 'bcryptjs';
@@ -72,7 +72,7 @@ export class AuthService {
         account: Partial<Account>;
         session: Session;
         accounts: Partial<Account>[];
-        assetTypes: AssetType[];
+        assetTypes: DefinitiveAssetType[];
         apps: App[];
         protected: ProtectedData;
     }> {

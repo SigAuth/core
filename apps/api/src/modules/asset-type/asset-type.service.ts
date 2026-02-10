@@ -4,7 +4,7 @@ import { Utils } from '@/internal/utils';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AssetType } from '@sigauth/sdk/architecture';
+import { DefinitiveAssetType } from '@sigauth/sdk/architecture';
 
 @Injectable()
 export class AssetTypeService {
@@ -20,7 +20,7 @@ export class AssetTypeService {
     /*
         This is a really heavy task and scales badly with the amount of asset being created
      */
-    async editAssetType(dto: EditAssetTypeDto): Promise<AssetType | null> {
+    async editAssetType(dto: EditAssetTypeDto): Promise<DefinitiveAssetType | null> {
         const target = await this.db.DBClient.getAssetType(dto.uuid);
         if (!target) throw new NotFoundException('Asset type not found');
 
@@ -39,11 +39,11 @@ export class AssetTypeService {
         }
     }
 
-    async getAssetType(uuid: string): Promise<AssetType | null> {
+    async getAssetType(uuid: string): Promise<DefinitiveAssetType | null> {
         return this.db.DBClient.getAssetType(uuid);
     }
 
-    async getAllAssetTypes(): Promise<AssetType[]> {
+    async getAllAssetTypes(): Promise<DefinitiveAssetType[]> {
         return this.db.DBClient.getAssetTypes();
     }
 }

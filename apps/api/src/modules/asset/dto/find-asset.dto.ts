@@ -32,7 +32,7 @@ export class FindQueryClass {
 
     @IsOptional()
     @Type(() => AuthorzationClass)
-    authorization?: AuthorzationClass;
+    authorization?: any;
 
     @IsOptional()
     @IsObject()

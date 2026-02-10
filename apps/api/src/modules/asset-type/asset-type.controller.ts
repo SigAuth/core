@@ -13,7 +13,7 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AssetType } from '@sigauth/sdk/architecture';
+import { DefinitiveAssetType } from '@sigauth/sdk/architecture';
 
 @Controller('asset-type')
 @UseGuards(SDKGuard, IsRoot)
@@ -39,7 +39,7 @@ export class AssetTypeController {
             },
         },
     })
-    async createAssetType(@Body() createAssetTypeDto: CreateAssetTypeDto): Promise<{ assetType: AssetType }> {
+    async createAssetType(@Body() createAssetTypeDto: CreateAssetTypeDto): Promise<{ assetType: DefinitiveAssetType }> {
         const uuid = await this.assetTypesService.createAssetType(createAssetTypeDto);
         if (!uuid) throw new InternalServerErrorException('Failed to create asset type');
         return { assetType: (await this.assetTypesService.getAssetType(uuid))! };
@@ -65,7 +65,7 @@ export class AssetTypeController {
     @ApiNotFoundResponse({ description: 'Asset type not found' })
     @ApiConflictResponse({ description: 'Asset typ field could not be found (duplicate or invalid id)' })
     @HttpCode(HttpStatus.OK)
-    async editAssetType(@Body() editAssetTypeDto: EditAssetTypeDto): Promise<{ updatedAssetType: AssetType }> {
+    async editAssetType(@Body() editAssetTypeDto: EditAssetTypeDto): Promise<{ updatedAssetType: DefinitiveAssetType }> {
         const updatedAssetType = (await this.assetTypesService.editAssetType(editAssetTypeDto))!;
         return { updatedAssetType };
     }
@@ -98,7 +98,7 @@ export class AssetTypeController {
             ],
         },
     })
-    async getAllAssetTypes(): Promise<AssetType[]> {
+    async getAllAssetTypes(): Promise<DefinitiveAssetType[]> {
         return await this.assetTypesService.getAllAssetTypes();
     }
 }

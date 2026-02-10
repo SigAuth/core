@@ -1,7 +1,7 @@
 import { FindQuery } from '@/internal/database/generic/orm-client/sigauth.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Asset, AssetType } from '@sigauth/sdk/architecture';
+import { Asset, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 
 @Injectable()
 export class AssetService {
@@ -64,7 +64,7 @@ export class AssetService {
 
         if (assets.length == 0 || assets.length != data.length) throw new NotFoundException('Not all asset found or invalid ids provided');
 
-        const typeCache: AssetType[] = [];
+        const typeCache: DefinitiveAssetType[] = [];
         for (const a of assets) {
             let assetType = typeCache.find(t => t.uuid == data.find(d => d.uuid == a.uuid)?.typeUuid) ?? null;
             if (!assetType) {

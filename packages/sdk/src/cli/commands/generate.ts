@@ -1,7 +1,7 @@
 import { Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import ora from 'ora';
-import { AssetType } from '../../asset-type.architecture.js';
+import { DefinitiveAssetType } from '../../asset-type.architecture.js';
 import { Config } from '../config/config.js';
 import { SDKGenerator } from '../generator/generator.builder.js';
 import { sigauthRequest } from '../utils.js';
@@ -76,7 +76,7 @@ export default class GenerateTypes extends Command {
                     );
             }
 
-            const types: AssetType[] = await typeRes.json();
+            const types: DefinitiveAssetType[] = await typeRes.json();
             const generator = new SDKGenerator(types, config.get('out')!);
             generator.generate();
 

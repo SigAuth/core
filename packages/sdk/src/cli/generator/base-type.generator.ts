@@ -1,8 +1,8 @@
 import { InterfaceDeclarationStructure, OptionalKind, Project, PropertySignatureStructure } from 'ts-morph';
-import { AssetFieldType, AssetType, AssetTypeField, AssetTypeRelationField } from '../../asset-type.architecture.js';
+import { AssetFieldType, AssetTypeField, AssetTypeRelationField, DefinitiveAssetType } from '../../asset-type.architecture.js';
 import { FundamentalAssetTypes } from '../../protected.types.js';
 
-export const generateBaseTypeFile = (project: Project, assetTypes: AssetType[], outPath: string, includeInternals: boolean) => {
+export const generateBaseTypeFile = (project: Project, assetTypes: DefinitiveAssetType[], outPath: string, includeInternals: boolean) => {
     const baseTypeFile = project.createSourceFile(`${outPath}/asset-types.ts`, '', { overwrite: true });
     const interfaces: OptionalKind<InterfaceDeclarationStructure>[] = [];
     const reverseRelations: Record<string, OptionalKind<PropertySignatureStructure>[]> = {};

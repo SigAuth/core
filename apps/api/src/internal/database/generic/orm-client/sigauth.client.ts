@@ -1,7 +1,13 @@
 import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
 import { ORMUtils } from '@/internal/database/generic/orm-client/helper.client';
 import { Utils } from '@/internal/utils';
-import { INTERNAL_ASSET_TYPE_TABLE, INTERNAL_GRANT_TABLE } from '@sigauth/sdk/architecture';
+import {
+    AssetFieldType,
+    AssetTypeRelationField,
+    DefinitiveAssetType,
+    INTERNAL_ASSET_TYPE_TABLE,
+    INTERNAL_GRANT_TABLE,
+} from '@sigauth/sdk/architecture';
 import {
     Account,
     App,
@@ -21,59 +27,102 @@ export type GlobalRealtionMap = Record<
     Record<string, { table: string; joinType?: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean }>
 >;
 
-const buildTypeRelations = (mapping: FundamentalAssetTypeMapping): GlobalRealtionMap => {
-    return {
-        [mapping.Account]: {
-            subject_sessions: { table: mapping.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
-            account_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'accountUuid' }, // Internal
-        },
-        [mapping.Session]: {
-            subject_account: { table: mapping.Account, joinType: 'forward', fieldName: 'subjectUuid' },
-            session_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
-            session_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' },
-        },
-        [mapping.App]: {
-            app_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
-            app_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
-            app_scopes: { table: mapping.AppScope, joinType: 'reverse', fieldName: 'appUuids', usingJoinTable: true },
+// we need to dynamically generate this table so we can have the correct mapping for all asset types including custom ones
 
-            app_accesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-            app_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-            app_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-        },
-        [mapping.AppScope]: {
-            app_references: { table: mapping.App, joinType: 'forward', fieldName: 'appUuids', usingJoinTable: true },
-        },
-        [mapping.AuthorizationInstance]: {
-            session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-        },
-        [mapping.AuthorizationChallenge]: {
-            session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-        },
-        
-        // Internal
-        [mapping.AssetType]: {
-            type_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'typeUuid' },
-            type_appAccesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'typeUuid' },
-            type_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'typeUuid' },
-        },
-        [mapping.Grant]: {
-            account_reference: { table: mapping.Account, joinType: 'forward', fieldName: 'accountUuid' },
-            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-            type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
-        },
-        [mapping.AppAccess]: {
-            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-            type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
-        },
-        [mapping.Permission]: {
-            app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-            type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
-        },
-    };
+const buildTypeRelations = (assetTypes: DefinitiveAssetType[]): GlobalRealtionMap => {
+    const map: GlobalRealtionMap = {};
+
+    const tableName = (typeUuid: string) => (!typeUuid.startsWith('_internal') ? `asset_${typeUuid}` : typeUuid);
+
+    for (const assetType of assetTypes) {
+        const relations = assetType.fields.filter((f): f is AssetTypeRelationField => f.type === AssetFieldType.RELATION);
+        for (const relation of relations) {
+            const target = assetTypes.find(t => t.uuid === relation.targetAssetType);
+            if (!target)
+                throw new Error(
+                    `Invalid relation in asset type ${assetType.name}: target asset type ${relation.targetAssetType} not found`,
+                );
+
+            if (!map[tableName(assetType.uuid)]) map[tableName(assetType.uuid)] = {};
+            if (!map[tableName(relation.targetAssetType)]) map[tableName(relation.targetAssetType)] = {};
+
+            // forward
+            const fieldName = relation.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '') + '_ref' + (relation.allowMultiple ? 's' : '');
+            map[tableName(assetType.uuid)][fieldName] = {
+                joinType: 'forward',
+                table: tableName(relation.targetAssetType),
+                fieldName: relation.name,
+                usingJoinTable: relation.allowMultiple,
+            };
+
+            // reverse
+            const reverseFieldName = assetType.name.toLowerCase() + 's';
+            map[tableName(relation.targetAssetType)][reverseFieldName] = {
+                joinType: 'reverse',
+                table: tableName(assetType.uuid),
+                fieldName: relation.name,
+                usingJoinTable: relation.allowMultiple,
+            };
+        }
+    }
+
+    console.log(map);
+    return map;
 };
+
+// const buildTypeRelations = (mapping: FundamentalAssetTypeMapping): GlobalRealtionMap => {
+//     return {
+//         [mapping.Account]: {
+//             subject_sessions: { table: mapping.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
+//             account_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'accountUuid' }, // Internal
+//         },
+//         [mapping.Session]: {
+//             subject_account: { table: mapping.Account, joinType: 'forward', fieldName: 'subjectUuid' },
+//             session_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
+//             session_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' },
+//         },
+//         [mapping.App]: {
+//             app_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
+//             app_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
+//             app_scopes: { table: mapping.AppScope, joinType: 'reverse', fieldName: 'appUuids', usingJoinTable: true },
+
+//             app_accesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+//             app_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+//             app_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
+//         },
+//         [mapping.AppScope]: {
+//             app_references: { table: mapping.App, joinType: 'forward', fieldName: 'appUuids', usingJoinTable: true },
+//         },
+//         [mapping.AuthorizationInstance]: {
+//             session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+//         },
+//         [mapping.AuthorizationChallenge]: {
+//             session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
+//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+//         },
+
+//         // Internal
+//         [mapping.AssetType]: {
+//             type_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'typeUuid' },
+//             type_appAccesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'typeUuid' },
+//             type_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'typeUuid' },
+//         },
+//         [mapping.Grant]: {
+//             account_reference: { table: mapping.Account, joinType: 'forward', fieldName: 'accountUuid' },
+//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+//             type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+//         },
+//         [mapping.AppAccess]: {
+//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+//             type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+//         },
+//         [mapping.Permission]: {
+//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
+//             type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
+//         },
+//     };
+// };
 
 export class SigauthClient {
     private relations?: GlobalRealtionMap;
@@ -81,10 +130,52 @@ export class SigauthClient {
     private mapping?: FundamentalAssetTypeMapping;
     private client?: GenericDatabaseGateway;
 
-    init(mapping: FundamentalAssetTypeMapping, client: GenericDatabaseGateway) {
-        this.mapping = mapping;
+    async init(mapping: FundamentalAssetTypeMapping, client: GenericDatabaseGateway) {
+        this.mapping = mapping; // we dont need to save this anymore
         this.client = client;
-        this.relations = buildTypeRelations(mapping);
+
+        const assetTypes = await this.client.getAssetTypes();
+
+        // add internals
+        assetTypes.push({
+            uuid: INTERNAL_ASSET_TYPE_TABLE,
+            name: 'AssetType',
+            fields: [{
+                
+            }]
+        })
+
+        assetTypes.push({
+            uuid: INTERNAL_GRANT_TABLE,
+            name: 'Grant',
+            fields: [
+                {
+                    name: 'accountUuid',
+                    type: AssetFieldType.RELATION,
+                    required: true,
+                    targetAssetType: assetTypes.find(a => a.name === 'Account')!.uuid,
+                    allowMultiple: false,
+                },
+                { name: 'assetUuid', type: AssetFieldType.VARCHAR },
+                {
+                    name: 'typeUuid',
+                    type: AssetFieldType.RELATION,
+                    targetAssetType: assetTypes.find(a => a.name === 'AssetType')!.uuid,
+                    allowMultiple: false,
+                },
+                {
+                    name: 'appUuid',
+                    type: AssetFieldType.RELATION,
+                    required: true,
+                    targetAssetType: assetTypes.find(a => a.name === 'App')!.uuid,
+                    allowMultiple: false,
+                },
+                { name: 'permission', type: AssetFieldType.VARCHAR, required: true },
+                { name: 'grantable', type: AssetFieldType.BOOLEAN, required: true },
+            ],
+        });
+
+        this.relations = buildTypeRelations(assetTypes);
     }
 
     private ensureInitialized() {

@@ -1,8 +1,8 @@
 import { Project, Scope } from 'ts-morph';
-import { AssetType } from '../../asset-type.architecture.js';
+import { DefinitiveAssetType } from '../../asset-type.architecture.js';
 import { AccessableFundamentals, FundamentalAssetTypes } from '../../protected.types.js';
 
-export const generateClient = (project: Project, assetTypes: AssetType[], outPath: string) => {
+export const generateClient = (project: Project, assetTypes: DefinitiveAssetType[], outPath: string) => {
     const clientFile = project.createSourceFile(`${outPath}/sigauth.client.ts`, '', { overwrite: true });
 
     assetTypes = assetTypes.filter(

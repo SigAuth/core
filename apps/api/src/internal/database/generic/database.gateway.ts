@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Asset, AssetType, AssetTypeField, AssetTypeRelationField } from '@sigauth/sdk/architecture';
+import { Asset, AssetTypeField, AssetTypeRelationField, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
 
 export abstract class GenericDatabaseGateway {
@@ -23,23 +23,23 @@ export abstract class GenericDatabaseGateway {
         uuid: string,
         name: string,
         fields: ((AssetTypeField | AssetTypeRelationField) & { originalName?: string })[],
-    ): Promise<AssetType>;
+    ): Promise<DefinitiveAssetType>;
 
     abstract deleteAssetType(uuid: string): Promise<void>;
 
     abstract getAssetTypeFields(uuid: string, externalJoinKeys?: string[]): Promise<AssetTypeField[]>;
 
-    abstract getAssetType(uuid: string): Promise<AssetType | null>;
+    abstract getAssetType(uuid: string): Promise<DefinitiveAssetType | null>;
 
-    abstract getAssetTypes(): Promise<AssetType[]>;
+    abstract getAssetTypes(): Promise<DefinitiveAssetType[]>;
 
     abstract getAssetByUuid<T extends Asset>(typeUuid: string, assetUuid: string): Promise<T | null>;
 
-    abstract createAsset<T extends Asset>(assetType: AssetType, fields: Record<string, any>): Promise<T>;
+    abstract createAsset<T extends Asset>(assetType: DefinitiveAssetType, fields: Record<string, any>): Promise<T>;
 
-    abstract updateAsset<T extends Asset>(assetType: AssetType, assetUuid: string, fields: Record<string, any>): Promise<T>;
+    abstract updateAsset<T extends Asset>(assetType: DefinitiveAssetType, assetUuid: string, fields: Record<string, any>): Promise<T>;
 
-    abstract deleteAsset(assetType: AssetType, assetUuid: string): Promise<boolean>;
+    abstract deleteAsset(assetType: DefinitiveAssetType, assetUuid: string): Promise<boolean>;
 
     abstract getAssetsByType<T extends Asset>(typeUuid: string): Promise<T[]>;
 }

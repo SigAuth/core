@@ -4,9 +4,9 @@ import { Injectable } from '@nestjs/common';
 import {
     Asset,
     AssetFieldType,
-    AssetType,
     AssetTypeField,
     AssetTypeRelationField,
+    DefinitiveAssetType,
     INTERNAL_APP_ACCESS_TABLE,
     INTERNAL_ASSET_TYPE_TABLE,
     INTERNAL_GRANT_TABLE,
@@ -333,7 +333,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         uuid: string,
         name: string,
         fields: ((AssetTypeField | AssetTypeRelationField) & { originalName?: string })[],
-    ): Promise<AssetType> {
+    ): Promise<DefinitiveAssetType> {
         const type = await this.getAssetType(uuid);
         if (!type) throw new Error('Asset type not found');
 
@@ -606,7 +606,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         }
     }
 
-    async createAsset<T extends Asset>(assetType: AssetType, fields: Record<string, any>): Promise<T> {
+    async createAsset<T extends Asset>(assetType: DefinitiveAssetType, fields: Record<string, any>): Promise<T> {
         if (!this.db) throw new Error('Database not connected');
         if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot set uuid field when creating asset, it is auto-generated');
         const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
@@ -638,7 +638,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         return (await this.getAssetByUuid<T>(assetType.uuid, asset.uuid)) as T;
     }
 
-    async updateAsset<T extends Asset>(assetType: AssetType, assetUuid: string, fields: Record<string, any>): Promise<T> {
+    async updateAsset<T extends Asset>(assetType: DefinitiveAssetType, assetUuid: string, fields: Record<string, any>): Promise<T> {
         if (!this.db) throw new Error('Database not connected');
         if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot update uuid field of an asset');
 
@@ -679,7 +679,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         return asset;
     }
 
-    async deleteAsset(assetType: AssetType, assetUuid: string): Promise<boolean> {
+    async deleteAsset(assetType: DefinitiveAssetType, assetUuid: string): Promise<boolean> {
         if (!this.db) throw new Error('Database not connected');
         const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
 
@@ -766,7 +766,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         return fields;
     }
 
-    async getAssetType(uuid: string): Promise<AssetType | null> {
+    async getAssetType(uuid: string): Promise<DefinitiveAssetType | null> {
         if (!this.db) throw new Error('Database not connected');
 
         const typeRow = (await this.db.raw(`SELECT * FROM ?? WHERE uuid = ?`, [INTERNAL_ASSET_TYPE_TABLE, uuid])).rows[0];
@@ -780,10 +780,10 @@ export class PostgresDriver extends GenericDatabaseGateway {
         };
     }
 
-    async getAssetTypes(): Promise<AssetType[]> {
+    async getAssetTypes(): Promise<DefinitiveAssetType[]> {
         if (!this.db) throw new Error('Database not connected');
 
-        const types: AssetType[] = [];
+        const types: DefinitiveAssetType[] = [];
         const typeRes = await this.db.raw(`SELECT * FROM ??`, [INTERNAL_ASSET_TYPE_TABLE]);
 
         for (const row of typeRes.rows) {
