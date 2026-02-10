@@ -1,6 +1,7 @@
 import { Project } from 'ts-morph';
 import { AssetType } from '../../asset-type.architecture.js';
 import { generateBaseTypeFile } from './base-type.generator.js';
+import { generateClient } from './client.generator.js';
 
 export class SDKGenerator {
     private readonly assetTypes: AssetType[];
@@ -16,6 +17,7 @@ export class SDKGenerator {
     generate() {
         try {
             generateBaseTypeFile(this.project, this.assetTypes, this.out, true);
+            generateClient(this.project, this.assetTypes, this.out);
         } catch (error) {
             console.error('Error generating SDK:', error);
         }

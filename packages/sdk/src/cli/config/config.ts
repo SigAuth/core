@@ -56,5 +56,9 @@ export class Config {
         sourceFile.saveSync();
         console.log(`TypeScript configuration saved to ${this.configPath}`);
     }
+
+    get All() {
+        return this.content;
+    }
 }
 

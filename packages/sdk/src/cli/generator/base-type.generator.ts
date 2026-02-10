@@ -1,5 +1,6 @@
 import { InterfaceDeclarationStructure, OptionalKind, Project, PropertySignatureStructure } from 'ts-morph';
 import { AssetFieldType, AssetType, AssetTypeField, AssetTypeRelationField } from '../../asset-type.architecture.js';
+import { FundamentalAssetTypes } from '../../protected.types.js';
 
 export const generateBaseTypeFile = (project: Project, assetTypes: AssetType[], outPath: string, includeInternals: boolean) => {
     const baseTypeFile = project.createSourceFile(`${outPath}/asset-types.ts`, '', { overwrite: true });
@@ -36,7 +37,7 @@ export const generateBaseTypeFile = (project: Project, assetTypes: AssetType[], 
     }
 
     for (const type of assetTypes) {
-        if (type.name == 'AssetType') continue; // skip base AssetType interface
+        if (FundamentalAssetTypes.includes(type.name as any)) continue; // skip base AssetType interface
 
         const properties: OptionalKind<PropertySignatureStructure>[] = [];
         const referenceProperties: OptionalKind<PropertySignatureStructure>[] = [];
@@ -84,59 +85,6 @@ export const generateBaseTypeFile = (project: Project, assetTypes: AssetType[], 
     }
 
     baseTypeFile.addInterfaces(interfaces);
-    if (includeInternals) {
-        baseTypeFile.addStatements(`
-            export type AssetType = {
-                uuid: string;
-                name: string;
-                externalJoinKeys: string[];
-
-                /** Reverse relation from Permission.typeUuid */
-                type_permissions?: Permission[];
-                /** Reverse relation from AppAccess.typeUuid */
-                type_appAccesses?: AppAccess[];
-                /** Reverse relation from Grant.typeUuid */
-                type_grants?: Grant[];
-            };
-
-            export interface Grant {
-                accountUuid: string;
-                assetUuid?: string;
-                typeUuid?: string;
-                appUuid: string;
-                permission: string;
-                grantable: boolean;
-
-                /** These fields are only available when the relation is included in the query */
-                account_reference?: Account;
-                app_reference?: App;
-                type_reference?: AssetType;
-            }
-
-            export interface AppAccess {
-                appUuid: string;
-                typeUuid: string;
-                find: boolean;
-                create: boolean;
-                edit: boolean;
-                delete: boolean;
-
-                /** These fields are only available when the relation is included in the query */
-                app_reference?: App;
-                type_reference?: AssetType;
-            }
-
-            export type Permission = {
-                typeUuid?: string;
-                appUuid: string;
-                permission: string;
-
-                /** These fields are only available when the relation is included in the query */
-                app_reference?: App;
-                type_reference?: AssetType;
-            };
-        `);
-    }
 
     baseTypeFile.formatText();
     baseTypeFile.saveSync();

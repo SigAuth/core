@@ -51,6 +51,11 @@
             "types": "./dist/cli/config/config.types.d.ts",
             "import": "./dist/cli/config/config.types.js",
             "default": "./dist/cli/config/config.types.js"
+        },
+        "./utils": {
+            "types": "./dist/cli/utils.d.ts",
+            "import": "./dist/cli/utils.js",
+            "default": "./dist/cli/utils.js"
         }
     },
     "dependencies": {

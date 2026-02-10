@@ -30,6 +30,11 @@ export default class GenerateTypes extends Command {
 
         const config = new Config();
         await config.loadConfig();
+        if (!config.All) {
+            this.error(
+                chalk.red(`Failed to load configuration. Please ensure your config file is correct and located at ${config['configPath']}`),
+            );
+        }
 
         if (flags.verbose) {
             msg(`Loading environment variables from: ${process.cwd()}/sigauth.config.ts`);
@@ -55,8 +60,8 @@ export default class GenerateTypes extends Command {
                 spinner.start();
             }
 
-            const typeRes = await sigauthRequest('GET', `${config.get('issuer')}/api/asset-type/all`, {
-                config,
+            const typeRes = await sigauthRequest('GET', `/api/asset-type/all`, {
+                config: config.All,
                 internalAuthorization: false,
             });
 

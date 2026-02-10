@@ -19,7 +19,11 @@ export abstract class GenericDatabaseGateway {
 
     abstract createAssetType(name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<string | undefined>;
 
-    abstract editAssetType(uuid: string, name: string, fields: (AssetTypeField | AssetTypeRelationField)[]): Promise<AssetType>;
+    abstract editAssetType(
+        uuid: string,
+        name: string,
+        fields: ((AssetTypeField | AssetTypeRelationField) & { originalName?: string })[],
+    ): Promise<AssetType>;
 
     abstract deleteAssetType(uuid: string): Promise<void>;
 
