@@ -15,12 +15,13 @@ import {
     SELF_REFERENCE_ASSET_TYPE_UUID,
 } from '@sigauth/sdk/architecture';
 import { getMappedFields, RegistryConfigs } from '@sigauth/sdk/fundamentals';
-import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
+import { AssetTypeTableMapping } from '@sigauth/sdk/protected';
 import knex, { Knex } from 'knex';
 
 @Injectable()
 export class PostgresDriver extends GenericDatabaseGateway {
     private db?: Knex;
+    private mapping?: AssetTypeTableMapping;
 
     constructor(private readonly storage: StorageService) {
         super(PostgresDriver.name);
@@ -39,12 +40,12 @@ export class PostgresDriver extends GenericDatabaseGateway {
         });
         this.logger.log('Connected to Postgres database!');
 
+        await this.generateAssetTypeTableMapping();
         const exists = await this.checkIfInstancedSchemaExists();
         if (!exists) {
             this.logger.log('Instanced schema not found, initializing database schema...');
-            const mapping = await this.initializeSchema();
+            this.mapping = await this.initializeSchema();
 
-            this.storage.saveConfigFile({ mapping });
             this.logger.log('Initialized database schema');
         } else {
             this.logger.log('Instanced schema found, skipping initialization.');
@@ -54,10 +55,8 @@ export class PostgresDriver extends GenericDatabaseGateway {
     private async checkIfInstancedSchemaExists() {
         if (!this.db) throw new Error('Database not connected');
 
-        const mapping = this.storage.FundamentalAssetTypeMapping;
-        if (!mapping) return false;
-
-        for (const tableName of Object.values(mapping)) {
+        if (!this.mapping) return false;
+        for (const tableName of Object.values(this.mapping)) {
             const exists = await this.db.schema.hasTable(tableName);
             if (!exists) {
                 this.logger.error(`Expected default table "${tableName}" to exist, but it does not.`);
@@ -67,7 +66,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         return true;
     }
 
-    async initializeSchema(): Promise<FundamentalAssetTypeMapping> {
+    async initializeSchema(): Promise<AssetTypeTableMapping> {
         if (!this.db) throw new Error('Database not connected');
 
         // generate base table to maintain asset types
@@ -86,7 +85,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         }
 
         // create asset types for account, mirror, sessions, and auth
-        const mapping: Partial<FundamentalAssetTypeMapping> = {
+        const mapping: Partial<AssetTypeTableMapping> = {
             AssetType: INTERNAL_ASSET_TYPE_TABLE,
             Grant: INTERNAL_GRANT_TABLE,
             AppAccess: INTERNAL_APP_ACCESS_TABLE,
@@ -164,7 +163,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             });
         }
 
-        return mapping as FundamentalAssetTypeMapping;
+        return mapping as AssetTypeTableMapping;
     }
 
     async createAssetType(
@@ -761,6 +760,27 @@ export class PostgresDriver extends GenericDatabaseGateway {
             table.primary(['source', 'target', 'field']);
         });
         this.logger.log(`Created join table for relations between "${sourceTypeUuid}" and "${targetTypeUuid}"`);
+    }
+
+    async generateAssetTypeTableMapping(refetch?: boolean): Promise<AssetTypeTableMapping> {
+        if (!this.mapping || refetch) {
+            if (!this.db) throw new Error('Database not connected');
+            if (!(await this.db.schema.hasTable(INTERNAL_ASSET_TYPE_TABLE))) return {} as any;
+
+            const types = await this.getAssetTypes();
+            const mapping: Partial<AssetTypeTableMapping> = {};
+            for (const assetType of types) {
+                mapping[assetType.name] = 'asset_' + assetType.uuid;
+            }
+
+            mapping['Grant'] = INTERNAL_GRANT_TABLE;
+            mapping['AppAccess'] = INTERNAL_APP_ACCESS_TABLE;
+            mapping['Permission'] = INTERNAL_PERMISSION_TABLE;
+            mapping['AssetType'] = INTERNAL_ASSET_TYPE_TABLE;
+            this.mapping = mapping as AssetTypeTableMapping;
+        }
+
+        return this.mapping;
     }
 
     private applyOnDeleteStrategy(column: Knex.ReferencingColumnBuilder, field: AssetTypeRelationField): void {

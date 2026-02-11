@@ -14,7 +14,7 @@ export const FundamentalAssetTypes = [
 export const AccessableFundamentals = ['Account', 'App'] as const;
 
 export type FundamentalAssetType = (typeof FundamentalAssetTypes)[number];
-export type FundamentalAssetTypeMapping = Record<FundamentalAssetType, string>;
+export type AssetTypeTableMapping = Record<FundamentalAssetType, string> & { [key: string]: string };
 
 export const SigAuthPermissions = {
     ROOT: 'root', // TODO root should be a group of all permissions and not be assignable directly
@@ -24,7 +24,6 @@ export const SigAuthPermissions = {
 };
 
 export type ProtectedData = {
-    mapping: FundamentalAssetTypeMapping;
     sigauthAppUuid: string;
 };
 

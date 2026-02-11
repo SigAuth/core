@@ -28,8 +28,8 @@ export class AssetTypeService {
     }
 
     async deleteAssetType(uuids: string[]) {
-        if (!this.storage.FundamentalAssetTypeMapping) throw new Error('Storage service not initialized yet');
-        const criticalTypes = Object.values(this.storage.FundamentalAssetTypeMapping).map(s => convertTypeTableToUuid(s));
+        if (!this.db.TableMapping) throw new Error('Storage service not initialized yet');
+        const criticalTypes = Object.values(this.db.TableMapping).map(s => convertTypeTableToUuid(s));
 
         for (const uuid of uuids) {
             if (criticalTypes.includes(uuid)) {

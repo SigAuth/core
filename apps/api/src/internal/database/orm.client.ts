@@ -22,11 +22,9 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
 
     async onApplicationBootstrap() {
         await this.db.connect();
-
-        if (!this.storage.FundamentalAssetTypeMapping) {
-            throw new Error('Cannot initialize ORMService without instance signature loaded in StorageService.');
-        }
-        await this.init(this.storage.FundamentalAssetTypeMapping, this.db);
+        
+        if (!this.DBClient.generateAssetTypeTableMapping()) throw new Error('Cannot initialize ORMService without instance signature loaded in StorageService.');
+        await this.init(this.db);
 
         if (!this.storage.SigAuthAppUuid || !(await this.App.findOne({ where: { uuid: this.storage.SigAuthAppUuid } }))) {
             this.logger.warn('SigAuth App not found in database. Creating default SigAuth App entry.');
@@ -96,7 +94,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
                         accountUuid: account.uuid,
                         appUuid: appId,
                         typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID,
-                        assetUuid: convertTypeTableToUuid(this.storage.FundamentalAssetTypeMapping.Account),
+                        assetUuid: convertTypeTableToUuid(this.mapping!.Account),
                         permission: SigAuthPermissions.CREATE_ASSET,
                         grantable: true,
                     },

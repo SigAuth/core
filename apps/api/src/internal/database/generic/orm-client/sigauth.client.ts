@@ -23,7 +23,7 @@ import {
     RegistryConfigs,
     Session,
 } from '@sigauth/sdk/fundamentals';
-import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
+import { AssetTypeTableMapping } from '@sigauth/sdk/protected';
 import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 
 export type GlobalRealtionMap = Record<
@@ -93,44 +93,45 @@ const buildTypeRelations = (assetTypes: DefinitiveAssetType[]): GlobalRealtionMa
 };
 
 export class SigauthClient {
+    protected mapping?: AssetTypeTableMapping;
+
     private relations?: GlobalRealtionMap;
     private models: Partial<Record<string, Model<any>>> = {};
-    private mapping?: FundamentalAssetTypeMapping;
     private client?: GenericDatabaseGateway;
 
-    async init(mapping: FundamentalAssetTypeMapping, client: GenericDatabaseGateway) {
-        this.mapping = mapping; // we dont need to save this anymore
+    async init(client: GenericDatabaseGateway) {
         this.client = client;
+        this.mapping = await this.client.generateAssetTypeTableMapping();
 
         const assetTypes = await this.client.getAssetTypes();
-
-        // add internals
         assetTypes.push({
             uuid: INTERNAL_ASSET_TYPE_TABLE,
             name: 'AssetType',
-            fields: getMappedFields(mapping, RegistryConfigs.AssetType),
+            fields: getMappedFields(this.mapping, RegistryConfigs.AssetType),
         });
 
         assetTypes.push({
             uuid: INTERNAL_GRANT_TABLE,
             name: 'Grant',
-            fields: getMappedFields(mapping, RegistryConfigs.Grant),
+            fields: getMappedFields(this.mapping, RegistryConfigs.Grant),
         });
 
         assetTypes.push({
             uuid: INTERNAL_APP_ACCESS_TABLE,
             name: 'AppAccess',
-            fields: getMappedFields(mapping, RegistryConfigs.AppAccess),
+            fields: getMappedFields(this.mapping, RegistryConfigs.AppAccess),
         });
 
         assetTypes.push({
             uuid: INTERNAL_PERMISSION_TABLE,
             name: 'Permission',
-            fields: getMappedFields(mapping, RegistryConfigs.Permission),
+            fields: getMappedFields(this.mapping, RegistryConfigs.Permission),
         });
 
         this.relations = buildTypeRelations(assetTypes);
     }
+
+    private rebuildRelations() {}
 
     private ensureInitialized() {
         if (!this.mapping || !this.client || !this.relations) {
@@ -139,7 +140,7 @@ export class SigauthClient {
     }
 
     private getModel<T extends object>(
-        key: keyof FundamentalAssetTypeMapping & string,
+        key: keyof AssetTypeTableMapping & string,
         Type: new (table: any, rels: GlobalRealtionMap, client: GenericDatabaseGateway) => Model<T>,
     ): Model<T> {
         this.ensureInitialized();
@@ -185,6 +186,10 @@ export class SigauthClient {
 
     get Permission(): Model<Permission> {
         return this.getModel<Permission>('Permission', Model);
+    }
+
+    get TableMapping() {
+        return this.mapping!;
     }
 }
 

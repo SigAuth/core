@@ -27,27 +27,11 @@ export class AssetService {
                     ')',
             );
 
-        // check if every variable is of the right type
-        // Lets try to let the database do that by creating the Asset in a try catch
-        // for (const field of Object.entries(fields)) {
-        //     const correspondingField = typeFields.find(f => f.name == field[0]);
-        //     const targetType =
-        //         correspondingField?.type === AssetFieldType.TEXT
-        //             ? 'string'
-        //             : correspondingField?.type === AssetFieldType.CHECKFIELD
-        //               ? 'boolean'
-        //               : 'number';
-
-        //     if (typeof field[1] != targetType)
-        //         throw new BadRequestException(
-        //             'Invalid field type ( field: ' + field[0].toString() + ' must be of type ' + targetType + ')',
-        //         );
-        // }
-
         try {
             const assetType = await this.db.DBClient.getAssetType(assetTypeUuid);
             if (!assetType) throw new NotFoundException('Asset type not found');
 
+            // Type checks are outsourced to db which will throw an error
             if (assetUuid) {
                 return this.db.DBClient.updateAsset<Asset>(assetType, assetUuid, fields);
             } else {

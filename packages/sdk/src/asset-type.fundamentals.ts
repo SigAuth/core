@@ -1,6 +1,6 @@
 import { AssetFieldType, AssetTypeField, AssetTypeRelationField, RelationalIntegrityStrategy } from './asset-type.architecture.js';
 import { convertTypeTableToUuid } from './cli/utils.js';
-import { FundamentalAssetTypeMapping } from './protected.types.js';
+import { AssetTypeTableMapping } from './protected.types.js';
 
 const accountFields = [
     { name: 'username', type: AssetFieldType.VARCHAR, required: true },
@@ -206,7 +206,7 @@ export type Permission = Prettify<Entity<'Permission'>>;
 // --------------------------------------------------------   Type Logic   -------------------------------------------------------------
 
 export const getMappedFields = (
-    mapping: Partial<FundamentalAssetTypeMapping>,
+    mapping: Partial<AssetTypeTableMapping>,
     fields: readonly (AssetTypeField | AssetTypeRelationField)[],
 ): (AssetTypeField | AssetTypeRelationField)[] => {
     return fields.map(field => {
