@@ -102,36 +102,37 @@ export class SigauthClient {
     async init(client: GenericDatabaseGateway) {
         this.client = client;
         this.mapping = await this.client.generateAssetTypeTableMapping();
+        await this.rebuildRelations();
+    }
 
-        const assetTypes = await this.client.getAssetTypes();
+    private async rebuildRelations() {
+        const assetTypes = (await this.client?.getAssetTypes()) ?? [];
         assetTypes.push({
             uuid: INTERNAL_ASSET_TYPE_TABLE,
             name: 'AssetType',
-            fields: getMappedFields(this.mapping, RegistryConfigs.AssetType),
+            fields: getMappedFields(this.mapping!, RegistryConfigs.AssetType),
         });
 
         assetTypes.push({
             uuid: INTERNAL_GRANT_TABLE,
             name: 'Grant',
-            fields: getMappedFields(this.mapping, RegistryConfigs.Grant),
+            fields: getMappedFields(this.mapping!, RegistryConfigs.Grant),
         });
 
         assetTypes.push({
             uuid: INTERNAL_APP_ACCESS_TABLE,
             name: 'AppAccess',
-            fields: getMappedFields(this.mapping, RegistryConfigs.AppAccess),
+            fields: getMappedFields(this.mapping!, RegistryConfigs.AppAccess),
         });
 
         assetTypes.push({
             uuid: INTERNAL_PERMISSION_TABLE,
             name: 'Permission',
-            fields: getMappedFields(this.mapping, RegistryConfigs.Permission),
+            fields: getMappedFields(this.mapping!, RegistryConfigs.Permission),
         });
 
         this.relations = buildTypeRelations(assetTypes);
     }
-
-    private rebuildRelations() {}
 
     private ensureInitialized() {
         if (!this.mapping || !this.client || !this.relations) {

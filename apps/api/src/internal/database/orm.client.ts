@@ -22,8 +22,9 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
 
     async onApplicationBootstrap() {
         await this.db.connect();
-        
-        if (!this.DBClient.generateAssetTypeTableMapping()) throw new Error('Cannot initialize ORMService without instance signature loaded in StorageService.');
+
+        if (!this.DBClient.generateAssetTypeTableMapping())
+            throw new Error('Cannot initialize ORMService without instance signature loaded in StorageService.');
         await this.init(this.db);
 
         if (!this.storage.SigAuthAppUuid || !(await this.App.findOne({ where: { uuid: this.storage.SigAuthAppUuid } }))) {
