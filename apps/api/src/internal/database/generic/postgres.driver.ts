@@ -14,6 +14,7 @@ import {
     RelationalIntegrityStrategy,
     SELF_REFERENCE_ASSET_TYPE_UUID,
 } from '@sigauth/sdk/architecture';
+import { getMappedFields, RegistryConfigs } from '@sigauth/sdk/fundamentals';
 import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
 import knex, { Knex } from 'knex';
 
@@ -85,112 +86,51 @@ export class PostgresDriver extends GenericDatabaseGateway {
         }
 
         // create asset types for account, mirror, sessions, and auth
-        const accountType = await this.createAssetType('Account', [
-            { name: 'username', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'email', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'api', type: AssetFieldType.VARCHAR },
-            { name: 'twoFactorCode', type: AssetFieldType.VARCHAR },
-            { name: 'deactivated', type: AssetFieldType.BOOLEAN, required: true },
-            { name: 'passwordHash', type: AssetFieldType.VARCHAR, required: true },
-        ]);
+        const mapping: Partial<FundamentalAssetTypeMapping> = {
+            AssetType: INTERNAL_ASSET_TYPE_TABLE,
+            Grant: INTERNAL_GRANT_TABLE,
+            AppAccess: INTERNAL_APP_ACCESS_TABLE,
+            Permission: INTERNAL_PERMISSION_TABLE,
+        };
+
+        const accountType = await this.createAssetType('Account', getMappedFields(mapping, RegistryConfigs.Account));
         if (!accountType) throw new Error('Failed to create Account asset type during initialization');
+        mapping.Account = 'asset_' + accountType;
 
-        const sessionType = await this.createAssetType('Session', [
-            {
-                name: 'subjectUuid',
-                type: AssetFieldType.RELATION,
-                required: true,
-                targetAssetType: accountType,
-                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
-            },
-            { name: 'expire', type: AssetFieldType.INTEGER, required: true }, // todo is there a native way to expire rows in Postgres?
-            { name: 'created', type: AssetFieldType.INTEGER, required: true },
-        ]);
+        const sessionType = await this.createAssetType('Session', getMappedFields(mapping, RegistryConfigs.Session));
         if (!sessionType) throw new Error('Failed to create Session asset type during initialization');
+        mapping.Session = 'asset_' + sessionType;
 
-        const appType = await this.createAssetType('App', [
-            { name: 'name', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'url', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'oidcAuthCodeCb', type: AssetFieldType.VARCHAR },
-            { name: 'token', type: AssetFieldType.VARCHAR },
-        ]);
+        const appType = await this.createAssetType('App', getMappedFields(mapping, RegistryConfigs.App));
         if (!appType) throw new Error('Failed to create App asset type during initialization');
+        mapping.App = 'asset_' + appType;
 
-        const scope = await this.createAssetType('AppScope', [
-            { name: 'name', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'description', type: AssetFieldType.TEXT, required: true },
-            { name: 'public', type: AssetFieldType.BOOLEAN, required: true },
-            {
-                name: 'appUuids',
-                type: AssetFieldType.RELATION,
-                targetAssetType: appType,
-                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
-                allowMultiple: true,
-            },
-        ]);
+        const scope = await this.createAssetType('AppScope', getMappedFields(mapping, RegistryConfigs.AppScope));
         if (!scope) throw new Error('Failed to create AppScope asset type during initialization');
+        mapping.AppScope = 'asset_' + scope;
 
-        const authInstanceType = await this.createAssetType('AuthorizationInstance', [
-            {
-                name: 'sessionUuid',
-                type: AssetFieldType.RELATION,
-                required: true,
-                targetAssetType: sessionType,
-                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
-            },
-            {
-                name: 'appUuid',
-                type: AssetFieldType.RELATION,
-                required: true,
-                targetAssetType: appType,
-                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
-            },
-            { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'refreshTokenExpire', type: AssetFieldType.INTEGER, required: true },
-            { name: 'accessToken', type: AssetFieldType.VARCHAR, required: true },
-        ]);
+        const authInstanceType = await this.createAssetType(
+            'AuthorizationInstance',
+            getMappedFields(mapping, RegistryConfigs.AuthorizationInstance),
+        );
         if (!authInstanceType) throw new Error('Failed to create AuthorizationInstance asset type during initialization');
+        mapping.AuthorizationInstance = 'asset_' + authInstanceType;
 
-        const authChallengeType = await this.createAssetType('AuthorizationChallenge', [
-            {
-                name: 'sessionUuid',
-                type: AssetFieldType.RELATION,
-                required: true,
-                targetAssetType: sessionType,
-                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
-            },
-            {
-                name: 'appUuid',
-                type: AssetFieldType.RELATION,
-                required: true,
-                targetAssetType: appType,
-                referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
-            },
-            { name: 'authCode', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'challenge', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'redirectUri', type: AssetFieldType.VARCHAR, required: true },
-            { name: 'created', type: AssetFieldType.DATE, required: true },
-        ]);
+        const authChallengeType = await this.createAssetType(
+            'AuthorizationChallenge',
+            getMappedFields(mapping, RegistryConfigs.AuthorizationChallenge),
+        );
         if (!authChallengeType) throw new Error('Failed to create AuthorizationChallenge asset type during initialization');
+        mapping.AuthorizationChallenge = 'asset_' + authChallengeType;
 
         if (!(await this.db.schema.hasTable(INTERNAL_GRANT_TABLE))) {
             await this.db.schema.createTable(INTERNAL_GRANT_TABLE, table => {
-                table
-                    .uuid('accountUuid')
-                    .notNullable()
-                    .references('uuid')
-                    .inTable(`asset_${accountType.replace(/-/g, '_')}`)
-                    .onDelete('CASCADE');
+                table.uuid('accountUuid').notNullable().references('uuid').inTable(`asset_${accountType}`).onDelete('CASCADE');
 
                 table.uuid('assetUuid');
                 table.uuid('typeUuid').references('uuid').inTable(INTERNAL_ASSET_TYPE_TABLE).onDelete('CASCADE');
 
-                table
-                    .uuid('appUuid')
-                    .notNullable()
-                    .references('uuid')
-                    .inTable(`asset_${appType.replace(/-/g, '_')}`)
-                    .onDelete('CASCADE');
+                table.uuid('appUuid').notNullable().references('uuid').inTable(`asset_${appType}`).onDelete('CASCADE');
 
                 table.string('permission').notNullable();
                 table.boolean('grantable').notNullable().defaultTo(false);
@@ -205,12 +145,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
         if (!(await this.db.schema.hasTable(INTERNAL_APP_ACCESS_TABLE))) {
             await this.db.schema.createTable(INTERNAL_APP_ACCESS_TABLE, table => {
-                table
-                    .uuid('appUuid')
-                    .notNullable()
-                    .references('uuid')
-                    .inTable(`asset_${appType.replace(/-/g, '_')}`)
-                    .onDelete('CASCADE');
+                table.uuid('appUuid').notNullable().references('uuid').inTable(`asset_${appType}`).onDelete('CASCADE');
                 table.uuid('typeUuid').notNullable().references('uuid').inTable(INTERNAL_ASSET_TYPE_TABLE).onDelete('CASCADE');
                 table.boolean('find').notNullable();
                 table.boolean('create').notNullable();
@@ -221,12 +156,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
         if (!(await this.db.schema.hasTable(INTERNAL_PERMISSION_TABLE))) {
             await this.db.schema.createTable(INTERNAL_PERMISSION_TABLE, table => {
-                table
-                    .uuid('appUuid')
-                    .notNullable()
-                    .references('uuid')
-                    .inTable(`asset_${appType.replace(/-/g, '_')}`)
-                    .onDelete('CASCADE');
+                table.uuid('appUuid').notNullable().references('uuid').inTable(`asset_${appType}`).onDelete('CASCADE');
                 table.uuid('typeUuid').references('uuid').inTable(INTERNAL_ASSET_TYPE_TABLE).onDelete('CASCADE');
                 table.string('permission').notNullable();
                 table.primary(['appUuid', 'permission']);
@@ -234,20 +164,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             });
         }
 
-        const mapping: FundamentalAssetTypeMapping = {
-            Account: 'asset_' + accountType.replaceAll('-', '_'),
-            Session: 'asset_' + sessionType.replaceAll('-', '_'),
-            App: 'asset_' + appType.replaceAll('-', '_'),
-            AppScope: 'asset_' + scope.replaceAll('-', '_'),
-            AuthorizationChallenge: 'asset_' + authChallengeType.replaceAll('-', '_'),
-            AuthorizationInstance: 'asset_' + authInstanceType.replaceAll('-', '_'),
-
-            AppAccess: INTERNAL_APP_ACCESS_TABLE,
-            Permission: INTERNAL_PERMISSION_TABLE,
-            AssetType: INTERNAL_ASSET_TYPE_TABLE,
-            Grant: INTERNAL_GRANT_TABLE,
-        };
-        return mapping;
+        return mapping as FundamentalAssetTypeMapping;
     }
 
     async createAssetType(
@@ -267,7 +184,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             .filter((f): f is Omit<AssetTypeRelationField, 'uuid'> => f.type === AssetFieldType.RELATION && !!f.allowMultiple)
             .map(f => f.name + '#' + f.targetAssetType + '#' + (f.required ? '1' : '0') + '#' + f.referentialIntegrityStrategy);
         const [{ uuid }] = await this.db(INTERNAL_ASSET_TYPE_TABLE).insert({ name, externalJoinKeys }).returning('uuid');
-        const tableName = `asset_${uuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${uuid}`;
         await this.db.schema.createTable(tableName, async table => {
             table.uuid('uuid').primary().defaultTo(this.db!.raw('uuidv7()')); // Primary key
             for (const field of fields) {
@@ -308,10 +225,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
                     case AssetFieldType.RELATION:
                         const relField = field as AssetTypeRelationField;
                         if (!relField.allowMultiple) {
-                            column = table
-                                .uuid(field.name)
-                                .references('uuid')
-                                .inTable(`asset_${relField.targetAssetType.replace(/-/g, '_')}`);
+                            column = table.uuid(field.name).references('uuid').inTable(`asset_${relField.targetAssetType}`);
                             this.applyOnDeleteStrategy(column, relField);
                         } else {
                             // For multiple relations, we create join table for each relation constraint
@@ -322,7 +236,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
                     default:
                         throw new Error(`Unsupported field type: ${field.type}`);
                 }
-                if (field.required) column.notNullable();
+                if (field.required && field.type != AssetFieldType.RELATION) column.notNullable();
             }
         });
         this.logger.log(`Created table "${tableName}"`);
@@ -342,7 +256,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             await this.db!.table(INTERNAL_ASSET_TYPE_TABLE).where({ uuid }).update({ name });
         }
 
-        const tableName = `asset_${uuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${uuid}`;
         const existingFieldsMap = new Map(type.fields.map(f => [f.name, f]));
         const processedOldFields = new Set<string>();
         const newExternalKeys: string[] = [];
@@ -553,10 +467,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             case AssetFieldType.RELATION:
                 const relField = field as AssetTypeRelationField;
                 if (!relField.allowMultiple) {
-                    const refColumn = table
-                        .uuid(field.name)
-                        .references('uuid')
-                        .inTable(`asset_${relField.targetAssetType.replace(/-/g, '_')}`);
+                    const refColumn = table.uuid(field.name).references('uuid').inTable(`asset_${relField.targetAssetType}`);
                     this.applyOnDeleteStrategy(refColumn, relField);
                     column = refColumn as unknown as Knex.ColumnBuilder;
                 }
@@ -571,7 +482,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
     async deleteAssetType(uuid: string) {
         if (!this.db) throw new Error('Database not connected');
 
-        const tableName = `asset_${uuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${uuid}`;
         const assetUuids = await this.db.table(tableName).count('uuid as count');
         this.logger.log(`Deleting asset type table ${tableName} with ${assetUuids[0].count} assets`);
 
@@ -609,7 +520,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
     async createAsset<T extends Asset>(assetType: DefinitiveAssetType, fields: Record<string, any>): Promise<T> {
         if (!this.db) throw new Error('Database not connected');
         if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot set uuid field when creating asset, it is auto-generated');
-        const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${assetType.uuid}`;
 
         // TODO filter externalKEys and create join table entries
         const externalFields = assetType.fields.filter(
@@ -642,7 +553,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
         if (!this.db) throw new Error('Database not connected');
         if (Object.keys(fields).some(k => k === 'uuid')) throw new Error('Cannot update uuid field of an asset');
 
-        const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${assetType.uuid}`;
         const updateData: Record<string, any> = { ...fields };
 
         const asset = await this.db(tableName)
@@ -681,7 +592,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
     async deleteAsset(assetType: DefinitiveAssetType, assetUuid: string): Promise<boolean> {
         if (!this.db) throw new Error('Database not connected');
-        const tableName = `asset_${assetType.uuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${assetType.uuid}`;
 
         // delete in join tables handled by foreign key constraints
         const externalFields = assetType.fields.filter(
@@ -703,14 +614,14 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
     getAssetsByType<T extends Asset>(typeUuid: string): Promise<T[]> {
         if (!this.db) throw new Error('Database not connected');
-        const tableName = `asset_${typeUuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${typeUuid}`;
 
         return this.db(tableName).select('*') as Promise<T[]>;
     }
 
     async getAssetTypeFields(uuid: string, externalJoinKeys?: string[]): Promise<AssetTypeField[]> {
         if (!this.db) throw new Error('Database not connected');
-        const tableName = `asset_${uuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${uuid}`;
 
         const genericKeysRes = await this.db.raw(
             `SELECT column_name, data_type, is_nullable, udt_name 
@@ -744,7 +655,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
             if (foreignKey) {
                 (field as AssetTypeRelationField).referentialIntegrityStrategy = foreignKey.on_delete;
-                (field as AssetTypeRelationField).targetAssetType = foreignKey.foreign_table_name.replace('asset_', '').replace(/_/g, '-');
+                (field as AssetTypeRelationField).targetAssetType = foreignKey.foreign_table_name.replace('asset_', '');
             }
             fields.push(field);
         }
@@ -790,7 +701,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             types.push({
                 uuid: row.uuid,
                 name: row.name,
-                fields: await this.getAssetTypeFields(row.uuid, row.externaljoinkeys),
+                fields: await this.getAssetTypeFields(row.uuid, row.externalJoinKeys),
             });
         }
 
@@ -798,7 +709,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
     }
 
     async getAssetByUuid<T extends Asset>(typeUuid: string, assetUuid: string): Promise<T | null> {
-        const tableName = `asset_${typeUuid.replace(/-/g, '_')}`;
+        const tableName = `asset_${typeUuid}`;
         if (!this.db) throw new Error('Database not connected');
 
         const asset = await this.db(tableName).where({ uuid: assetUuid }).first();
@@ -832,16 +743,10 @@ export class PostgresDriver extends GenericDatabaseGateway {
         }
 
         await this.db!.schema.createTable(joinTable, table => {
-            const sourceColumn = table
-                .uuid('source')
-                .references('uuid')
-                .inTable(`asset_${sourceTypeUuid.replace(/-/g, '_')}`);
+            const sourceColumn = table.uuid('source').references('uuid').inTable(`asset_${sourceTypeUuid}`);
             this.applyOnDeleteStrategy(sourceColumn, field);
 
-            const targetColumn = table
-                .uuid('target')
-                .references('uuid')
-                .inTable(`asset_${targetTypeUuid.replace(/-/g, '_')}`);
+            const targetColumn = table.uuid('target').references('uuid').inTable(`asset_${targetTypeUuid}`);
             this.applyOnDeleteStrategy(targetColumn, field);
 
             // A join table row cannot have a null target because that would not make sense in the context of a relation,

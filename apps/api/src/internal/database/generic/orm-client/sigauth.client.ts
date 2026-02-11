@@ -1,12 +1,13 @@
 import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
 import { ORMUtils } from '@/internal/database/generic/orm-client/helper.client';
-import { Utils } from '@/internal/utils';
 import {
     AssetFieldType,
     AssetTypeRelationField,
     DefinitiveAssetType,
+    INTERNAL_APP_ACCESS_TABLE,
     INTERNAL_ASSET_TYPE_TABLE,
     INTERNAL_GRANT_TABLE,
+    INTERNAL_PERMISSION_TABLE,
 } from '@sigauth/sdk/architecture';
 import {
     Account,
@@ -16,16 +17,39 @@ import {
     AssetType,
     AuthorizationChallenge,
     AuthorizationInstance,
+    getMappedFields,
     Grant,
     Permission,
+    RegistryConfigs,
     Session,
 } from '@sigauth/sdk/fundamentals';
 import { FundamentalAssetTypeMapping } from '@sigauth/sdk/protected';
+import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 
 export type GlobalRealtionMap = Record<
     string,
     Record<string, { table: string; joinType?: 'forward' | 'reverse'; fieldName: string; usingJoinTable?: boolean }>
 >;
+
+const stripRelationSuffix = (name: string) =>
+    name
+        .replace(/Uuids$/, '')
+        .replace(/Ids$/, '')
+        .replace(/Uuid$/, '')
+        .replace(/Id$/, '');
+
+const pluralize = (name: string) => (name.endsWith('s') ? name : `${name}s`);
+
+const uncapitalize = (name: string) => (name ? name[0].toLowerCase() + name.slice(1) : name);
+
+const autoRefName = (name: string, allowMultiple?: boolean) => {
+    if (allowMultiple) {
+        if (name.endsWith('Uuids')) return pluralize(name.replace(/Uuids$/, ''));
+        if (name.endsWith('Ids')) return pluralize(name.replace(/Ids$/, ''));
+        return pluralize(stripRelationSuffix(name));
+    }
+    return stripRelationSuffix(name);
+};
 
 // we need to dynamically generate this table so we can have the correct mapping for all asset types including custom ones
 
@@ -33,7 +57,6 @@ const buildTypeRelations = (assetTypes: DefinitiveAssetType[]): GlobalRealtionMa
     const map: GlobalRealtionMap = {};
 
     const tableName = (typeUuid: string) => (!typeUuid.startsWith('_internal') ? `asset_${typeUuid}` : typeUuid);
-
     for (const assetType of assetTypes) {
         const relations = assetType.fields.filter((f): f is AssetTypeRelationField => f.type === AssetFieldType.RELATION);
         for (const relation of relations) {
@@ -47,82 +70,27 @@ const buildTypeRelations = (assetTypes: DefinitiveAssetType[]): GlobalRealtionMa
             if (!map[tableName(relation.targetAssetType)]) map[tableName(relation.targetAssetType)] = {};
 
             // forward
-            const fieldName = relation.name.replace(/(Ids?|Uuids?|Identifiers?)$/i, '') + '_ref' + (relation.allowMultiple ? 's' : '');
-            map[tableName(assetType.uuid)][fieldName] = {
+            const forwardRefName = `${autoRefName(relation.name, relation.allowMultiple)}_ref`;
+            map[tableName(assetType.uuid)][forwardRefName] = {
                 joinType: 'forward',
                 table: tableName(relation.targetAssetType),
                 fieldName: relation.name,
-                usingJoinTable: relation.allowMultiple,
+                usingJoinTable: !!relation.allowMultiple,
             };
 
             // reverse
-            const reverseFieldName = assetType.name.toLowerCase() + 's';
+            const reverseFieldName = `${uncapitalize(assetType.name)}_${pluralize(stripRelationSuffix(relation.name))}`;
             map[tableName(relation.targetAssetType)][reverseFieldName] = {
                 joinType: 'reverse',
                 table: tableName(assetType.uuid),
                 fieldName: relation.name,
-                usingJoinTable: relation.allowMultiple,
+                usingJoinTable: !!relation.allowMultiple,
             };
         }
     }
 
-    console.log(map);
     return map;
 };
-
-// const buildTypeRelations = (mapping: FundamentalAssetTypeMapping): GlobalRealtionMap => {
-//     return {
-//         [mapping.Account]: {
-//             subject_sessions: { table: mapping.Session, joinType: 'reverse', fieldName: 'subjectUuid' },
-//             account_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'accountUuid' }, // Internal
-//         },
-//         [mapping.Session]: {
-//             subject_account: { table: mapping.Account, joinType: 'forward', fieldName: 'subjectUuid' },
-//             session_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'sessionUuid' },
-//             session_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'sessionUuid' },
-//         },
-//         [mapping.App]: {
-//             app_authorizationinstances: { table: mapping.AuthorizationInstance, joinType: 'reverse', fieldName: 'appUuid' },
-//             app_authorizationchallenges: { table: mapping.AuthorizationChallenge, joinType: 'reverse', fieldName: 'appUuid' },
-//             app_scopes: { table: mapping.AppScope, joinType: 'reverse', fieldName: 'appUuids', usingJoinTable: true },
-
-//             app_accesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-//             app_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-//             app_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'appUuid' }, // Internal
-//         },
-//         [mapping.AppScope]: {
-//             app_references: { table: mapping.App, joinType: 'forward', fieldName: 'appUuids', usingJoinTable: true },
-//         },
-//         [mapping.AuthorizationInstance]: {
-//             session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-//         },
-//         [mapping.AuthorizationChallenge]: {
-//             session_reference: { table: mapping.Session, joinType: 'forward', fieldName: 'sessionUuid' },
-//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-//         },
-
-//         // Internal
-//         [mapping.AssetType]: {
-//             type_grants: { table: mapping.Grant, joinType: 'reverse', fieldName: 'typeUuid' },
-//             type_appAccesses: { table: mapping.AppAccess, joinType: 'reverse', fieldName: 'typeUuid' },
-//             type_permissions: { table: mapping.Permission, joinType: 'reverse', fieldName: 'typeUuid' },
-//         },
-//         [mapping.Grant]: {
-//             account_reference: { table: mapping.Account, joinType: 'forward', fieldName: 'accountUuid' },
-//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-//             type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
-//         },
-//         [mapping.AppAccess]: {
-//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-//             type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
-//         },
-//         [mapping.Permission]: {
-//             app_reference: { table: mapping.App, joinType: 'forward', fieldName: 'appUuid' },
-//             type_reference: { table: mapping.AssetType, joinType: 'forward', fieldName: 'typeUuid' },
-//         },
-//     };
-// };
 
 export class SigauthClient {
     private relations?: GlobalRealtionMap;
@@ -140,39 +108,25 @@ export class SigauthClient {
         assetTypes.push({
             uuid: INTERNAL_ASSET_TYPE_TABLE,
             name: 'AssetType',
-            fields: [{
-                
-            }]
-        })
+            fields: getMappedFields(mapping, RegistryConfigs.AssetType),
+        });
 
         assetTypes.push({
             uuid: INTERNAL_GRANT_TABLE,
             name: 'Grant',
-            fields: [
-                {
-                    name: 'accountUuid',
-                    type: AssetFieldType.RELATION,
-                    required: true,
-                    targetAssetType: assetTypes.find(a => a.name === 'Account')!.uuid,
-                    allowMultiple: false,
-                },
-                { name: 'assetUuid', type: AssetFieldType.VARCHAR },
-                {
-                    name: 'typeUuid',
-                    type: AssetFieldType.RELATION,
-                    targetAssetType: assetTypes.find(a => a.name === 'AssetType')!.uuid,
-                    allowMultiple: false,
-                },
-                {
-                    name: 'appUuid',
-                    type: AssetFieldType.RELATION,
-                    required: true,
-                    targetAssetType: assetTypes.find(a => a.name === 'App')!.uuid,
-                    allowMultiple: false,
-                },
-                { name: 'permission', type: AssetFieldType.VARCHAR, required: true },
-                { name: 'grantable', type: AssetFieldType.BOOLEAN, required: true },
-            ],
+            fields: getMappedFields(mapping, RegistryConfigs.Grant),
+        });
+
+        assetTypes.push({
+            uuid: INTERNAL_APP_ACCESS_TABLE,
+            name: 'AppAccess',
+            fields: getMappedFields(mapping, RegistryConfigs.AppAccess),
+        });
+
+        assetTypes.push({
+            uuid: INTERNAL_PERMISSION_TABLE,
+            name: 'Permission',
+            fields: getMappedFields(mapping, RegistryConfigs.Permission),
         });
 
         this.relations = buildTypeRelations(assetTypes);
@@ -195,41 +149,41 @@ export class SigauthClient {
         return this.models[key] as Model<T>;
     }
 
-    get Account() {
+    get Account(): Model<Account> {
         return this.getModel<Account>('Account', Model);
     }
-    get Session() {
+    get Session(): Model<Session> {
         return this.getModel<Session>('Session', Model);
     }
-    get App() {
+    get App(): Model<App> {
         return this.getModel<App>('App', Model);
     }
 
-    get AppScope() {
+    get AppScope(): Model<AppScope> {
         return this.getModel<AppScope>('AppScope', Model);
     }
 
-    get AuthorizationInstance() {
+    get AuthorizationInstance(): Model<AuthorizationInstance> {
         return this.getModel<AuthorizationInstance>('AuthorizationInstance', Model);
     }
-    get AuthorizationChallenge() {
+    get AuthorizationChallenge(): Model<AuthorizationChallenge> {
         return this.getModel<AuthorizationChallenge>('AuthorizationChallenge', Model);
     }
 
     // Internal
-    get AssetType() {
+    get AssetType(): Model<AssetType> {
         return this.getModel<AssetType>('AssetType', Model);
     }
 
-    get Grant() {
+    get Grant(): Model<Grant> {
         return this.getModel<Grant>('Grant', Model);
     }
 
-    get AppAccess() {
+    get AppAccess(): Model<AppAccess> {
         return this.getModel<AppAccess>('AppAccess', Model);
     }
 
-    get Permission() {
+    get Permission(): Model<Permission> {
         return this.getModel<Permission>('Permission', Model);
     }
 }
@@ -241,7 +195,9 @@ export class Model<T extends Record<string, any>> {
         private db: GenericDatabaseGateway,
     ) {}
 
-    async findOne<Q extends Omit<FindQuery<T>, 'limit'>>(query: Q): Promise<Payload<T, Q> | null> {
+    async findOne<const Q extends Omit<FindQuery<T>, 'limit'>>(
+        query: Q & Exact<Omit<FindQuery<T>, 'limit'>, Q>,
+    ): Promise<Payload<T, Q> | null> {
         (query as any).limit = 1;
         const qsString = ORMUtils.simpleQs(query);
         const sql = ORMUtils.toSQL(this.tableName, query, this.relations);
@@ -251,7 +207,7 @@ export class Model<T extends Record<string, any>> {
         return ORMUtils.hydrateRow(result[0] as Payload<T, Q>, query.includes);
     }
 
-    async findMany<Q extends FindQuery<T>>(query: Q): Promise<Payload<T, Q>[]> {
+    async findMany<const Q extends FindQuery<T>>(query: Q & Exact<FindQuery<T>, Q>): Promise<Payload<T, Q>[]> {
         const qsString = ORMUtils.simpleQs(query);
         const sql = ORMUtils.toSQL(this.tableName, query, this.relations);
 
@@ -483,7 +439,7 @@ export class Model<T extends Record<string, any>> {
         const relationDeletes: string[] = [];
 
         const relationConfigs = this.relations[this.tableName] || {};
-        const assetTypeUuid = Utils.convertSignatureToUuid(this.tableName);
+        const assetTypeUuid = convertTypeTableToUuid(this.tableName);
 
         let relIndex = 0;
         for (const [key, config] of Object.entries(relationConfigs)) {
@@ -520,7 +476,7 @@ export class Model<T extends Record<string, any>> {
                     FROM (
                         SELECT unnest("externalJoinKeys") as k 
                         FROM ${INTERNAL_ASSET_TYPE_TABLE} 
-                        WHERE "uuid" = '${config.joinType == 'forward' ? assetTypeUuid : Utils.convertSignatureToUuid(config.table)}'
+                        WHERE "uuid" = '${config.joinType == 'forward' ? assetTypeUuid : convertTypeTableToUuid(config.table)}'
                     ) as sub
                     WHERE k LIKE '${fieldName}#%'
                     LIMIT 1
@@ -776,6 +732,8 @@ type Scalar =
     | readonly Date[]
     | readonly symbol[];
 
+type Exact<Shape, Input extends Shape> = Shape & Record<Exclude<keyof Input, keyof Shape>, never>;
+
 export type ScalarKeys<T> = {
     [K in keyof T]: NonNullable<T[K]> extends Scalar ? K : never;
 }[keyof T];
@@ -791,7 +749,7 @@ export type Payload<T, Q extends FindQuery<T>> = Pick<T, ScalarKeys<T>> &
           }
         : {});
 
-export type FindIncludesQuery<T> = {
+type FindIncludesShape<T> = {
     [K in keyof T as NonNullable<T[K]> extends (infer U)[] // 1. Unpack Arrays (e.g. Session[]) to check the inner type
         ? U extends Scalar
             ? never
@@ -800,6 +758,8 @@ export type FindIncludesQuery<T> = {
           ? never
           : K]?: boolean | FindIncludesQuery<NonNullable<T[K]> extends (infer U)[] ? U : NonNullable<T[K]>>; // If type is scalar, exclude key
 };
+
+export type FindIncludesQuery<T> = FindIncludesShape<T>;
 
 export type FindWhere<T> = Partial<{ [K in keyof T]: T[K] | { in?: T[K][]; lt?: T[K]; gt?: T[K] } }> & {
     AND?: FindWhere<T> | FindWhere<T>[];

@@ -3,20 +3,6 @@ import { randomBytes } from 'crypto';
 export const Utils = {
     convertPermissionNameToIdent: (name: string) => name.toLowerCase().replace(/ /g, '-'),
 
-    /**
-     * Converts the given signature (table names like 'asset_<uuidv7>') to just the UUID
-     * @param signature
-     */
-    convertSignatureToUuid: (signature: string) => {
-        if (!signature.startsWith('asset_')) {
-            if (signature.startsWith('_internal')) return signature;
-
-            throw new Error('Invalid signature format');
-        }
-        const uuid = signature.slice(6, signature.length);
-        return uuid.replaceAll(/_/g, '-');
-    },
-
     generateToken: (length: number) => {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const array = new Uint8Array(length);

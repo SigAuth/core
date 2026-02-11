@@ -84,7 +84,7 @@ export class AppsService {
         if (editAppDto.uuid == this.storage.SigAuthAppUuid)
             throw new BadRequestException('You can not edit the SigAuth app, please create a new one');
 
-        const app = await this.db.App.findOne({ where: { uuid: editAppDto.uuid }, includes: { app_permissions: true } });
+        const app = await this.db.App.findOne({ where: { uuid: editAppDto.uuid }, includes: { permission_apps: true } });
         if (!app) throw new NotFoundException("App doesn't exist");
 
         if (editAppDto.nudge) await this.sendAppNudge(app.url);
@@ -93,7 +93,7 @@ export class AppsService {
         this.checkForDuplicatePermissions(editAppDto.permissions);
 
         // handle permission removal
-        await this.clearDeletedPermissions(app.uuid, app.app_permissions, editAppDto.permissions);
+        await this.clearDeletedPermissions(app.uuid, app.permission_apps, editAppDto.permissions);
 
         return this.db.App.updateOne({
             where: { uuid: editAppDto.uuid },
@@ -168,7 +168,7 @@ export class AppsService {
     }
 
     async getApp(uuid: string): Promise<App | null> {
-        return this.db.App.findOne({ where: { uuid }, includes: { app_permissions: true, app_scopes: true } });
+        return this.db.App.findOne({ where: { uuid }, includes: { permission_apps: true, appScope_apps: true } });
     }
 
     // async getAppInfo(app: App): Promise<AppInfo> {

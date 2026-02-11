@@ -28,7 +28,7 @@ export const ORMUtils = {
         // Join rel tables automatically to fill base join fields (e.g. appUuids)
         if (relationMap && relationMap[table]) {
             for (const relationConfig of Object.values(relationMap[table])) {
-                if (relationConfig.usingJoinTable) {
+                if (relationConfig.usingJoinTable && relationConfig.joinType === 'forward') {
                     const { table: targetTableId, joinType = 'forward', fieldName } = relationConfig;
                     const parentHex = getShortId(table);
                     const targetHex = getShortId(targetTableId);

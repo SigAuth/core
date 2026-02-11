@@ -16,7 +16,7 @@ export type DefinitiveAssetType = {
 export type AssetTypeField = {
     name: string;
     type: AssetFieldType;
-    required?: boolean;
+    required: boolean;
     allowMultiple?: boolean; // Whether multiple assets can be related through that field
 };
 

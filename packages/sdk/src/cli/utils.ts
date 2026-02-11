@@ -36,3 +36,13 @@ export async function sigauthRequest(
     }
 }
 
+export const convertTypeTableToUuid = (tableName: string) => {
+    if (!tableName.startsWith('asset_')) {
+        if (tableName.startsWith('_internal')) return tableName;
+
+        throw new Error('Invalid signature format for asset type: ' + tableName);
+    }
+    const uuid = tableName.slice(6, tableName.length);
+    return uuid.replaceAll(/_/g, '-');
+};
+

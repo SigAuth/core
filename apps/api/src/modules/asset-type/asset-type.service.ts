@@ -1,10 +1,10 @@
 import { ORMService } from '@/internal/database/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
-import { Utils } from '@/internal/utils';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DefinitiveAssetType } from '@sigauth/sdk/architecture';
+import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 
 @Injectable()
 export class AssetTypeService {
@@ -29,7 +29,7 @@ export class AssetTypeService {
 
     async deleteAssetType(uuids: string[]) {
         if (!this.storage.FundamentalAssetTypeMapping) throw new Error('Storage service not initialized yet');
-        const criticalTypes = Object.values(this.storage.FundamentalAssetTypeMapping).map(s => Utils.convertSignatureToUuid(s));
+        const criticalTypes = Object.values(this.storage.FundamentalAssetTypeMapping).map(s => convertTypeTableToUuid(s));
 
         for (const uuid of uuids) {
             if (criticalTypes.includes(uuid)) {

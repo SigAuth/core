@@ -4,14 +4,14 @@ import { AssetTypeService } from '@/modules/asset-type/asset-type.service';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssetFieldType, AssetType } from '@sigauth/sdk/architecture';
+import { AssetFieldType, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 
 describe('AppService', () => {
     let appService: AppsService;
     let typeService: AssetTypeService;
 
     let module: TestingModule;
-    let blogType: AssetType;
+    let blogType: DefinitiveAssetType;
 
     beforeEach(async () => {
         module = await Test.createTestingModule({
@@ -52,7 +52,7 @@ describe('AppService', () => {
         expect(appDetails).toBeDefined();
         expect(appDetails!.name).toBe('Test App');
         expect(appDetails!.url).toBe('https://example.com');
-        expect(appDetails?.app_permissions).toEqual(
+        expect(appDetails?.permission_apps).toEqual(
             expect.arrayContaining([
                 expect.objectContaining({
                     permission: 'read',
@@ -68,7 +68,7 @@ describe('AppService', () => {
                 }),
             ]),
         );
-        expect(appDetails?.app_scopes).toEqual(
+        expect(appDetails?.appScope_apps).toEqual(
             expect.arrayContaining([
                 expect.objectContaining({
                     public: false,

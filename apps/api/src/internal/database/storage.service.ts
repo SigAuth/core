@@ -1,6 +1,6 @@
-import { Utils } from '@/internal/utils';
 import { Injectable, Logger } from '@nestjs/common';
 import { FundamentalAssetTypeMapping, ProtectedData } from '@sigauth/sdk/protected';
+import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject } from 'crypto';
 import fs from 'fs';
 
@@ -83,7 +83,7 @@ export class StorageService {
 
         Object.keys(criticalUuids).forEach(key => {
             const k = key as keyof typeof criticalUuids;
-            criticalUuids[k] = Utils.convertSignatureToUuid(criticalUuids[k]);
+            criticalUuids[k] = convertTypeTableToUuid(criticalUuids[k]);
         });
 
         return {

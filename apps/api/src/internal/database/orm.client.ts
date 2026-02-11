@@ -5,6 +5,7 @@ import { Utils } from '@/internal/utils';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/architecture';
 import { SigAuthPermissions } from '@sigauth/sdk/protected';
+import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -95,7 +96,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
                         accountUuid: account.uuid,
                         appUuid: appId,
                         typeUuid: SELF_REFERENCE_ASSET_TYPE_UUID,
-                        assetUuid: Utils.convertSignatureToUuid(this.storage.FundamentalAssetTypeMapping.Account),
+                        assetUuid: convertTypeTableToUuid(this.storage.FundamentalAssetTypeMapping.Account),
                         permission: SigAuthPermissions.CREATE_ASSET,
                         grantable: true,
                     },

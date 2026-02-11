@@ -89,10 +89,12 @@ describe('AccountService', () => {
                 {
                     name: 'field1',
                     type: AssetFieldType.VARCHAR,
+                    required: false,
                 },
                 {
                     name: 'field2',
                     type: AssetFieldType.VARCHAR,
+                    required: false,
                 },
             ],
         });
@@ -133,8 +135,8 @@ describe('AccountService', () => {
 
         let fetched = await service.getAccount(account.uuid, true);
         expect(fetched).toBeDefined();
-        expect(fetched!.account_grants).toHaveLength(3);
-        const perms = fetched!.account_grants?.map(g => g.permission);
+        expect(fetched!.grant_accounts).toHaveLength(3);
+        const perms = fetched!.grant_accounts?.map(g => g.permission);
         expect(perms).toContain('read');
         expect(perms).toContain('write');
         expect(perms).toContain('execute');
@@ -148,8 +150,8 @@ describe('AccountService', () => {
 
         fetched = await service.getAccount(account.uuid, true);
         expect(fetched).toBeDefined();
-        expect(fetched!.account_grants).toHaveLength(1);
-        const editperms = fetched!.account_grants?.map(g => g.permission);
+        expect(fetched!.grant_accounts).toHaveLength(1);
+        const editperms = fetched!.grant_accounts?.map(g => g.permission);
         expect(editperms).toContain('write');
 
         await expect(
@@ -172,8 +174,8 @@ describe('AccountService', () => {
         await assetService.deleteAssets([{ typeUuid: typeUuid!, uuid: asset.uuid }]);
         fetched = await service.getAccount(account.uuid, true);
         expect(fetched).toBeDefined();
-        expect(fetched!.account_grants).toHaveLength(1);
-        const remainingPerms = fetched!.account_grants?.map(g => g.permission);
+        expect(fetched!.grant_accounts).toHaveLength(1);
+        const remainingPerms = fetched!.grant_accounts?.map(g => g.permission);
         expect(remainingPerms).toContain('execute');
 
         await typeService.deleteAssetType([typeUuid!]);
@@ -181,7 +183,7 @@ describe('AccountService', () => {
 
         fetched = await service.getAccount(account.uuid, true);
         expect(fetched).toBeDefined();
-        expect(fetched!.account_grants).toHaveLength(0);
+        expect(fetched!.grant_accounts).toHaveLength(0);
 
         expect(await service.getAccount(account.uuid, true)).toBeDefined();
         await service.deleteAccount({ accountUuids: [account.uuid] });

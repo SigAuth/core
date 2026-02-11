@@ -177,8 +177,8 @@ export class AccountService {
     getAccount(accountUuid: string, includePermissions = false): Promise<Account | null> {
         return this.db.Account.findOne({
             where: { uuid: accountUuid },
-            includes: { account_grants: includePermissions },
-        });
+            includes: { grant_accounts: includePermissions },
+        }) as Promise<Account | null>;
     }
 
     async logOutAll(accountUuid: string) {

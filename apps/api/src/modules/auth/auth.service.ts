@@ -95,7 +95,7 @@ export class AuthService {
             const [accounts, assetTypes, apps] = await Promise.all([
                 this.db.Account.findMany({}),
                 this.db.DBClient.getAssetTypes(),
-                this.db.App.findMany({ includes: { app_permissions: true } }),
+                this.db.App.findMany({ includes: { permission_apps: true } }),
             ]);
 
             accounts.map(a => {
@@ -152,8 +152,8 @@ export class AuthService {
 
     async exchangeOIDCToken(code: string, app: App, redirectUri: string) {
         const authChallenge = await this.db.AuthorizationChallenge.findOne({
-            where: { authorizationCode: code, redirectUri },
-            includes: { session_reference: { subject_account: true } },
+            where: { authCode: code, redirectUri },
+            includes: { session_ref: { subject_ref: true } },
         });
         if (!authChallenge) throw new NotFoundException("Couldn't resolve authorization challenge");
 
@@ -166,7 +166,7 @@ export class AuthService {
             throw new UnauthorizedException('Authorization challenge expired');
         }
 
-        if (dayjs.unix(authChallenge.session_reference.expire).isBefore(dayjs())) {
+        if (dayjs.unix(authChallenge.session_ref.expire).isBefore(dayjs())) {
             await this.db.AuthorizationChallenge.deleteMany({ where: { sessionUuid: authChallenge.sessionUuid } });
             await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: authChallenge.sessionUuid } });
             await this.db.Session.deleteOne({ where: { uuid: authChallenge.sessionUuid } });
@@ -174,15 +174,15 @@ export class AuthService {
         }
 
         const payload = {
-            name: authChallenge.session_reference.subject_account.username,
-            email: authChallenge.session_reference.subject_account.email,
+            name: authChallenge.session_ref.subject_ref.username,
+            email: authChallenge.session_ref.subject_ref.email,
             // more claims to come
         };
 
         const accessToken = await new SignJWT(payload)
             .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
             .setIssuedAt()
-            .setSubject(String(authChallenge.session_reference.subject_account.uuid))
+            .setSubject(String(authChallenge.session_ref.subject_ref.uuid))
             .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
             .setAudience(app.name)
             .setExpirationTime(
@@ -211,7 +211,7 @@ export class AuthService {
     async refreshOIDCToken(refreshToken: string, app: App) {
         const instance = await this.db.AuthorizationInstance.findOne({
             where: { refreshToken },
-            includes: { session_reference: { subject_account: true } },
+            includes: { session_ref: { subject_ref: true } },
         });
         if (!instance) throw new NotFoundException("Couldn't resolve authorization instance");
 
@@ -220,22 +220,22 @@ export class AuthService {
             throw new UnauthorizedException('Refresh token expired');
         }
 
-        if (dayjs.unix(instance.session_reference.expire).isBefore(dayjs())) {
+        if (dayjs.unix(instance.session_ref.expire).isBefore(dayjs())) {
             await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: instance.sessionUuid } });
             await this.db.Session.deleteOne({ where: { uuid: instance.sessionUuid } });
             throw new UnauthorizedException('Session expired');
         }
 
         const payload = {
-            name: instance.session_reference.subject_account.username,
-            email: instance.session_reference.subject_account.email,
+            name: instance.session_ref.subject_ref.username,
+            email: instance.session_ref.subject_ref.email,
             // more claims to come
         };
 
         const accessToken = await new SignJWT(payload)
             .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
             .setIssuedAt()
-            .setSubject(String(instance.session_reference.subject_account.uuid))
+            .setSubject(String(instance.session_ref.subject_ref.uuid))
             .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
             .setAudience(app.name)
             .setExpirationTime(
