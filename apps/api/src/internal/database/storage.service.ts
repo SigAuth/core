@@ -9,12 +9,14 @@ export class StorageService {
     private readonly logger = new Logger(StorageService.name);
     private readonly PATH = './config';
 
+    // TODO saving the mapping in the config is actually deprecated and can just be pulled from the db on startup
     private fundamentalAssetTypeMapping: FundamentalAssetTypeMapping | null = null;
 
     private authPublicKey: KeyObject | null = null;
     private authPrivateKey: KeyObject | null = null;
 
     // instance specific fields
+    // TODO saving the app uuid in the config is actually deprecated and can just be pulled from the db on startup
     private sigauthAppUuid: string | null = null;
 
     getPath(): string {
