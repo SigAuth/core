@@ -144,53 +144,50 @@ export class SigauthClient {
         }
     }
 
-    private getModel<T extends object>(
-        key: keyof AssetTypeTableMapping & string,
-        Type: new (table: any, rels: GlobalRealtionMap, client: GenericDatabaseGateway) => Model<T>,
-    ): Model<T> {
+    public getModel<T extends object>(key: keyof AssetTypeTableMapping & string): Model<T> {
         this.ensureInitialized();
         if (!this.models[key]) {
-            this.models[key] = new Type(this.mapping![key], this.relations!, this.client!);
+            this.models[key] = new Model(this.mapping![key], this.relations!, this.client!);
         }
         return this.models[key] as Model<T>;
     }
 
     get Account(): Model<Account> {
-        return this.getModel<Account>('Account', Model);
+        return this.getModel<Account>('Account');
     }
     get Session(): Model<Session> {
-        return this.getModel<Session>('Session', Model);
+        return this.getModel<Session>('Session');
     }
     get App(): Model<App> {
-        return this.getModel<App>('App', Model);
+        return this.getModel<App>('App');
     }
 
     get AppScope(): Model<AppScope> {
-        return this.getModel<AppScope>('AppScope', Model);
+        return this.getModel<AppScope>('AppScope');
     }
 
     get AuthorizationInstance(): Model<AuthorizationInstance> {
-        return this.getModel<AuthorizationInstance>('AuthorizationInstance', Model);
+        return this.getModel<AuthorizationInstance>('AuthorizationInstance');
     }
     get AuthorizationChallenge(): Model<AuthorizationChallenge> {
-        return this.getModel<AuthorizationChallenge>('AuthorizationChallenge', Model);
+        return this.getModel<AuthorizationChallenge>('AuthorizationChallenge');
     }
 
     // Internal
     get AssetType(): Model<AssetType> {
-        return this.getModel<AssetType>('AssetType', Model);
+        return this.getModel<AssetType>('AssetType');
     }
 
     get Grant(): Model<Grant> {
-        return this.getModel<Grant>('Grant', Model);
+        return this.getModel<Grant>('Grant');
     }
 
     get AppAccess(): Model<AppAccess> {
-        return this.getModel<AppAccess>('AppAccess', Model);
+        return this.getModel<AppAccess>('AppAccess');
     }
 
     get Permission(): Model<Permission> {
-        return this.getModel<Permission>('Permission', Model);
+        return this.getModel<Permission>('Permission');
     }
 
     get TableMapping() {
@@ -388,7 +385,7 @@ export class Model<T extends Record<string, any>> {
         return this.executeUpdate(input.where, input.data, true);
     }
 
-    async updateMany(input: UpdateManyInput<T>): Promise<T[]> {
+    async updateMany(input: UpdateInput<T>): Promise<T[]> {
         const result = await this.executeUpdate(input.where, input.data, false);
         return Array.isArray(result) ? result : [result];
     }
@@ -397,7 +394,7 @@ export class Model<T extends Record<string, any>> {
         return this.executeDelete(input.where, true);
     }
 
-    async deleteMany(input: DeleteManyInput<T>): Promise<T[]> {
+    async deleteMany(input: DeleteInput<T>): Promise<T[]> {
         const result = await this.executeDelete(input.where, false);
         return Array.isArray(result) ? result : [result];
     }
@@ -804,16 +801,7 @@ export type UpdateInput<T> = {
     data: Partial<CreateQuery<T>>;
 };
 
-export type UpdateManyInput<T> = {
-    where: FindWhere<T>;
-    data: Partial<CreateQuery<T>>;
-};
-
 export type DeleteInput<T> = {
-    where: FindWhere<T>;
-};
-
-export type DeleteManyInput<T> = {
     where: FindWhere<T>;
 };
 

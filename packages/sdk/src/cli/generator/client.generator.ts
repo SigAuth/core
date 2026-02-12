@@ -135,7 +135,7 @@ export const generateClient = (project: Project, assetTypes: DefinitiveAssetType
 
     clientClass.addGetAccessors(
         assetTypes.map(t => ({
-            name: t.name, // Hier NUR den Namen, ohne "get"
+            name: t.name,
             returnType: `Model<${t.name}>`,
             statements: `return this.getModel<${t.name}>('${t.name}', Model);`,
         })),
@@ -165,27 +165,99 @@ export const generateClient = (project: Project, assetTypes: DefinitiveAssetType
             }
 
             async createOne(input: CreateInput<T>): Promise<T> {
-                return {} as T;
+                const res = await sigauthRequest("POST", '/api/asset/createOne', {
+                    body: {
+                        type: this.typeUuid,
+                        query: input
+                    },
+                    config: this.config,
+                    internalAuthorization: input.internalAuthorization,
+                })
+                if (res.ok) {
+                    return res.json() as any as T;
+                } else {
+                    throw new Error(\`Failed to createOne the asset: \${res.status} \${res.statusText}\`);
+                }
             }
 
             async createMany(input: CreateManyInput<T>): Promise<T[]> {
-                return [] as T[];
+                const res = await sigauthRequest("POST", '/api/asset/createMany', {
+                    body: {
+                        type: this.typeUuid,
+                        query: input
+                    },
+                    config: this.config,
+                    internalAuthorization: input.internalAuthorization,
+                })
+                if (res.ok) {
+                    return res.json() as any as T[];
+                } else {
+                    throw new Error(\`Failed to createMany the asset: \${res.status} \${res.statusText}\`);
+                }
             }
 
             async updateOne(input: UpdateInput<T>): Promise<T> {
-                return {} as T;
+                const res = await sigauthRequest("POST", '/api/asset/updateOne', {
+                    body: {
+                        type: this.typeUuid,
+                        query: input
+                    },
+                    config: this.config,
+                    internalAuthorization: input.internalAuthorization,
+                })
+                if (res.ok) {
+                    return res.json() as any as T;
+                } else {
+                    throw new Error(\`Failed to updateOne the asset: \${res.status} \${res.statusText}\`);
+                }
             }
 
             async updateMany(input: UpdateInput<T>): Promise<T[]> {
-                return [] as T[];
+                const res = await sigauthRequest("POST", '/api/asset/updateMany', {
+                    body: {
+                        type: this.typeUuid,
+                        query: input
+                    },
+                    config: this.config,
+                    internalAuthorization: input.internalAuthorization,
+                })
+                if (res.ok) {
+                    return res.json() as any as T[];
+                } else {
+                    throw new Error(\`Failed to createMany the asset: \${res.status} \${res.statusText}\`);
+                }
             }
 
             async deleteOne(input: DeleteInput<T>): Promise<T> {
-                return {} as T;
+                const res = await sigauthRequest("POST", '/api/asset/deleteOne', {
+                    body: {
+                        type: this.typeUuid,
+                        query: input
+                    },
+                    config: this.config,
+                    internalAuthorization: input.internalAuthorization,
+                })
+                if (res.ok) {
+                    return res.json() as any as T;
+                } else {
+                    throw new Error(\`Failed to deleteOne the asset: \${res.status} \${res.statusText}\`);
+                }
             }
 
             async deleteMany(input: DeleteInput<T>): Promise<T[]> {
-                return [] as T[];
+                const res = await sigauthRequest("POST", '/api/asset/deleteMany', {
+                    body: {
+                        type: this.typeUuid,
+                        query: input
+                    },
+                    config: this.config,
+                    internalAuthorization: input.internalAuthorization,
+                })
+                if (res.ok) {
+                    return res.json() as any as T[];
+                } else {
+                    throw new Error(\`Failed to deleteMany the asset: \${res.status} \${res.statusText}\`);
+                }
             }
         }    
     `);

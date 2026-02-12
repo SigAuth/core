@@ -2,7 +2,10 @@ import { AssetService } from '@/modules/asset/asset.service';
 import { CreateAssetDto } from '@/modules/asset/dto/create-asset.dto';
 import { DeleteAssetDto } from '@/modules/asset/dto/delete-asset.dto';
 import { EditAssetDto } from '@/modules/asset/dto/edit-asset.dto';
-import { FindAssetDto } from '@/modules/asset/dto/find-asset.dto';
+import { SDKCreateManyAssetDto, SDKCreateOneAssetDto } from '@/modules/asset/dto/sdk.create-asset.dto';
+import { SDKDeleteManyAssetDto, SDKDeleteOneAssetDto } from '@/modules/asset/dto/sdk.delete-asset.dto';
+import { FindAssetDto } from '@/modules/asset/dto/sdk.find-asset.dto';
+import { SDKUpdateManyAssetDto, SDKUpdateOneAssetDto } from '@/modules/asset/dto/sdk.update-asset.dto';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
@@ -98,7 +101,43 @@ export class AssetController {
     @Get('find')
     @UseGuards(SDKGuard)
     async findAsset(@Query() q: FindAssetDto) {
-        
+        return await this.assetsService.remoteFindAsset(q.type, q.query);
+    }
+
+    @Post('updateOne')
+    @UseGuards(SDKGuard)
+    async remoteUpdateOne(@Body() q: SDKUpdateOneAssetDto) {
+        return await this.assetsService.remoteUpdateOne(q.type, q.query);
+    }
+
+    @Post('updateMany')
+    @UseGuards(SDKGuard)
+    async remoteUpdateMany(@Body() q: SDKUpdateManyAssetDto) {
+        return await this.assetsService.remoteUpdateMany(q.type, q.query);
+    }
+
+    @Post('createOne')
+    @UseGuards(SDKGuard)
+    async remoteCreateOne(@Body() q: SDKCreateOneAssetDto) {
+        return await this.assetsService.remoteCreateOne(q.type, q.query);
+    }
+
+    @Post('createMany')
+    @UseGuards(SDKGuard)
+    async remoteCreateMany(@Body() q: SDKCreateManyAssetDto) {
+        return await this.assetsService.remoteCreateMany(q.type, q.query);
+    }
+
+    @Post('delete')
+    @UseGuards(SDKGuard)
+    async remoteDelete(@Body() q: SDKDeleteOneAssetDto) {
+        return await this.assetsService.remoteDeleteOne(q.type, q.query);
+    }
+
+    @Post('deleteMany')
+    @UseGuards(SDKGuard)
+    async remoteDeleteMany(@Body() q: SDKDeleteManyAssetDto) {
+        return await this.assetsService.remoteDeleteMany(q.type, q.query);
     }
 }
 

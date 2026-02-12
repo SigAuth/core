@@ -1,4 +1,4 @@
-import { FindQuery } from '@/internal/database/generic/orm-client/sigauth.client';
+import { CreateInput, CreateManyInput, DeleteInput, FindQuery, UpdateInput } from '@/internal/database/generic/orm-client/sigauth.client';
 import { ORMService } from '@/internal/database/orm.client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Asset, DefinitiveAssetType } from '@sigauth/sdk/architecture';
@@ -66,8 +66,68 @@ export class AssetService {
         return this.db.DBClient.getAssetByUuid<T>(typeUuid, assetUuid);
     }
 
-    async findAsset(typeUuid: string, query: FindQuery<any>): Promise<Asset[]> {
+    async remoteFindAsset(typeUuid: string, query: FindQuery<any>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        this.db.getModel(type.name).findMany(query);
         return [];
+    }
+
+    async remoteCreateOne(typeUuid: string, query: CreateInput<any>): Promise<Asset> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).createOne(query)) as Asset;
+    }
+
+    async remoteCreateMany(typeUuid: string, query: CreateManyInput<object>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).createMany(query)) as Asset[];
+    }
+
+    async remoteUpdateOne(typeUuid: string, query: UpdateInput<any>): Promise<Asset> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).updateOne(query)) as Asset;
+    }
+
+    async remoteUpdateMany(typeUuid: string, query: UpdateInput<any>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).updateMany(query)) as Asset[];
+    }
+
+    async remoteDeleteOne(typeUuid: string, query: DeleteInput<any>): Promise<Asset> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).deleteOne(query)) as Asset;
+    }
+
+    async remoteDeleteMany(typeUuid: string, query: DeleteInput<any>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).deleteMany(query)) as Asset[];
     }
 }
 

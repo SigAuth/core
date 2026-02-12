@@ -1,7 +1,7 @@
 packages:
   - apps/*
   - packages/*
-  - '!@sigauth/admin-dashboard'
+  - '!apps/dashboard'
 
 onlyBuiltDependencies:
   - '@nestjs/core'
