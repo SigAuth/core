@@ -3,9 +3,11 @@ import { PostgresDriver } from '@/internal/database/generic/postgres.driver';
 import { ORMService } from '@/internal/database/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Global, Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Global()
 @Module({
+    imports: [EventEmitterModule.forRoot()],
     providers: [
         {
             provide: GenericDatabaseGateway,

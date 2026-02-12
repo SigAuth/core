@@ -1,16 +1,20 @@
-import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
+import { ASSET_TYPE_CHANGE_EVENT, GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
 import { SigauthClient } from '@/internal/database/generic/orm-client/sigauth.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/architecture';
 import { SigAuthPermissions } from '@sigauth/sdk/protected';
 import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
-export class ORMService extends SigauthClient implements OnApplicationBootstrap {
+export class ORMService extends SigauthClient implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly logger: Logger;
+    private refreshInFlight?: Promise<void>;
+    private refreshQueued = false;
+    private shuttingDown = false;
 
     constructor(
         private readonly db: GenericDatabaseGateway,
@@ -102,6 +106,38 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap 
                 ],
             });
         }
+    }
+
+    @OnEvent(ASSET_TYPE_CHANGE_EVENT)
+    async handleOrderCreatedEvent() {
+        if (!this.client || this.shuttingDown) return;
+        await this.queueSchemaRefresh();
+    }
+
+    async onModuleDestroy() {
+        this.shuttingDown = true;
+        if (this.refreshInFlight) {
+            await this.refreshInFlight;
+        }
+        await this.db.disconnect();
+    }
+
+    private async queueSchemaRefresh(): Promise<void> {
+        if (this.refreshInFlight) {
+            this.refreshQueued = true;
+            return this.refreshInFlight;
+        }
+
+        this.refreshInFlight = (async () => {
+            do {
+                this.refreshQueued = false;
+                await this.refreshSchema();
+            } while (this.refreshQueued);
+        })().finally(() => {
+            this.refreshInFlight = undefined;
+        });
+
+        return this.refreshInFlight;
     }
 
     get DBClient() {

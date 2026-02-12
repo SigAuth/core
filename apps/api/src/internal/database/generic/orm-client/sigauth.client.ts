@@ -94,18 +94,22 @@ const buildTypeRelations = (assetTypes: DefinitiveAssetType[]): GlobalRealtionMa
 
 export class SigauthClient {
     protected mapping?: AssetTypeTableMapping;
+    protected client?: GenericDatabaseGateway;
 
     private relations?: GlobalRealtionMap;
     private models: Partial<Record<string, Model<any>>> = {};
-    private client?: GenericDatabaseGateway;
 
     async init(client: GenericDatabaseGateway) {
         this.client = client;
-        this.mapping = await this.client.generateAssetTypeTableMapping();
-        await this.rebuildRelations();
+        await this.refreshSchema();
     }
 
-    private async rebuildRelations() {
+    async refreshSchema() {
+        this.mapping = await this.client!.generateAssetTypeTableMapping(true);
+        this.relations = await this.rebuildRelations();
+    }
+
+    private async rebuildRelations(): Promise<GlobalRealtionMap> {
         const assetTypes = (await this.client?.getAssetTypes()) ?? [];
         assetTypes.push({
             uuid: INTERNAL_ASSET_TYPE_TABLE,
@@ -131,7 +135,7 @@ export class SigauthClient {
             fields: getMappedFields(this.mapping!, RegistryConfigs.Permission),
         });
 
-        this.relations = buildTypeRelations(assetTypes);
+        return buildTypeRelations(assetTypes);
     }
 
     private ensureInitialized() {

@@ -346,10 +346,16 @@ describe('AssetService', () => {
 
     afterAll(async () => {
         const allTypes = await typeService['db'].DBClient.getAssetTypes();
-        for (const type of allTypes) {
-            if (type.name.startsWith('Test')) {
-                await typeService.deleteAssetType([type.uuid]);
-            }
+        const testTypes = allTypes.filter(type => type.name.startsWith('Test'));
+        const relationTypes = testTypes.filter(type => type.fields.some(field => field.type === AssetFieldType.RELATION));
+        const baseTypes = testTypes.filter(type => !type.fields.some(field => field.type === AssetFieldType.RELATION));
+
+        for (const type of relationTypes) {
+            await typeService.deleteAssetType([type.uuid]);
+        }
+
+        for (const type of baseTypes) {
+            await typeService.deleteAssetType([type.uuid]);
         }
         await module.close();
     });

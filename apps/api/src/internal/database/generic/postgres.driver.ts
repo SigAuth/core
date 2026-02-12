@@ -1,6 +1,7 @@
-import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
+import { ASSET_TYPE_CHANGE_EVENT, GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
 import { StorageService } from '@/internal/database/storage.service';
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
     Asset,
     AssetFieldType,
@@ -23,7 +24,10 @@ export class PostgresDriver extends GenericDatabaseGateway {
     private db?: Knex;
     private mapping?: AssetTypeTableMapping;
 
-    constructor(private readonly storage: StorageService) {
+    constructor(
+        private readonly storage: StorageService,
+        private readonly eventEmitter: EventEmitter2,
+    ) {
         super(PostgresDriver.name);
     }
 
@@ -239,6 +243,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             }
         });
         this.logger.log(`Created table "${tableName}"`);
+        await this.eventEmitter.emitAsync(ASSET_TYPE_CHANGE_EVENT);
         return uuid;
     }
 
@@ -411,6 +416,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
             }
         }
 
+        await this.eventEmitter.emitAsync(ASSET_TYPE_CHANGE_EVENT);
         return (await this.getAssetType(uuid))!;
     }
 
@@ -481,6 +487,19 @@ export class PostgresDriver extends GenericDatabaseGateway {
     async deleteAssetType(uuid: string) {
         if (!this.db) throw new Error('Database not connected');
 
+        const allTypes = await this.getAssetTypes();
+        const blockingTypes = allTypes.filter(type =>
+            type.fields.some(
+                (field): field is AssetTypeRelationField =>
+                    field.type === AssetFieldType.RELATION && (field as AssetTypeRelationField).targetAssetType === uuid,
+            ),
+        );
+
+        if (blockingTypes.length > 0) {
+            const names = blockingTypes.map(type => type.name).join(', ');
+            throw new Error(`Cannot delete asset type ${uuid}; referenced by: ${names}`);
+        }
+
         const tableName = `asset_${uuid}`;
         const assetUuids = await this.db.table(tableName).count('uuid as count');
         this.logger.log(`Deleting asset type table ${tableName} with ${assetUuids[0].count} assets`);
@@ -499,6 +518,7 @@ export class PostgresDriver extends GenericDatabaseGateway {
 
         await this.db.table(INTERNAL_ASSET_TYPE_TABLE).where({ uuid }).del();
         await this.db.schema.dropTableIfExists(tableName);
+        await this.eventEmitter.emitAsync(ASSET_TYPE_CHANGE_EVENT);
     }
 
     async rawQuery<T>(queryString: string): Promise<T[]> {

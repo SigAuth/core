@@ -2,6 +2,8 @@ import { Logger } from '@nestjs/common';
 import { Asset, AssetTypeField, AssetTypeRelationField, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 import { AssetTypeTableMapping } from '@sigauth/sdk/protected';
 
+export const ASSET_TYPE_CHANGE_EVENT = 'asset-type.change';
+
 export abstract class GenericDatabaseGateway {
     protected readonly logger: Logger;
 
