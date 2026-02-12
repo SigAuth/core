@@ -2,7 +2,7 @@ import { InterfaceDeclarationStructure, OptionalKind, Project, PropertySignature
 import { AssetFieldType, AssetTypeField, AssetTypeRelationField, DefinitiveAssetType } from '../../asset-type.architecture.js';
 import { FundamentalAssetTypes } from '../../protected.types.js';
 
-export const generateBaseTypeFile = (project: Project, assetTypes: DefinitiveAssetType[], outPath: string, includeInternals: boolean) => {
+export const generateBaseTypeFile = (project: Project, assetTypes: DefinitiveAssetType[], outPath: string) => {
     const baseTypeFile = project.createSourceFile(`${outPath}/asset-types.ts`, '', { overwrite: true });
     const interfaces: OptionalKind<InterfaceDeclarationStructure>[] = [];
     const reverseRelations: Record<string, OptionalKind<PropertySignatureStructure>[]> = {};
@@ -84,8 +84,11 @@ export const generateBaseTypeFile = (project: Project, assetTypes: DefinitiveAss
         });
     }
 
-    baseTypeFile.addInterfaces(interfaces);
+    if (interfaces.length == 0) {
+        return;
+    }
 
+    baseTypeFile.addInterfaces(interfaces);
     baseTypeFile.formatText();
     baseTypeFile.saveSync();
 };

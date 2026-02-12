@@ -8,7 +8,7 @@ import { FindAssetDto } from '@/modules/asset/dto/sdk.find-asset.dto';
 import { SDKUpdateManyAssetDto, SDKUpdateOneAssetDto } from '@/modules/asset/dto/sdk.update-asset.dto';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiCreatedResponse,
@@ -98,9 +98,9 @@ export class AssetController {
         return await this.assetsService.deleteAssets(deleteAssetsDto.data);
     }
 
-    @Get('find')
+    @Post('find')
     @UseGuards(SDKGuard)
-    async findAsset(@Query() q: FindAssetDto) {
+    async findAsset(@Body() q: FindAssetDto) {
         return await this.assetsService.remoteFindAsset(q.type, q.query);
     }
 

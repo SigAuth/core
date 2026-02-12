@@ -13,7 +13,7 @@ export const generateClient = (project: Project, assetTypes: DefinitiveAssetType
         .filter(name => !FundamentalAssetTypes.includes(name as any))
         .join(', ');
 
-    clientFile.addStatements(`import { ${assetNames} } from './asset-types';`);
+    if (assetNames.length > 0) clientFile.addStatements(`import { ${assetNames} } from './asset-types';`);
     clientFile.addStatements(`import type { ${AccessableFundamentals.join(', ')} } from '@sigauth/sdk/fundamentals';`);
     clientFile.addStatements(`import type { SigAuthConfig } from '@sigauth/sdk/config';`);
     clientFile.addStatements(`import { sigauthRequest } from '@sigauth/sdk/utils';`);
@@ -153,7 +153,11 @@ export const generateClient = (project: Project, assetTypes: DefinitiveAssetType
             }
 
             async find<Q extends FindQuery<T>>(query: Q): Promise<Payload<T, Q>[]> {
-                const res = await sigauthRequest("GET", \`/api/asset/find?type=\${this.typeUuid}&query=\${encodeURIComponent(JSON.stringify(query))}\`, {
+                const res = await sigauthRequest("POST", '/api/asset/find', {
+                    body: {
+                        type: this.typeUuid,
+                        query,
+                    },
                     config: this.config,
                     internalAuthorization: query.internalAuthorization,
                 })

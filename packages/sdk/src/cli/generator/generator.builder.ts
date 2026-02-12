@@ -16,7 +16,7 @@ export class SDKGenerator {
 
     generate() {
         try {
-            generateBaseTypeFile(this.project, this.assetTypes, this.out, true);
+            generateBaseTypeFile(this.project, this.assetTypes, this.out);
             generateClient(this.project, this.assetTypes, this.out);
         } catch (error) {
             console.error('Error generating SDK:', error);

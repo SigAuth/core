@@ -1,10 +1,12 @@
 import { CreateInput, CreateManyInput, DeleteInput, FindQuery, UpdateInput } from '@/internal/database/generic/orm-client/sigauth.client';
 import { ORMService } from '@/internal/database/orm.client';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Asset, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 
 @Injectable()
 export class AssetService {
+    private readonly logger = new Logger(AssetService.name);
+
     constructor(private readonly db: ORMService) {}
     async createOrUpdateAsset(
         assetUuid: string | undefined,
@@ -72,8 +74,7 @@ export class AssetService {
 
         // TODO check for App Access
 
-        this.db.getModel(type.name).findMany(query);
-        return [];
+        return this.db.getModel(type.name).findMany(query) as any;
     }
 
     async remoteCreateOne(typeUuid: string, query: CreateInput<any>): Promise<Asset> {

@@ -1,21 +1,6 @@
-import type { FindQuery } from '@/internal/database/generic/orm-client/sigauth.client';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
-
-export class FindAssetDto {
-    @IsUUID('7')
-    @ApiProperty({ description: 'UUID of the asset type', example: '550e8400-e29b-41d4-a716-446655440000', type: 'string' })
-    type!: string;
-
-    @ApiProperty({
-        description: 'The query used to find the assets',
-        example: { filters: [{ field: 'name', operator: 'eq', value: 'Example' }] },
-        type: Object,
-    })
-    @Type(() => FindQueryClass)
-    query!: FindQuery<any>;
-}
+import { IsArray, IsBoolean, IsInt, IsObject, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 
 export class FindQueryClass {
     @IsOptional()
@@ -24,7 +9,7 @@ export class FindQueryClass {
 
     @IsOptional()
     @IsObject()
-    where?: any;
+    where?: Record<string, any>;
 
     @IsOptional()
     @IsObject()
@@ -37,6 +22,9 @@ export class FindQueryClass {
     @IsOptional()
     @IsObject()
     orderBy?: Record<string, 'asc' | 'desc'>;
+
+    @IsBoolean()
+    internalAuthorization!: boolean;
 }
 
 export class AuthorzationClass {
@@ -49,5 +37,21 @@ export class AuthorzationClass {
 
     @IsBoolean()
     recusive!: boolean;
+}
+
+export class FindAssetDto {
+    @IsUUID('7')
+    @ApiProperty({ description: 'UUID of the asset type', example: '550e8400-e29b-41d4-a716-446655440000', type: 'string' })
+    type!: string;
+
+    @ApiProperty({
+        description: 'The query used to find the assets',
+        example: { filters: [{ field: 'name', operator: 'eq', value: 'Example' }] },
+        type: Object,
+    })
+    @IsObject()
+    @Type(() => FindQueryClass)
+    @ValidateNested()
+    query!: FindQueryClass;
 }
 

@@ -12,7 +12,14 @@ async function bootstrap() {
     app.setGlobalPrefix('api', {
         exclude: [{ path: '.well-known/*path', method: RequestMethod.GET }],
     });
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            transformOptions: { enableImplicitConversion: true },
+        }),
+    );
     app.use(cookieParser());
 
     if (process.env.EXPOSE_SWAGGER === 'true') {

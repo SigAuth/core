@@ -21,3 +21,7 @@ overrides:
   validator@<13.15.22: '>=13.15.22'
   vite@>=7.1.0 <=7.1.10: '>=7.1.11'
 
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+
