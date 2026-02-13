@@ -18,6 +18,8 @@ import {
 import { getMappedFields, RegistryConfigs } from '@sigauth/sdk/fundamentals';
 import { AssetTypeTableMapping } from '@sigauth/sdk/protected';
 import knex, { Knex } from 'knex';
+import { GlobalRealtionMap, Model } from '../orm-client/sigauth.client';
+import { ModelPG } from './postgres.model';
 
 @Injectable()
 export class PostgresDriver extends GenericDatabaseGateway {
@@ -29,6 +31,10 @@ export class PostgresDriver extends GenericDatabaseGateway {
         private readonly eventEmitter: EventEmitter2,
     ) {
         super(PostgresDriver.name);
+    }
+
+    public getModel<T extends Record<string, any>>(tableName: string, relations: GlobalRealtionMap, db: GenericDatabaseGateway): Model<T> {
+        return new ModelPG<T>(tableName, relations, db);
     }
 
     async onModuleDestroy() {
@@ -837,4 +843,3 @@ export class PostgresDriver extends GenericDatabaseGateway {
         throw new Error(`Unsupported Postgres type: ${pgType}`);
     }
 }
-
