@@ -28,8 +28,7 @@
     },
     "files": [
         "dist",
-        "bin",
-        "oclif.manifest.json"
+        "bin"
     ],
     "exports": {
         "./protected": {
@@ -79,3 +78,4 @@
         "topics": {}
     }
 }
+
