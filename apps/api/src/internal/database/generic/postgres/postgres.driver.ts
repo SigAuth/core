@@ -1,4 +1,5 @@
 import { ASSET_TYPE_CHANGE_EVENT, GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
+import { ModelPG } from '@/internal/database/generic/postgres/postgres.model';
 import { StorageService } from '@/internal/database/storage.service';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -18,8 +19,6 @@ import {
 import { getMappedFields, RegistryConfigs } from '@sigauth/sdk/fundamentals';
 import { AssetTypeTableMapping } from '@sigauth/sdk/protected';
 import knex, { Knex } from 'knex';
-import { GlobalRealtionMap, Model } from '../orm-client/sigauth.client';
-import { ModelPG } from './postgres.model';
 
 @Injectable()
 export class PostgresDriver extends GenericDatabaseGateway {
@@ -33,8 +32,8 @@ export class PostgresDriver extends GenericDatabaseGateway {
         super(PostgresDriver.name);
     }
 
-    public getModel<T extends Record<string, any>>(tableName: string, relations: GlobalRealtionMap, db: GenericDatabaseGateway): Model<T> {
-        return new ModelPG<T>(tableName, relations, db);
+    get modelClass(): typeof ModelPG {
+        return ModelPG;
     }
 
     async onModuleDestroy() {

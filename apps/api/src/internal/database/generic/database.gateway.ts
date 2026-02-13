@@ -1,7 +1,7 @@
+import { Model } from '@/internal/database/generic/orm-client/sigauth.client';
 import { Logger } from '@nestjs/common';
 import { Asset, AssetTypeField, AssetTypeRelationField, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 import { AssetTypeTableMapping } from '@sigauth/sdk/protected';
-import { GlobalRealtionMap, Model } from './orm-client/sigauth.client';
 
 export const ASSET_TYPE_CHANGE_EVENT = 'asset-type.change';
 
@@ -12,7 +12,7 @@ export abstract class GenericDatabaseGateway {
         this.logger = new Logger(loggerName || GenericDatabaseGateway.name);
     }
 
-    abstract getModel<T extends object>(tableName: string, relations: GlobalRealtionMap, db: GenericDatabaseGateway): Model<T>;
+    abstract get modelClass(): new (...args: any[]) => Model<Record<string, any>>;
 
     abstract connect(connectionString?: string): Promise<void>;
 

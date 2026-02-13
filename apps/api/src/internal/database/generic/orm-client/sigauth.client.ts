@@ -145,7 +145,8 @@ export class SigauthClient {
     public getModel<T extends Record<string, any>>(key: keyof AssetTypeTableMapping & string): Model<T> {
         this.ensureInitialized();
         if (!this.models[key]) {
-            this.models[key] = this.client!.getModel<T>(this.mapping![key], this.relations!, this.client!);
+            const ModelImpl = this.client?.modelClass;
+            this.models[key] = new ModelImpl!(this.mapping![key], this.relations!, this.client!);
         }
         return this.models[key] as Model<T>;
     }

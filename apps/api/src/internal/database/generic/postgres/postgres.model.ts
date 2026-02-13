@@ -1,5 +1,3 @@
-import { INTERNAL_ASSET_TYPE_TABLE, INTERNAL_GRANT_TABLE } from '@sigauth/sdk/architecture';
-import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 import {
     CreateInput,
     CreateManyInput,
@@ -11,7 +9,9 @@ import {
     Model,
     Payload,
     UpdateInput,
-} from '../orm-client/sigauth.client';
+} from '@/internal/database/generic/orm-client/sigauth.client';
+import { INTERNAL_ASSET_TYPE_TABLE, INTERNAL_GRANT_TABLE } from '@sigauth/sdk/architecture';
+import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 
 export class ModelPG<T extends Record<string, any>> extends Model<T> {
     async findOne<const Q extends Omit<FindQuery<T>, 'limit'>>(
