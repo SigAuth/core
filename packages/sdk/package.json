@@ -13,6 +13,10 @@
         "types",
         "sdk"
     ],
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
     "bin": {
         "sigauth": "./bin/run.js"
     },
