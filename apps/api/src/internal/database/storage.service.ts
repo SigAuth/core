@@ -68,6 +68,9 @@ export class StorageService {
 
             fs.writeFileSync(`${this.getPath()}/auth_public_key.pem`, pair.publicKey);
             fs.writeFileSync(`${this.getPath()}/auth_private_key.pem`, pair.privateKey);
+
+            this.authPublicKey = createPublicKey(pair.publicKey);
+            this.authPrivateKey = createPrivateKey(pair.privateKey);
         }
     }
 
