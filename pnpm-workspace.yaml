@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - '!apps/dashboard'
 
 onlyBuiltDependencies:
   - '@nestjs/core'
@@ -19,3 +20,8 @@ overrides:
   tar@=7.5.1: '>=7.5.2'
   validator@<13.15.22: '>=13.15.22'
   vite@>=7.1.0 <=7.1.10: '>=7.1.11'
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+

@@ -6,12 +6,20 @@ package-lock.json
 # Build outputs
 dist/
 keys/
+**/api/config/**
+**/sigauth.config.ts
 build/
 .next/
 out/
 .cache/
 .turbo/
 
+# CLI
+oclif.manifest.json
+*-debug.log
+*-error.log
+**/.DS_Store
+tmp/
 
 # Vite
 *.local
@@ -48,3 +56,4 @@ coverage/
 .tmp/
 **/generated/
 /packages/prisma-wrapper/src/prisma-generated
+*.pem

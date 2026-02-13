@@ -13,5 +13,5 @@ export class LoginRequestDto {
     @IsOptional()
     @IsNumber()
     @ApiProperty({ example: 248435, type: 'number', description: '2FA code if enabled', required: false })
-    secondFactor?: string;
+    twoFactorCode?: string;
 }

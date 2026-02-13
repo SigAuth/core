@@ -1,128 +1,134 @@
-import { PrismaService } from '@/common/prisma/prisma.service';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AssetFieldType, AssetTypeField } from '@sigauth/generics/json-types';
-import { Asset, Container } from '@sigauth/generics/prisma-client';
-import { PROTECTED } from '@sigauth/generics/protected';
+import { CreateInput, CreateManyInput, DeleteInput, FindQuery, UpdateInput } from '@/internal/database/generic/orm-client/sigauth.client';
+import { ORMService } from '@/internal/database/orm.client';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Asset, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 
 @Injectable()
 export class AssetService {
-    constructor(private readonly prisma: PrismaService) {}
+    private readonly logger = new Logger(AssetService.name);
 
+    constructor(private readonly db: ORMService) {}
     async createOrUpdateAsset(
-        assetId: number | undefined,
-        name: string,
-        assetTypeId: number | undefined,
-        fields: Record<number, string | number>,
-        intern: boolean,
+        assetUuid: string | undefined,
+        assetTypeUuid: string,
+        fields: Record<string, string[] | string | number | boolean | Date>,
     ): Promise<Asset> {
-        if (!intern && assetTypeId == PROTECTED.AssetType.id)
-            throw new BadRequestException('Cannot create asset of protected asset type (id: ' + PROTECTED.AssetType.id + ')');
-
-        const finalAssetTypeId = assetTypeId ?? (await this.prisma.asset.findUnique({ where: { id: assetId ?? -1 } }))?.typeId;
-        if (!finalAssetTypeId) throw new NotFoundException('Invalid asset type');
-
-        const assetType = await this.prisma.assetType.findUnique({ where: { id: finalAssetTypeId } });
+        const assetType = await this.db.AssetType.findOne({ where: { uuid: assetTypeUuid } });
         if (!assetType) throw new NotFoundException('Invalid asset type');
 
-        const assetTypeFields = assetType.fields as AssetTypeField[];
-        if (!assetTypeFields.filter(f => f.required).every(af => Object.keys(fields).includes(af.id.toString())))
+        const typeFields = await this.db.DBClient.getAssetTypeFields(assetTypeUuid, assetType.externalJoinKeys);
+        if (!typeFields.filter(f => f.required).every(af => Object.keys(fields).includes(af.name)))
             throw new BadRequestException('Required fields are missing');
-
         if (Object.values(fields).some(v => v === undefined)) throw new BadRequestException('Some fields have undefined values');
-
-        if (Object.keys(fields).every(k => !assetTypeFields.find(f => f.id.toString() == k)))
+        if (Object.keys(fields).every(k => !typeFields.find(f => f.name == k)))
             throw new BadRequestException(
                 'Unknown fields provided (' +
                     Object.keys(fields)
-                        .filter(k => !assetTypeFields.find(f => f.id.toString() == k))
+                        .filter(k => !typeFields.find(f => f.name == k))
                         .join(', ') +
                     ')',
             );
 
-        // check if every variable is of the right type
-        for (const field of Object.entries(fields)) {
-            const correspondingField = assetTypeFields.find(f => f.id == +field[0]);
-            const targetType =
-                correspondingField?.type === AssetFieldType.TEXT
-                    ? 'string'
-                    : correspondingField?.type === AssetFieldType.CHECKFIELD
-                      ? 'boolean'
-                      : 'number';
-            if (typeof field[1] != targetType)
-                throw new BadRequestException(
-                    'Invalid field type ( field: ' + field[0].toString() + ' must be of type ' + targetType + ')',
-                );
-        }
+        try {
+            const assetType = await this.db.DBClient.getAssetType(assetTypeUuid);
+            if (!assetType) throw new NotFoundException('Asset type not found');
 
-        return this.prisma.asset.upsert({
-            where: {
-                id: assetId ?? -1,
-            },
-            create: {
-                name,
-                typeId: finalAssetTypeId,
-                fields,
-            },
-            update: {
-                name,
-                fields,
-            },
-        });
+            // Type checks are outsourced to db which will throw an error
+            if (assetUuid) {
+                return this.db.DBClient.updateAsset<Asset>(assetType, assetUuid, fields);
+            } else {
+                return this.db.DBClient.createAsset<Asset>(assetType, fields);
+            }
+        } catch (e: any) {
+            throw new BadRequestException('One or more fields have invalid types or values' + e.message);
+        }
     }
 
-    async applyUsedContainers(assetId: number, containerIds: number[]): Promise<Container[]> {
-        const asset = await this.prisma.asset.findUnique({ where: { id: assetId } });
-        if (!asset) throw new NotFoundException('Asset not found');
-        if (containerIds.includes(PROTECTED.Container.id)) throw new BadRequestException('Cannot modify protected container');
+    async deleteAssets(data: { typeUuid: string; uuid: string }[]): Promise<Asset[]> {
+        const results = await Promise.all(data.map(d => this.db.DBClient.getAssetByUuid<Asset>(d.typeUuid, d.uuid)));
+        const assets = results.filter((a): a is Asset => a !== null);
 
-        if ((await this.prisma.container.count({ where: { id: { in: containerIds } } })) != containerIds.length)
-            throw new NotFoundException('Container not found');
+        if (assets.length == 0 || assets.length != data.length) throw new NotFoundException('Not all asset found or invalid ids provided');
 
-        const appliedContainers = await this.prisma.container.findMany({ where: { assets: { has: assetId } } });
-        const added = containerIds.filter(id => !appliedContainers.find(c => c.id == id));
-        const removed = appliedContainers.filter(c => !containerIds.includes(c.id));
-
-        for (const container of removed) {
-            await this.prisma.container.update({
-                where: { id: container.id },
-                data: { assets: { set: container.assets.filter(i => i != asset.id) } },
-            });
-        }
-
-        for (const containerId of added) {
-            await this.prisma.container.update({
-                where: { id: containerId },
-                data: {
-                    assets: { push: asset.id },
-                },
-            });
-        }
-
-        return await this.prisma.container.findMany({ where: { assets: { has: assetId } } });
-    }
-
-    async deleteAssets(ids: number[]): Promise<Asset[]> {
-        const assets = await this.prisma.asset.findMany({ where: { id: { in: ids } } });
-        const containers = await this.prisma.container.findMany({ where: {} });
-        if (assets.length == 0 || assets.length != ids.length) throw new NotFoundException('Not all asset found or invalid ids provided');
-
+        const typeCache: DefinitiveAssetType[] = [];
         for (const a of assets) {
-            await this.prisma.permissionInstance.deleteMany({
-                where: {
-                    assetId: a.id,
-                },
-            });
+            let assetType = typeCache.find(t => t.uuid == data.find(d => d.uuid == a.uuid)?.typeUuid) ?? null;
+            if (!assetType) {
+                assetType = await this.db.DBClient.getAssetType(data.find(d => d.uuid == a.uuid)!.typeUuid);
+                if (!assetType) throw new NotFoundException('Asset type not found for asset ' + a.uuid);
+                typeCache.push(assetType);
+            }
+            await this.db.DBClient.deleteAsset(assetType, a.uuid);
         }
 
-        for (const container of containers) {
-            container.assets = container.assets.filter(n => !ids.includes(n));
-            await this.prisma.container.update({
-                where: { id: container.id },
-                data: { assets: container.assets || [] },
-            });
-        }
-
-        await this.prisma.asset.deleteMany({ where: { id: { in: ids } } });
         return assets;
     }
+
+    async getAsset<T extends Asset>(typeUuid: string, assetUuid: string): Promise<T | null> {
+        return this.db.DBClient.getAssetByUuid<T>(typeUuid, assetUuid);
+    }
+
+    async remoteFindAsset(typeUuid: string, query: FindQuery<any>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return this.db.getModel(type.name).findMany(query) as any;
+    }
+
+    async remoteCreateOne(typeUuid: string, query: CreateInput<any>): Promise<Asset> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).createOne(query)) as Asset;
+    }
+
+    async remoteCreateMany(typeUuid: string, query: CreateManyInput<object>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).createMany(query)) as Asset[];
+    }
+
+    async remoteUpdateOne(typeUuid: string, query: UpdateInput<any>): Promise<Asset> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).updateOne(query)) as Asset;
+    }
+
+    async remoteUpdateMany(typeUuid: string, query: UpdateInput<any>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).updateMany(query)) as Asset[];
+    }
+
+    async remoteDeleteOne(typeUuid: string, query: DeleteInput<any>): Promise<Asset> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).deleteOne(query)) as Asset;
+    }
+
+    async remoteDeleteMany(typeUuid: string, query: DeleteInput<any>): Promise<Asset[]> {
+        const type = await this.db.DBClient.getAssetType(typeUuid);
+        if (!type) throw new NotFoundException('Asset type not found');
+
+        // TODO check for App Access
+
+        return (await this.db.getModel(type.name).deleteMany(query)) as Asset[];
+    }
 }
+

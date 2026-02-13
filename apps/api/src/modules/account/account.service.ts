@@ -1,25 +1,25 @@
-import { PrismaService } from '@/common/prisma/prisma.service';
-import { Utils } from '@/common/utils';
+import { FindWhere } from '@/internal/database/generic/orm-client/sigauth.client';
+import { ORMService } from '@/internal/database/orm.client';
+import { Utils } from '@/internal/utils';
 import { CreateAccountDto } from '@/modules/account/dto/create-account.dto';
 import { DeleteAccountDto } from '@/modules/account/dto/delete-account.dto';
 import { EditAccountDto } from '@/modules/account/dto/edit-account.dto';
 import { PermissionSetDto } from '@/modules/account/dto/permission-set.dto';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AppPermission } from '@sigauth/generics/json-types';
-import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
-import { Account, PermissionInstance, Prisma, PrismaClient } from '@sigauth/generics/prisma-client';
+import { SELF_REFERENCE_ASSET_TYPE_UUID } from '@sigauth/sdk/architecture';
+import { Account } from '@sigauth/sdk/fundamentals';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AccountService {
     private logger: Logger = new Logger(AccountService.name);
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly db: ORMService) {}
 
-    async createAccount(createAccountDto: CreateAccountDto): Promise<AccountWithPermissions> {
-        const existing = await this.prisma.account.findFirst({
+    async createAccount(createAccountDto: CreateAccountDto): Promise<Account> {
+        const existing = await this.db.Account.findOne({
             where: {
-                OR: [{ name: createAccountDto.name }, { email: createAccountDto.email }],
+                OR: [{ username: createAccountDto.username }, { email: createAccountDto.email }],
             },
         });
 
@@ -27,159 +27,164 @@ export class AccountService {
             throw new BadRequestException('Name or Email already exists');
         }
 
-        const account: Account = await this.prisma.account.create({
+        const account: Account = await this.db.Account.createOne({
             data: {
-                name: createAccountDto.name,
+                username: createAccountDto.username,
                 email: createAccountDto.email,
-                password: bcrypt.hashSync(createAccountDto.password, 10),
-                api: createAccountDto.apiAccess ? Utils.generateToken(32) : null,
+                passwordHash: bcrypt.hashSync(createAccountDto.password, 10),
+                deactivated: false,
+                api: createAccountDto.apiAccess ? Utils.generateToken(32) : undefined,
             },
         });
 
-        return { ...account, permissions: [] };
+        return account;
     }
 
-    async editAccount(editAccountDto: EditAccountDto): Promise<AccountWithPermissions> {
+    async editAccount(editAccountDto: EditAccountDto): Promise<Account> {
         // Check for unique values (Name/Email)
-        let account = await this.prisma.account.findUnique({
-            where: { id: editAccountDto.id },
-            include: { permissions: true },
+
+        // Todo include permission in account type
+        let account = await this.db.Account.findOne({
+            where: { uuid: editAccountDto.uuid },
         });
         if (!account) throw new NotFoundException('Account does not exist');
-        if (editAccountDto.name || editAccountDto.email) {
-            const orConditions: Prisma.AccountWhereInput[] = [];
-            if (editAccountDto.name) orConditions.push({ name: editAccountDto.name });
+
+        if (editAccountDto.username || editAccountDto.email) {
+            const orConditions: FindWhere<Account>[] = [];
+            if (editAccountDto.username) orConditions.push({ username: editAccountDto.username });
             if (editAccountDto.email) orConditions.push({ email: editAccountDto.email });
 
-            const existing = await this.prisma.account.findFirst({
+            const existing = await this.db.Account.findOne({
                 where: {
                     OR: orConditions,
                 },
-                include: { permissions: true },
             });
 
-            if (existing && existing.id !== editAccountDto.id) {
+            if (existing && existing.uuid !== editAccountDto.uuid) {
                 throw new BadRequestException('Name or Email already exists');
             }
         }
 
         // Dynamically build update object
-        const data: { name?: string; email?: string; password?: string; api?: string | null; deactivated?: boolean } = {};
-        if (editAccountDto.name) data.name = editAccountDto.name;
+        const data: { username?: string; email?: string; passwordHash?: string; api?: string; deactivated?: boolean } = {};
+        if (editAccountDto.username) data.username = editAccountDto.username;
         if (editAccountDto.email) data.email = editAccountDto.email;
-        if (editAccountDto.password) data.password = bcrypt.hashSync(editAccountDto.password, 10);
+        if (editAccountDto.password) data.passwordHash = bcrypt.hashSync(editAccountDto.password, 10);
         if (editAccountDto.deactivated !== undefined) data.deactivated = editAccountDto.deactivated;
         if (editAccountDto.apiAccess !== undefined) {
-            data.api = editAccountDto.apiAccess ? Utils.generateToken(32) : null;
+            data.api = editAccountDto.apiAccess ? Utils.generateToken(32) : undefined;
         }
 
         // when deativated is toggled to true log out all sessions
         if (editAccountDto.deactivated && !account.deactivated) {
-            await this.logOutAll(editAccountDto.id);
+            await this.logOutAll(editAccountDto.uuid);
         }
 
-        const updated = await this.prisma.account.update({
-            where: { id: editAccountDto.id },
+        const updated = await this.db.Account.updateOne({
+            where: { uuid: editAccountDto.uuid },
             data,
         });
 
-        return { ...updated, permissions: account.permissions || [] };
+        return updated;
     }
 
     async deleteAccount(deleteAccountDto: DeleteAccountDto) {
-        await this.prisma.permissionInstance.deleteMany({
-            where: { accountId: { in: deleteAccountDto.accountIds } },
-        });
-
-        await this.prisma.account.deleteMany({
-            where: { id: { in: deleteAccountDto.accountIds } },
+        await this.db.Account.deleteMany({
+            where: { uuid: { in: deleteAccountDto.accountUuids } },
         });
     }
 
+    // TODO TEST adding, removing, maintaining
     async setPermissions(permissionSetDto: PermissionSetDto) {
-        const account = await this.prisma.account.findUnique({
-            where: { id: permissionSetDto.accountId },
+        const account = await this.db.Account.findOne({
+            where: { uuid: permissionSetDto.accountUuid },
         });
 
         if (!account) throw new NotFoundException('Account not found');
-        const maintained: PermissionInstance[] = [];
+        const remove = await this.db.Grant.findMany({ where: { accountUuid: permissionSetDto.accountUuid } });
 
         for (const perm of permissionSetDto.permissions) {
-            const app = await this.prisma.app.findUnique({
-                where: { id: perm.appId },
-            });
-            if (!app) throw new NotFoundException(`App with ID ${perm.appId} not found`);
-
-            async function checkAppContainerRelation(prisma: PrismaClient) {
-                const container = await prisma.container.findFirst({ where: { id: perm.containerId } });
-                if (!container) throw new NotFoundException(`Container with ID ${perm.containerId} not found`);
-                if (!container.apps.includes(app!.id ?? -1))
-                    throw new BadRequestException(`Container with ID ${perm.containerId} is not related to App ${app!.name}`);
-            }
-
-            this.logger.debug(`Checking permission ${perm.identifier} for app ${app.name} ${app.id} ${perm.appId}`);
-            let found = false;
-            const permissions = app.permissions as AppPermission;
-            const ident = Utils.convertPermissionNameToIdent(perm.identifier);
-            if (permissions.asset.map(p => Utils.convertPermissionNameToIdent(p)).includes(ident)) {
-                found = true;
-                if (!perm.assetId || !perm.containerId) {
-                    throw new BadRequestException(`Asset ID and Container ID must be provided for asset permissions`);
-                }
-                await checkAppContainerRelation(this.prisma);
-            } else if (permissions.container.map(p => Utils.convertPermissionNameToIdent(p)).includes(ident)) {
-                found = true;
-                if (!perm.containerId || perm.assetId) {
-                    throw new BadRequestException(`Container ID without an asset ID must be provided for container permissions`);
-                }
-                await checkAppContainerRelation(this.prisma);
-            } else if (permissions.root.map(p => Utils.convertPermissionNameToIdent(p)).includes(ident)) {
-                found = true;
-                if (perm.containerId || perm.assetId) {
-                    throw new BadRequestException(`No Container ID or Asset ID must be provided for root permissions`);
-                }
-            }
-            if (!found) throw new BadRequestException(`Permission ${perm.identifier} not found in app ${app.name}`);
-
-            const queryObject = {
-                accountId: permissionSetDto.accountId,
-                appId: perm.appId,
-                identifier: ident,
-                containerId: perm.containerId ?? null,
-                assetId: perm.assetId ?? null,
-            };
-            const existing = await this.prisma.permissionInstance.findFirst({
-                where: queryObject,
+            const exisiting = await this.db.Grant.findOne({
+                where: {
+                    accountUuid: permissionSetDto.accountUuid,
+                    ...perm,
+                },
             });
 
-            if (!existing) {
-                try {
-                    const createdPerm = await this.prisma.permissionInstance.create({
-                        data: queryObject,
-                    });
-                    maintained.push(createdPerm);
-                } catch (_) {
-                    throw new BadRequestException('Error creating permission: some foreign keys do not exist');
+            if (!exisiting) {
+                const app = await this.db.App.findOne({ where: { uuid: perm.appUuid } });
+                if (!app) throw new NotFoundException(`App with UUID ${perm.appUuid} not found`);
+
+                const permission = await this.db.Permission.findOne({
+                    where: {
+                        appUuid: app.uuid,
+                        typeUuid: perm.typeUuid ? perm.typeUuid : undefined,
+                        permission: perm.permission,
+                    },
+                });
+                if (!permission) throw new BadRequestException(`Permission ${perm.permission} not found in app ${app.name}`);
+
+                // check wether assetId is a valid asset or none for global permission
+                if (perm.typeUuid) {
+                    if (perm.typeUuid == SELF_REFERENCE_ASSET_TYPE_UUID) {
+                        const targetAsset = await this.db.AssetType.findOne({
+                            where: { uuid: perm.assetUuid },
+                        });
+                        if (!targetAsset) throw new NotFoundException(`Asset Type with UUID ${perm.assetUuid} not found`);
+                    } else {
+                        const targetType = await this.db.AssetType.findOne({
+                            where: { uuid: perm.typeUuid },
+                        });
+                        if (!targetType) throw new NotFoundException(`Asset Type with UUID ${perm.typeUuid} not found`);
+                        if (!perm.assetUuid) throw new BadRequestException(`Asset UUID must be provided for asset specific permissions`);
+
+                        const asset = await this.db.DBClient.getAssetByUuid(perm.typeUuid, perm.assetUuid);
+                        if (!asset) throw new NotFoundException(`Asset with UUID ${perm.assetUuid} not found`);
+                    }
                 }
+
+                await this.db.Grant.createOne({
+                    data: {
+                        accountUuid: permissionSetDto.accountUuid,
+                        ...perm,
+                    },
+                });
             } else {
-                maintained.push(existing);
+                remove.splice(
+                    remove.findIndex(
+                        r =>
+                            r.accountUuid === exisiting.accountUuid &&
+                            r.appUuid === exisiting.appUuid &&
+                            r.typeUuid === exisiting.typeUuid &&
+                            r.assetUuid === exisiting.assetUuid &&
+                            r.permission === exisiting.permission,
+                    ),
+                    1,
+                );
             }
         }
 
-        // remove all permissions that are not in the new set
-        await this.prisma.permissionInstance.deleteMany({
-            where: {
-                id: { notIn: maintained.map(p => p.id) },
-                accountId: permissionSetDto.accountId,
-            },
-        });
-
-        return maintained;
+        // remove all grants that were not part of the new set
+        if (remove.length > 0) {
+            const deleted = await this.db.Grant.deleteMany({
+                where: {
+                    OR: remove,
+                },
+            });
+        }
     }
 
-    async logOutAll(accountId: number) {
-        await this.prisma.session.deleteMany({
-            where: { subject: accountId },
+    getAccount(accountUuid: string, includePermissions = false): Promise<Account | null> {
+        return this.db.Account.findOne({
+            where: { uuid: accountUuid },
+            includes: { grant_accounts: includePermissions },
+        }) as Promise<Account | null>;
+    }
+
+    async logOutAll(accountUuid: string) {
+        await this.db.Session.deleteMany({
+            where: { subjectUuid: accountUuid },
         });
     }
 }
+
