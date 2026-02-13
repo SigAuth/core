@@ -1,5 +1,5 @@
-import { FindWhere } from '@/internal/database/generic/orm-client/sigauth.client';
-import { ORMService } from '@/internal/database/orm.client';
+import { ORMService } from '@/internal/database/generic/orm.client';
+import { FindWhere } from '@/internal/database/generic/sigauth.client';
 import { Utils } from '@/internal/utils';
 import { CreateAccountDto } from '@/modules/account/dto/create-account.dto';
 import { DeleteAccountDto } from '@/modules/account/dto/delete-account.dto';
@@ -187,4 +187,3 @@ export class AccountService {
         });
     }
 }
-

@@ -1,5 +1,5 @@
-import { CreateInput, CreateManyInput, DeleteInput, FindQuery, UpdateInput } from '@/internal/database/generic/orm-client/sigauth.client';
-import { ORMService } from '@/internal/database/orm.client';
+import { ORMService } from '@/internal/database/generic/orm.client';
+import { CreateInput, CreateManyInput, DeleteInput, FindQuery, UpdateInput } from '@/internal/database/generic/sigauth.client';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Asset, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 
@@ -131,4 +131,3 @@ export class AssetService {
         return (await this.db.getModel(type.name).deleteMany(query)) as Asset[];
     }
 }
-

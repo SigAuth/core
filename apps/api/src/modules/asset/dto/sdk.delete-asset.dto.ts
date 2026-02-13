@@ -1,4 +1,4 @@
-import type { DeleteInput } from '@/internal/database/generic/orm-client/sigauth.client';
+import type { DeleteInput } from '@/internal/database/generic/sigauth.client';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsObject, IsUUID } from 'class-validator';
@@ -37,4 +37,3 @@ export class DeleteQueryClass {
     @IsObject()
     where!: any;
 }
-

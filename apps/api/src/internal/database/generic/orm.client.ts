@@ -1,5 +1,5 @@
 import { ASSET_TYPE_CHANGE_EVENT, GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
-import { SigauthClient } from '@/internal/database/generic/orm-client/sigauth.client';
+import { SigauthClient } from '@/internal/database/generic/sigauth.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
@@ -144,4 +144,3 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap,
         return this.db;
     }
 }
-

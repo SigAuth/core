@@ -1,6 +1,6 @@
 import { GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
-import { PostgresDriver } from '@/internal/database/generic/postgres/postgres.driver';
-import { ORMService } from '@/internal/database/orm.client';
+import { ORMService } from '@/internal/database/generic/orm.client';
+import { PostgresDriver } from '@/internal/database/postgres/postgres.driver';
 import { StorageService } from '@/internal/database/storage.service';
 import { Global, Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';

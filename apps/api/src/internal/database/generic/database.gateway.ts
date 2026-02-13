@@ -1,4 +1,4 @@
-import { Model } from '@/internal/database/generic/orm-client/sigauth.client';
+import { Model } from '@/internal/database/generic/sigauth.client';
 import { Logger } from '@nestjs/common';
 import { Asset, AssetTypeField, AssetTypeRelationField, DefinitiveAssetType } from '@sigauth/sdk/architecture';
 import { AssetTypeTableMapping } from '@sigauth/sdk/protected';

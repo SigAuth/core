@@ -1,4 +1,4 @@
-import type { UpdateInput } from '@/internal/database/generic/orm-client/sigauth.client';
+import type { UpdateInput } from '@/internal/database/generic/sigauth.client';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsObject, IsUUID } from 'class-validator';
@@ -40,4 +40,3 @@ export class UpdateQueryClass {
     @IsObject()
     data: any;
 }
-

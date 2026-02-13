@@ -1,4 +1,4 @@
-import { ORMService } from '@/internal/database/orm.client';
+import { ORMService } from '@/internal/database/generic/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
@@ -320,4 +320,3 @@ export class AuthService {
     //     };
     // }
 }
-

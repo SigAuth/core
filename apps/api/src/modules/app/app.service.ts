@@ -1,4 +1,4 @@
-import { ORMService } from '@/internal/database/orm.client';
+import { ORMService } from '@/internal/database/generic/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { CreateAppDto, PermissionsDto } from '@/modules/app/dto/create-app.dto';
@@ -171,4 +171,3 @@ export class AppsService {
         return this.db.App.findOne({ where: { uuid }, includes: { permission_apps: true, appScope_apps: true } });
     }
 }
-

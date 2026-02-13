@@ -9,7 +9,7 @@ import {
     Model,
     Payload,
     UpdateInput,
-} from '@/internal/database/generic/orm-client/sigauth.client';
+} from '@/internal/database/generic/sigauth.client';
 import { INTERNAL_ASSET_TYPE_TABLE, INTERNAL_GRANT_TABLE } from '@sigauth/sdk/architecture';
 import { convertTypeTableToUuid } from '@sigauth/sdk/utils';
 

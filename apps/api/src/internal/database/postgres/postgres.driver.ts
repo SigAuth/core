@@ -1,5 +1,5 @@
 import { ASSET_TYPE_CHANGE_EVENT, GenericDatabaseGateway } from '@/internal/database/generic/database.gateway';
-import { ModelPG } from '@/internal/database/generic/postgres/postgres.model';
+import { ModelPG } from '@/internal/database/postgres/postgres.model';
 import { StorageService } from '@/internal/database/storage.service';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';

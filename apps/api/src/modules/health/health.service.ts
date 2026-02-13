@@ -1,4 +1,4 @@
-import { ORMService } from '@/internal/database/orm.client';
+import { ORMService } from '@/internal/database/generic/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -64,4 +64,3 @@ export class HealthService {
         return this.refreshPromise;
     }
 }
-

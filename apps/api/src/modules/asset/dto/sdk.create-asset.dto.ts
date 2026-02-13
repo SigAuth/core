@@ -1,4 +1,4 @@
-import type { CreateInput, CreateManyInput } from '@/internal/database/generic/orm-client/sigauth.client';
+import type { CreateInput, CreateManyInput } from '@/internal/database/generic/sigauth.client';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -53,4 +53,3 @@ export class CreateManyQueryClass {
     @IsString({ each: true })
     select?: string[];
 }
-

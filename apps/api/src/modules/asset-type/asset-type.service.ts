@@ -1,4 +1,4 @@
-import { ORMService } from '@/internal/database/orm.client';
+import { ORMService } from '@/internal/database/generic/orm.client';
 import { StorageService } from '@/internal/database/storage.service';
 import { CreateAssetTypeDto } from '@/modules/asset-type/dto/create-asset-type.dto';
 import { EditAssetTypeDto } from '@/modules/asset-type/dto/edit-asset-type.dto';
@@ -50,4 +50,3 @@ export class AssetTypeService {
         return this.db.DBClient.getAssetTypes();
     }
 }
-
