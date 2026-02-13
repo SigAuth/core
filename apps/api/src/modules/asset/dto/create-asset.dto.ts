@@ -1,26 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsObject, IsPositive, IsString, MinLength, ValidateNested } from 'class-validator';
+import { IsObject, IsUUID, ValidateNested } from 'class-validator';
 
 export class CreateAssetDto {
-    @IsNumber()
-    @IsPositive()
-    @ApiProperty({ example: 1, type: 'number' })
-    assetTypeId!: number;
-
-    @IsString()
-    @MinLength(4)
-    @ApiProperty({ example: 'Blog Post', type: 'string', minimum: 4 })
-    name!: string;
-
-    @IsNumber({}, { each: true })
-    @IsPositive({ each: true })
-    @ApiProperty({ example: [3], type: 'array', items: { type: 'number' } })
-    containerIds!: number[];
+    @IsUUID('7')
+    @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000', type: 'string' })
+    assetTypeUuid!: string;
 
     @IsObject()
     @ValidateNested({ each: true })
     @Type(() => Object)
-    @ApiProperty({ type: Object, example: { '1': 'value', '2': 5 } })
-    fields!: Record<string, string | number>; // fieldId and value
+    @ApiProperty({ type: Object, example: { field1: 'value', field2: 5 } })
+    fields!: Record<string, string | number | boolean | Date>; // fieldKey and value
 }
+

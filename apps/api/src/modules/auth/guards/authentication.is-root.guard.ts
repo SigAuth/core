@@ -1,23 +1,20 @@
-import { PrismaService } from '@/common/prisma/prisma.service';
-import { Utils } from '@/common/utils';
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
-import { PROTECTED, SigAuthRootPermissions } from '@sigauth/generics/protected';
+import { StorageService } from '@/internal/database/storage.service';
+import { Utils } from '@/internal/utils';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { SigAuthPermissions } from '@sigauth/sdk/protected';
 import { Request } from 'express';
 
 @Injectable()
 export class IsRoot implements CanActivate {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly storage: StorageService) {}
 
     canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest<Request>();
-        request.authMethod = 'session';
-
-        if (!request.account) throw new UnauthorizedException('No account found');
-
-        const account: AccountWithPermissions = request.account as AccountWithPermissions;
-        return !!account.permissions.find(
-            p => p.appId == PROTECTED.App.id && p.identifier == Utils.convertPermissionNameToIdent(SigAuthRootPermissions.ROOT),
+        if (!request.account) return true;
+        const account = request.account;
+        return !!account.account_grants!.find(
+            p => p.appUuid == this.storage.SigAuthAppUuid && p.permission == Utils.convertPermissionNameToIdent(SigAuthPermissions.ROOT),
         );
     }
 }
+

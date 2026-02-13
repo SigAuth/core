@@ -1,0 +1,82 @@
+{
+    "name": "@sigauth/sdk",
+    "version": "0.1.0",
+    "type": "module",
+    "homepage": "https://sigauth.org",
+    "author": "Ben Hacker",
+    "description": "SigAuth SDK for auth, generic types and managing asset types and their assets.",
+    "keywords": [
+        "sigauth",
+        "core",
+        "authentication",
+        "authorization",
+        "types",
+        "sdk"
+    ],
+    "bin": {
+        "sigauth": "./bin/run.js"
+    },
+    "bugs": {
+        "url": "https://github.com/SigAuth/core/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SigAuth/core.git"
+    },
+    "scripts": {
+        "build": "shx rm -rf dist tsconfig.tsbuildinfo && tsc -b"
+    },
+    "files": [
+        "dist",
+        "bin",
+        "oclif.manifest.json"
+    ],
+    "exports": {
+        "./protected": {
+            "types": "./dist/protected.types.d.ts",
+            "import": "./dist/protected.types.js",
+            "default": "./dist/protected.types.js"
+        },
+        "./architecture": {
+            "types": "./dist/asset-type.architecture.d.ts",
+            "import": "./dist/asset-type.architecture.js",
+            "default": "./dist/asset-type.architecture.js"
+        },
+        "./fundamentals": {
+            "types": "./dist/asset-type.fundamentals.d.ts",
+            "import": "./dist/asset-type.fundamentals.js",
+            "default": "./dist/asset-type.fundamentals.js"
+        },
+        "./config": {
+            "types": "./dist/cli/config/config.types.d.ts",
+            "import": "./dist/cli/config/config.types.js",
+            "default": "./dist/cli/config/config.types.js"
+        },
+        "./utils": {
+            "types": "./dist/cli/utils.d.ts",
+            "import": "./dist/cli/utils.js",
+            "default": "./dist/cli/utils.js"
+        }
+    },
+    "dependencies": {
+        "@oclif/core": "^4.8.0",
+        "chalk": "^5.6.2",
+        "enquirer": "^2.4.1",
+        "ora": "^9.0.0",
+        "shx": "^0.3.4",
+        "ts-morph": "^27.0.2"
+    },
+    "devDependencies": {
+        "@types/node": "^25.2.2",
+        "typescript": "latest"
+    },
+    "oclif": {
+        "bin": "sigauth",
+        "dirname": "sigauth",
+        "commands": "./dist/cli/commands",
+        "plugins": [],
+        "topicSeparator": " ",
+        "topics": {}
+    }
+}
+

@@ -1,9 +1,9 @@
 import { AuthService } from '@/modules/auth/auth.service';
-import { HasPermissionDto } from '@/modules/auth/dto/has-permission.dto';
+import { HasPermissionDto } from '@/modules/auth/dto/has-grant.dto';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
-import { ApiAppGuard } from '@/modules/auth/guards/api-app.guard';
-import { AuthGuard } from '@/modules/auth/guards/authentication.guard';
+import { HasAccount } from '@/modules/auth/guards/authentication.force-account.guard';
+import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
@@ -14,9 +14,8 @@ import {
     ApiOkResponse,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AccountWithPermissions } from '@sigauth/generics/prisma-extended';
+import { Account } from '@sigauth/sdk/fundamentals';
 import { type Request, type Response } from 'express';
-import * as process from 'node:process';
 
 @Controller('auth')
 export class AuthController {
@@ -32,7 +31,7 @@ export class AuthController {
 
     @Get('oidc/exchange')
     @HttpCode(HttpStatus.OK)
-    @UseGuards(ApiAppGuard)
+    @UseGuards(SDKGuard)
     @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
@@ -49,7 +48,7 @@ export class AuthController {
 
     @Get('oidc/refresh')
     @HttpCode(HttpStatus.OK)
-    @UseGuards(ApiAppGuard)
+    @UseGuards(SDKGuard)
     @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
@@ -84,19 +83,19 @@ export class AuthController {
     }
 
     @Get('logout')
-    @UseGuards(AuthGuard)
+    @UseGuards(SDKGuard, HasAccount)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ description: 'Session deleted and cookie cleared. No content.' })
     async logout(@Req() req: Request, @Res() res: Response) {
         const sid = (req.cookies as Record<string, string>)?.['sid'];
-        await this.authService.logout(req.account as AccountWithPermissions, sid);
+        await this.authService.logout(req.account as Account, sid);
         res.clearCookie('sid');
         res.sendStatus(200);
     }
 
     @Get('/oidc/has-permission')
     @HttpCode(HttpStatus.OK)
-    @UseGuards(ApiAppGuard)
+    @UseGuards(SDKGuard)
     @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
     @ApiOkResponse({
         description: 'Permission check result.',
@@ -105,27 +104,27 @@ export class AuthController {
     @ApiForbiddenResponse({ description: 'Account does not have the required permission or is signed out.', example: 'Forbidden' })
     @ApiBadRequestResponse({ description: 'Permission query parameter is missing.' })
     async hasPermission(@Req() req: Request, @Query() permissionDto: HasPermissionDto) {
-        return await this.authService.hasPermission(permissionDto);
+        // return await this.authService.hasPermission(permissionDto);
     }
 
-    @Get('/oidc/user-info')
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(ApiAppGuard)
-    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
-    @ApiOkResponse({
-        description: 'Provides User general info and lists which containers and directly correlate to the user.',
-        example: {
-            assets: [{ identifier: 'asset-read', assetId: 66, containerId: 12 }],
-            containers: [{ identifier: 'container-admin', containerId: 12 }],
-            roots: ['app-administrator'],
-        },
-    })
-    async getUserInfo(@Req() req: Request, @Query('accessToken') accessToken: string) {
-        return await this.authService.getUserInfo(accessToken, req.sigauthApp!);
-    }
+    // @Get('/oidc/user-info')
+    // @HttpCode(HttpStatus.OK)
+    // @UseGuards(ApiAppGuard)
+    // @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
+    // @ApiOkResponse({
+    //     description: 'Provides User general info and lists which containers and directly correlate to the user.',
+    //     example: {
+    //         assets: [{ identifier: 'asset-read', assetId: 66, containerId: 12 }],
+    //         containers: [{ identifier: 'container-admin', containerId: 12 }],
+    //         roots: ['app-administrator'],
+    //     },
+    // })
+    // async getUserInfo(@Req() req: Request, @Query('accessToken') accessToken: string) {
+    //     return await this.authService.getUserInfo(accessToken, req.sigauthApp!);
+    // }
 
-    @Get('init')
-    @UseGuards(AuthGuard)
+    @Get('base-data')
+    @UseGuards(SDKGuard, HasAccount)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'Session validated and general information to run the dashboard fetched successfully.',
@@ -139,6 +138,7 @@ export class AuthController {
         },
     })
     async init(@Req() req: Request) {
-        return await this.authService.getInitData(req.cookies['sid'] as string, req.account as AccountWithPermissions);
+        return await this.authService.getInitData(req.cookies['sid'] as string, req.account as Account);
     }
 }
+

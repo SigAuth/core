@@ -1,4 +1,3 @@
-import { UnauthorizedExceptionFilter } from '@/common/filters/unauthorized-exception.filter';
 import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -13,15 +12,21 @@ async function bootstrap() {
     app.setGlobalPrefix('api', {
         exclude: [{ path: '.well-known/*path', method: RequestMethod.GET }],
     });
-    app.useGlobalPipes(new ValidationPipe());
-    app.useGlobalFilters(new UnauthorizedExceptionFilter());
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            transformOptions: { enableImplicitConversion: true },
+        }),
+    );
     app.use(cookieParser());
 
     if (process.env.EXPOSE_SWAGGER === 'true') {
         const config = new DocumentBuilder()
             .setTitle('SigAuth API')
             .setDescription(
-                `The SigAuth API is rate limited and protected by 2FA. You can't send more than ${API_RATE_LIMIT} requests per minute.`
+                `The SigAuth API is rate limited and protected by 2FA. You can't send more than ${API_RATE_LIMIT} requests per minute.`,
             )
             .setVersion('0.2')
             .build();
@@ -38,4 +43,5 @@ async function bootstrap() {
 
 bootstrap()
     .then(() => logger.log('API is running...'))
-    .catch(logger.error);
+    .catch(error => logger.error(error));
+
