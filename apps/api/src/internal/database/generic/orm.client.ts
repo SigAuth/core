@@ -78,7 +78,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap,
             this.logger.warn('No accounts found in database. Creating dummy account for initial setup.');
             const account = await this.Account.createOne({
                 data: {
-                    username: 'admin',
+                    name: 'admin',
                     passwordHash: bcrypt.hashSync('admin', 10),
                     deactivated: false,
                     email: 'administrator@localhost',

@@ -2,7 +2,7 @@
     "name": "sigauth-core-monorepo",
     "version": "1.0",
     "type": "module",
-    "packageManager": "pnpm@10.29.1",
+    "packageManager": "pnpm@10.30.0",
     "engines": {
         "node": ">=22.14.0"
     },
@@ -24,6 +24,8 @@
     ],
     "scripts": {
         "format": "prettier --write .",
+        "build": "pnpm --filter @sigauth/sdk run build && pnpm -r --parallel --filter=!@sigauth/sdk --if-present run build",
+        "build:topo": "pnpm -r --if-present run build",
         "start": "node apps/api/dist/main"
     }
 }

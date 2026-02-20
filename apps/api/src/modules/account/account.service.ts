@@ -19,7 +19,7 @@ export class AccountService {
     async createAccount(createAccountDto: CreateAccountDto): Promise<Account> {
         const existing = await this.db.Account.findOne({
             where: {
-                OR: [{ username: createAccountDto.username }, { email: createAccountDto.email }],
+                OR: [{ name: createAccountDto.username }, { email: createAccountDto.email }],
             },
         });
 
@@ -29,11 +29,10 @@ export class AccountService {
 
         const account: Account = await this.db.Account.createOne({
             data: {
-                username: createAccountDto.username,
+                name: createAccountDto.username,
                 email: createAccountDto.email,
                 passwordHash: bcrypt.hashSync(createAccountDto.password, 10),
                 deactivated: false,
-                api: createAccountDto.apiAccess ? Utils.generateToken(32) : undefined,
             },
         });
 
@@ -51,7 +50,7 @@ export class AccountService {
 
         if (editAccountDto.username || editAccountDto.email) {
             const orConditions: FindWhere<Account>[] = [];
-            if (editAccountDto.username) orConditions.push({ username: editAccountDto.username });
+            if (editAccountDto.username) orConditions.push({ name: editAccountDto.username });
             if (editAccountDto.email) orConditions.push({ email: editAccountDto.email });
 
             const existing = await this.db.Account.findOne({

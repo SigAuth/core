@@ -3,9 +3,24 @@ import { convertTypeTableToUuid } from './cli/utils.js';
 import { AssetTypeTableMapping } from './protected.types.js';
 
 const accountFields = [
-    { name: 'username', type: AssetFieldType.VARCHAR, required: true },
+    { name: 'name', type: AssetFieldType.VARCHAR, required: true },
+    { name: 'givenName', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'familyName', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'middleName', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'nickname', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'preferredUsername', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'website', type: AssetFieldType.VARCHAR, required: false },    
     { name: 'email', type: AssetFieldType.VARCHAR, required: true },
-    { name: 'api', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'emailVerified', type: AssetFieldType.BOOLEAN, required: false },
+    { name: 'gender', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'birthdate', type: AssetFieldType.DATE, required: false },
+    { name: 'zoneinfo', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'locale', type: AssetFieldType.VARCHAR, required: false }, // Represented by RFC 5646 language tag, e.g. "en-US"
+    { name: 'phoneNumber', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'phoneNumberVerified', type: AssetFieldType.BOOLEAN, required: false },
+    { name: 'address', type: AssetFieldType.TEXT, required: false }, // Represented as JSON specified in OIDC CORE 5.1.1
+    { name: 'updatedAt', type: AssetFieldType.INTEGER, required: false }, // Represented as the number of seconds since 1970-01-01T00:00:00Z UTC
+
     { name: 'twoFactorCode', type: AssetFieldType.VARCHAR, required: false },
     { name: 'deactivated', type: AssetFieldType.BOOLEAN, required: true },
     { name: 'passwordHash', type: AssetFieldType.VARCHAR, required: true },

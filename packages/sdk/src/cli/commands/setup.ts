@@ -19,28 +19,31 @@ export default class SetupCommand extends Command {
             ).issuer;
             if (!issuer) this.error(chalk.red('Error: Issuer is required. Please provide the address to your SigAuth instance.'));
 
-            const appId = (
-                await enquirer.prompt<{ appId: string }>({
-                    type: 'password',
-                    name: 'appId',
-                    message: 'App ID of your SigAuth application:',
+            const secureCookies = (
+                await enquirer.prompt<{ enabled: boolean }>({
+                    type: 'toggle',
+                    name: 'enabled',
+                    message: 'Secure Cookies?',
+                    enabled: 'Yes',
+                    disabled: 'No',
                 })
-            ).appId;
+            ).enabled;
 
-            const appToken = (
-                await enquirer.prompt<{ appToken: string }>({
-                    type: 'password',
-                    name: 'appToken',
-                    message: 'App Token of your SigAuth application:',
+            const audience = (
+                await enquirer.prompt<{ audience: string }>({
+                    type: 'input',
+                    name: 'audience',
+                    message: 'Audience of your SigAuth application:',
                 })
-            ).appToken;
-
-            this.log(chalk.green(`✔ Issuer received: ${issuer}`));
-            this.log(chalk.green(`✔ App ID received: ${appId.substring(0, 4)}****`));
-            this.log(chalk.green(`✔ App Token received: ${appToken.substring(0, 4)}****`));
+            ).audience;
 
             const config = new Config();
-            config.setup(issuer, appId, appToken);
+
+            this.log(chalk.green(`✔ Issuer received: ${issuer}`));
+            this.log(chalk.green(`✔ Secure Cookies: ${secureCookies}`));
+            this.log(chalk.green(`✔ Audience received: ${audience}`));
+
+            config.setup(issuer, secureCookies, audience);
         } catch (error) {
             // If the user aborts the prompt with Ctrl+C
             this.log(chalk.yellow('\nSetup aborted.'));

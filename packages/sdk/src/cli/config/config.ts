@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import path from 'path';
-import { SigAuthConfig } from 'src/cli/config/config.types.js';
-import { Project, VariableDeclarationKind } from 'ts-morph';
+import { Project, SyntaxKind, VariableDeclarationKind } from 'ts-morph';
+import { SigAuthConfig } from './config.types.js';
 
 export class Config {
     private configPath: string;
@@ -29,29 +29,36 @@ export class Config {
         return this.content ? this.content[key] : undefined;
     }
 
-    setup(issuer: string, appId: string, appToken: string): void {
+    setup(issuer: string, secureCookies: boolean, audience: string): void {
         const project = new Project();
 
         const sourceFile = project.createSourceFile(this.configPath, {}, { overwrite: true });
-        const configData: SigAuthConfig = { issuer, appId, appToken, out: 'src/sigauth/generated' };
+        sourceFile.addStatements('import { type SigAuthConfig, env, loadEnviroment } from "@sigauth/sdk/config";');
 
-        sourceFile.addVariableStatement({
+        sourceFile.addStatements('loadEnviroment();');
+
+        const configVariable = sourceFile.addVariableStatement({
             declarationKind: VariableDeclarationKind.Const,
             isExported: true,
             declarations: [
                 {
                     name: 'config',
                     type: 'SigAuthConfig',
-                    initializer: JSON.stringify(configData, null, 2),
+                    initializer: '{}',
                 },
             ],
         });
 
-        sourceFile.insertImportDeclaration(0, {
-            namedImports: ['SigAuthConfig'],
-            moduleSpecifier: '@sigauth/sdk/config',
-            isTypeOnly: true,
-        });
+        const initializer = configVariable.getDeclarations()[0].getInitializerIfKindOrThrow(SyntaxKind.ObjectLiteralExpression);
+        initializer.addPropertyAssignments([
+            { name: 'issuer', initializer: `'${issuer}'` },
+            { name: 'secureCookies', initializer: `${secureCookies}` },
+            { name: 'audience', initializer: `'${audience}'` },
+            { name: 'out', initializer: "'src/sigauth/generated'" },
+            { name: 'refreshThresholdSeconds', initializer: '60' },
+            { name: 'appId', initializer: "env('SIGAUTH_APP_ID')" },
+            { name: 'appToken', initializer: "env('SIGAUTH_APP_TOKEN')" },
+        ]);
 
         sourceFile.saveSync();
         console.log(`TypeScript configuration saved to ${this.configPath}`);

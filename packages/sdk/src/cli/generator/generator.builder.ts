@@ -1,7 +1,7 @@
-import { DefinitiveAssetType } from 'src/asset-type.architecture.js';
 import { Project } from 'ts-morph';
 import { generateBaseTypeFile } from './base-type.generator.js';
 import { generateClient } from './client.generator.js';
+import { DefinitiveAssetType } from '../../asset-type.architecture.js';
 
 export class SDKGenerator {
     private readonly assetTypes: DefinitiveAssetType[];

@@ -18,12 +18,4 @@ export class CreateAccountDto {
     @IsEmail()
     @ApiProperty({ example: '<EMAIL>', type: 'string', description: 'Email must be valid' })
     email!: string;
-
-    @IsBoolean()
-    @ApiProperty({
-        example: false,
-        type: 'boolean',
-        description: 'Whether the account should have API access via a token or not',
-    })
-    apiAccess!: boolean;
 }

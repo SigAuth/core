@@ -22,7 +22,7 @@ export class AuthService {
     ) {}
 
     async login(loginRequestDto: LoginRequestDto) {
-        const account = await this.db.Account.findOne({ where: { username: loginRequestDto.username } });
+        const account = await this.db.Account.findOne({ where: { name: loginRequestDto.username } });
         if (!account || !bcrypt.compareSync(loginRequestDto.password, account.passwordHash)) {
             throw new UnauthorizedException('Invalid credentials');
         }
@@ -174,7 +174,7 @@ export class AuthService {
         }
 
         const payload = {
-            name: authChallenge.session_ref.subject_ref.username,
+            name: authChallenge.session_ref.subject_ref.name,
             email: authChallenge.session_ref.subject_ref.email,
             // more claims to come
         };
@@ -227,7 +227,7 @@ export class AuthService {
         }
 
         const payload = {
-            name: instance.session_ref.subject_ref.username,
+            name: instance.session_ref.subject_ref.name,
             email: instance.session_ref.subject_ref.email,
             // more claims to come
         };

@@ -12,12 +12,7 @@
         "isolatedModules": true,
         "incremental": true,
         "removeComments": true,
-        "baseUrl": ".",
-        "outDir": "./dist",
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "paths": {
-            "@/*": ["src/*"]
-        }
+        "emitDecoratorMetadata": true
     }
 }

@@ -3,15 +3,17 @@ packages:
   - packages/*
   - '!apps/dashboard'
 
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+
 onlyBuiltDependencies:
   - '@nestjs/core'
-  - '@prisma/client'
-  - '@prisma/engines'
   - '@scarf/scarf'
   - '@swc/core'
   - '@tailwindcss/oxide'
   - esbuild
-  - prisma
+  - msw
 
 overrides:
   body-parser@>=2.2.0 <2.2.1: '>=2.2.1'
@@ -20,8 +22,3 @@ overrides:
   tar@=7.5.1: '>=7.5.2'
   validator@<13.15.22: '>=13.15.22'
   vite@>=7.1.0 <=7.1.10: '>=7.1.11'
-
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
-
