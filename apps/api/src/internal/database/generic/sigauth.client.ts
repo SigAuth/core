@@ -12,7 +12,6 @@ import {
     Account,
     App,
     AppAccess,
-    AppScope,
     AssetType,
     AuthorizationChallenge,
     AuthorizationInstance,
@@ -161,10 +160,6 @@ export class SigauthClient {
         return this.getModel<App>('App');
     }
 
-    get AppScope(): Model<AppScope> {
-        return this.getModel<AppScope>('AppScope');
-    }
-
     get AuthorizationInstance(): Model<AuthorizationInstance> {
         return this.getModel<AuthorizationInstance>('AuthorizationInstance');
     }
@@ -294,3 +289,4 @@ export type UpdateInput<T> = {
 export type DeleteInput<T> = {
     where: FindWhere<T>;
 };
+

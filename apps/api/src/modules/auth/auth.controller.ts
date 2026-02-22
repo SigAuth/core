@@ -42,8 +42,8 @@ export class AuthController {
             redirectUri: 'https://myapp.com/redirect',
         },
     })
-    async exchangeOIDC(@Query('code') code: string, @Query('redirect-uri') redirectUri: string, @Req() req: Request) {
-        return await this.authService.exchangeOIDCToken(code, req.sigauthApp!, redirectUri);
+    async exchangeOIDC(@Query('code') code: string, @Query('code_verifier') codeVerifier: string, @Req() req: Request) {
+        return await this.authService.exchangeOIDCToken(code, req.sigauthApp!, codeVerifier);
     }
 
     @Get('oidc/refresh')

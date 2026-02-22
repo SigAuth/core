@@ -3,10 +3,10 @@ import { StorageService } from '@/internal/database/storage.service';
 import { Utils } from '@/internal/utils';
 import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
-import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { DefinitiveAssetType } from '@sigauth/sdk/architecture';
 import { Account, App, Session } from '@sigauth/sdk/fundamentals';
-import { ProtectedData, SigAuthPermissions } from '@sigauth/sdk/protected';
+import { OIDC_DEFAULT_CLAIMS, OIDC_DEFAULT_SCOPES, ProtectedData, SigAuthPermissions } from '@sigauth/sdk/protected';
 import bcrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import { SignJWT } from 'jose';
@@ -131,31 +131,50 @@ export class AuthService {
     }
 
     async authenticateOIDC(data: OIDCAuthenticateDto, sessionId: string) {
-        //     const session = await this.db.Session.findOne({ where: { uuid: sessionId }, include: { account: true } });
-        //     if (!session) throw new NotFoundException("Couldn't resolve session");
-        //     const app = await this.db.App.findOne({ where: { uuid: data.appUuid } });
-        //     if (!app) throw new NotFoundException("Couldn't resolve app");
-        //     if (!app.oidcAuthCodeCb) throw new BadRequestException('App does not support OIDC authorization code flow');
-        //     const authorizationCode = Utils.generateToken(64);
-        //     const challenge = await this.db.AuthorizationChallenge.createOne({
-        //         data: {
-        //             appUuid: data.appUuid,
-        //             sessionUuid: sessionId,
-        //             authCode: authorizationCode,
-        //             redirectUri: data.redirectUri,
-        //             created: new Date(),
-        //             challenge: '', // TODO PKCE
-        //         },
-        //     });
-        //     return `${app.oidcAuthCodeCb}?code=${challenge.authCode}&expires=${challenge.created.getTime() + 1000 * 60 * +(process.env.AUTHORIZATION_CHALLENGE_EXPIRATION_OFFSET ?? 5)}&redirectUri=${data.redirectUri}`;
+        const session = await this.db.Session.findOne({ where: { uuid: sessionId }, includes: { subject_ref: true } });
+        if (!session) throw new NotFoundException("Couldn't resolve session");
+        const app = await this.db.App.findOne({ where: { uuid: data.client_id } });
+        if (!app) throw new NotFoundException("Couldn't resolve app");
+        if (!app.oidcAuthCodeCb) throw new BadRequestException('App does not support OIDC authorization code flow');
+        if (data.redirect_uri !== app.oidcAuthCodeCb) throw new BadRequestException('Invalid redirect URI');
+
+        const authorizationCode = Utils.generateToken(64);
+        const challenge = await this.db.AuthorizationChallenge.createOne({
+            data: {
+                appUuid: app.uuid,
+                sessionUuid: sessionId,
+                authCode: authorizationCode,
+                created: new Date(),
+
+                scope: data.scope,
+                challengeMethod: data.code_challenge_method,
+                challenge: data.code_challenge,
+                nonce: data.nonce,
+            },
+        });
+        return { authorizationCode: challenge.authCode };
     }
 
-    async exchangeOIDCToken(code: string, app: App, redirectUri: string) {
+    async exchangeOIDCToken(code: string, app: App, codeVerfier: string) {
         const authChallenge = await this.db.AuthorizationChallenge.findOne({
-            where: { authCode: code, redirectUri },
+            where: { authCode: code },
             includes: { session_ref: { subject_ref: true } },
         });
         if (!authChallenge) throw new NotFoundException("Couldn't resolve authorization challenge");
+        if (authChallenge.appUuid !== app.uuid) throw new NotFoundException("Couldn't resolve app from authorization challenge");
+
+        if (authChallenge.challengeMethod === 'S256') {
+            const expectedChallenge = Utils.base64URLEncode(await Utils.sha256(codeVerfier));
+            if (expectedChallenge !== authChallenge.challenge) {
+                throw new UnauthorizedException('Invalid code verifier');
+            }
+        } else if (authChallenge.challengeMethod === 'plain') {
+            if (codeVerfier !== authChallenge.challenge) {
+                throw new UnauthorizedException('Invalid code verifier');
+            }
+        } else if (authChallenge.challengeMethod) {
+            throw new BadRequestException('Unsupported code challenge method');
+        }
 
         if (
             dayjs(authChallenge.created)
@@ -173,18 +192,53 @@ export class AuthService {
             throw new UnauthorizedException('Session expired');
         }
 
-        const payload = {
-            name: authChallenge.session_ref.subject_ref.name,
-            email: authChallenge.session_ref.subject_ref.email,
-            // more claims to come
+        let generateRefreshToken = false;
+        const accessTokenPayload: Record<string, any> = {};
+        const idTokenPayload: Record<string, any> = {};
+
+        const scopes = authChallenge.scope.split(' ');
+        if (scopes.includes('offline_access')) generateRefreshToken = true;
+
+        const scopeMapping = { ...JSON.parse(app.scopes || '{}'), ...OIDC_DEFAULT_SCOPES };
+        const claimMapping = { ...JSON.parse(app.claims || '{}'), ...OIDC_DEFAULT_CLAIMS };
+
+        const resolveClaimValue = (claimValue: string) => {
+            if (claimValue.startsWith('account.')) {
+                const accountField = claimValue.split('.')[1];
+                return (authChallenge.session_ref.subject_ref as any)[accountField];
+            }
+            return claimValue;
         };
 
-        const accessToken = await new SignJWT(payload)
+        scopes.forEach(scope => {
+            const targetClaims = scopeMapping[scope] || [];
+            targetClaims.forEach((claim: string) => {
+                if (claimMapping[claim]) {
+                    idTokenPayload[claim] = resolveClaimValue(claimMapping[claim]);
+                }
+            });
+        });
+        accessTokenPayload['scope'] = authChallenge.scope;
+
+        const idToken = await new SignJWT(idTokenPayload)
             .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
             .setIssuedAt()
             .setSubject(String(authChallenge.session_ref.subject_ref.uuid))
             .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
-            .setAudience(app.name)
+            .setAudience(app.uuid)
+            .setExpirationTime(
+                dayjs()
+                    .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
+                    .toDate(),
+            )
+            .sign(this.storage.AuthPrivateKey!);
+
+        const accessToken = await new SignJWT(accessTokenPayload)
+            .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
+            .setIssuedAt()
+            .setSubject(String(authChallenge.session_ref.subject_ref.uuid))
+            .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
+            .setAudience(app.uuid)
             .setExpirationTime(
                 dayjs()
                     .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
@@ -204,6 +258,7 @@ export class AuthService {
         await this.db.AuthorizationChallenge.deleteOne({ where: { uuid: authChallenge.uuid } });
         return {
             accessToken,
+            idToken,
             refreshToken: instance.refreshToken,
         };
     }
@@ -320,3 +375,4 @@ export class AuthService {
     //     };
     // }
 }
+

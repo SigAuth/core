@@ -113,10 +113,6 @@ export class PostgresDriver extends GenericDatabaseGateway {
         if (!appType) throw new Error('Failed to create App asset type during initialization');
         mapping.App = 'asset_' + appType;
 
-        const scope = await this.createAssetType('AppScope', getMappedFields(mapping, RegistryConfigs.AppScope));
-        if (!scope) throw new Error('Failed to create AppScope asset type during initialization');
-        mapping.AppScope = 'asset_' + scope;
-
         const authInstanceType = await this.createAssetType(
             'AuthorizationInstance',
             getMappedFields(mapping, RegistryConfigs.AuthorizationInstance),
@@ -842,3 +838,4 @@ export class PostgresDriver extends GenericDatabaseGateway {
         throw new Error(`Unsupported Postgres type: ${pgType}`);
     }
 }
+

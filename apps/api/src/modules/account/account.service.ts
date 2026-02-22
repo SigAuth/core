@@ -19,7 +19,7 @@ export class AccountService {
     async createAccount(createAccountDto: CreateAccountDto): Promise<Account> {
         const existing = await this.db.Account.findOne({
             where: {
-                OR: [{ name: createAccountDto.username }, { email: createAccountDto.email }],
+                OR: [{ name: createAccountDto.name }, { email: createAccountDto.email }],
             },
         });
 
@@ -29,7 +29,7 @@ export class AccountService {
 
         const account: Account = await this.db.Account.createOne({
             data: {
-                name: createAccountDto.username,
+                name: createAccountDto.name,
                 email: createAccountDto.email,
                 passwordHash: bcrypt.hashSync(createAccountDto.password, 10),
                 deactivated: false,
@@ -48,9 +48,9 @@ export class AccountService {
         });
         if (!account) throw new NotFoundException('Account does not exist');
 
-        if (editAccountDto.username || editAccountDto.email) {
+        if (editAccountDto.name || editAccountDto.email) {
             const orConditions: FindWhere<Account>[] = [];
-            if (editAccountDto.username) orConditions.push({ name: editAccountDto.username });
+            if (editAccountDto.name) orConditions.push({ name: editAccountDto.name });
             if (editAccountDto.email) orConditions.push({ email: editAccountDto.email });
 
             const existing = await this.db.Account.findOne({
@@ -65,8 +65,8 @@ export class AccountService {
         }
 
         // Dynamically build update object
-        const data: { username?: string; email?: string; passwordHash?: string; api?: string; deactivated?: boolean } = {};
-        if (editAccountDto.username) data.username = editAccountDto.username;
+        const data: { name?: string; email?: string; passwordHash?: string; api?: string; deactivated?: boolean } = {};
+        if (editAccountDto.name) data.name = editAccountDto.name;
         if (editAccountDto.email) data.email = editAccountDto.email;
         if (editAccountDto.password) data.passwordHash = bcrypt.hashSync(editAccountDto.password, 10);
         if (editAccountDto.deactivated !== undefined) data.deactivated = editAccountDto.deactivated;
@@ -186,3 +186,4 @@ export class AccountService {
         });
     }
 }
+

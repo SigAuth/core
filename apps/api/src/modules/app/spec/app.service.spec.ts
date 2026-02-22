@@ -43,7 +43,8 @@ describe('AppService', () => {
         const app = await appService.createApp({
             name: 'Test App',
             permissions: [{ permissions: ['read', 'write', 'admin'], typeUuid: blogType.uuid }],
-            scopes: ['test:read:blog', 'test:write:blog'],
+            scopes: JSON.stringify({ 'blog:read': 'blog:read', 'blog:write': 'blog:write', 'blog:admin': 'blog:admin', test: 'claimKey' }),
+            claims: JSON.stringify({ claimKey: 'claimValue' }),
             url: 'https://example.com',
         });
         expect(app).toBeDefined();
@@ -68,75 +69,35 @@ describe('AppService', () => {
                 }),
             ]),
         );
-        expect(appDetails?.appScope_apps).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    public: false,
-                    description: '',
-                    name: 'test:read:blog',
-                }),
-                expect.objectContaining({
-                    public: false,
-                    description: '',
-                    name: 'test:write:blog',
-                }),
-            ]),
+        expect(appDetails!.claims).toBe(JSON.stringify({ claimKey: 'claimValue' }));
+        expect(appDetails!.scopes).toBe(
+            JSON.stringify({ 'blog:read': 'blog:read', 'blog:write': 'blog:write', 'blog:admin': 'blog:admin', test: 'claimKey' }),
         );
         expect(app).toEqual(appDetails);
-
-        expect(await appService['db'].AppScope.findMany({ where: { appUuids: [app.uuid] } })).toEqual(
-            expect.arrayContaining([
-                expect.objectContaining({
-                    public: false,
-                    description: '',
-                    name: 'test:read:blog',
-                }),
-                expect.objectContaining({
-                    public: false,
-                    description: '',
-                    name: 'test:write:blog',
-                }),
-            ]),
-        );
 
         await appService.deleteApps([app.uuid]);
         const deletedApp = await appService.getApp(app.uuid);
         expect(deletedApp).toBeNull();
-
-        expect(await appService['db'].AppScope.findMany({ where: { appUuids: [app.uuid] } })).toEqual([]);
     });
 
     it('it should not delete scopes that are shared between apps', async () => {
         const app1 = await appService.createApp({
             name: 'Test App 1',
             permissions: [{ permissions: ['read'], typeUuid: blogType.uuid }],
-            scopes: ['test:shared:scope', 'test:unique:scope1'],
+            scopes: JSON.stringify({ 'test:shared:scope': 'test:shared:scope', 'test:unique:scope1': 'test:unique:scope1' }),
+            claims: JSON.stringify({ claimKey: 'claimValue' }),
             url: 'https://example.com',
         });
 
         const app2 = await appService.createApp({
             name: 'Test App 2',
             permissions: [{ permissions: ['read'], typeUuid: blogType.uuid }],
-            scopes: ['test:shared:scope'],
+            scopes: JSON.stringify({ 'test:shared:scope': 'test:shared:scope' }),
+            claims: JSON.stringify({ claimKey: 'claimValue' }),
             url: 'https://example.com',
         });
 
         await appService.deleteApps([app1.uuid]);
-        const remainingScope = await appService['db'].AppScope.findMany({ where: { name: 'test:shared:scope' } });
-        expect(remainingScope).toEqual([
-            expect.objectContaining({
-                public: false,
-                description: '',
-                name: 'test:shared:scope',
-                appUuids: [app2.uuid],
-            }),
-        ]);
-        const deletedScope = await appService['db'].AppScope.findMany({ where: { name: 'test:unique:scope1' } });
-        expect(deletedScope).toEqual([]);
-
-        await appService.deleteApps([app2.uuid]);
-        const deletedSharedScope = await appService['db'].AppScope.findMany({ where: { name: 'test:shared:scope' } });
-        expect(deletedSharedScope).toEqual([]);
     });
 
     afterEach(async () => {

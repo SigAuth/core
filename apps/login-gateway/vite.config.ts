@@ -22,7 +22,7 @@ export default defineConfig({
                 changeOrigin: true,
             },
         },
-        allowedHosts: ['*'],
+        allowedHosts: ['localhost', '5173--main--sigauth--sigabiel.coder.sigasoft.de'],
     },
 });
 

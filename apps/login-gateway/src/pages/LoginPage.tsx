@@ -2,29 +2,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { logout, request } from '@/lib/utils';
-import { useEffect, useRef, useState } from 'react';
-import { toast, Toaster } from 'sonner';
+import { request } from '@/lib/utils';
+import type { AuthenticationParams } from '@/RootComponent';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+import { Toaster, toast } from 'sonner';
 
-const SignInPage = () => {
+type LoginPageProps = {
+    authParams: AuthenticationParams;
+    obtainAuthorizationCode: () => Promise<string | undefined>;
+    buildRedirectUrl: (params: Record<string, string>) => string;
+};
+
+export const LoginPage = ({ authParams, obtainAuthorizationCode, buildRedirectUrl }: LoginPageProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const isSubmittingRef = useRef(false);
-    const queryParams = new URLSearchParams(window.location.search);
+    const { state } = authParams;
 
-    const clientId = queryParams.get('client_id');
-    const responseType = queryParams.get('response_type');
-    const scope = queryParams.get('scope');
-    const redirect_uri = queryParams.get('redirect_uri');
-    const state = queryParams.get('state');
-
-    const nonce = queryParams.get('nonce');
-    const challenge = queryParams.get('code_challenge');
-    const challengeMethod = queryParams.get('code_challenge_method');
-    const prompt = queryParams.get('prompt'); // none, login, consent, select_account
-
-    const handleSubmit = async () => {
-        // Prevent double-submit (Enter + click, fast re-press, etc.)
-        if (isSubmittingRef.current) return;
+    const sendCredentialLogin = async () => {
+        if (isSubmitting) return;
 
         const username = (document.getElementById('username') as HTMLInputElement).value.trim();
         const password = (document.getElementById('password') as HTMLInputElement).value.trim();
@@ -32,54 +27,32 @@ const SignInPage = () => {
         // TODO add 2FA
         if (username.length < 3 || password.length < 3) return toast.warning('Please enter longer credentials.');
 
-        isSubmittingRef.current = true;
         setIsSubmitting(true);
 
         try {
             const res = await request('POST', `/api/auth/login`, { username, password });
 
             if (res.ok) {
-                toast.success('Login successful!');
-                window.location.reload();
+                const authCode = await obtainAuthorizationCode();
+                if (authCode) {
+                    window.location.href = buildRedirectUrl({ code: authCode, state });
+                } else {
+                    window.location.href = buildRedirectUrl({ error: 'authorization_code_failed', state });
+                }
             } else if (res.status === 429) {
                 toast.error('Too many requests. Please wait a moment and try again.');
             } else {
                 toast.error('Login failed. Please check your credentials.');
             }
         } finally {
-            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     };
 
-    useEffect(() => {
-        request(
-            'GET',
-            `/api/auth/oidc/authenticate?client_id=${clientId}&response_type=${responseType}&scope=${scope}&redirect_uri=${redirect_uri}&state=${state}&nonce=${nonce}&code_challenge=${challenge}&code_challenge_method=${challengeMethod}&prompt=${prompt}`,
-        ).then(async res => {
-            if (res.ok) {
-                // redirecting to app, show consent screen if needed
-                toast.info('Already logged in, redirecting...');
-                // window.location.href = await res.text();
-            } else {
-                logout();
-            }
-        });
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key !== 'Enter') return;
-
-            // Ignore OS key-repeat when holding Enter
-            if (e.repeat) return;
-
-            void handleSubmit();
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
+    const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        void sendCredentialLogin();
+    };
 
     return (
         <main className="flex items-center justify-center min-h-screen bg-muted">
@@ -95,7 +68,7 @@ const SignInPage = () => {
                     </CardAction>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col gap-6">
+                    <form className="flex flex-col gap-6" onSubmit={onSubmit}>
                         <div className="grid gap-2">
                             <Label htmlFor="username">Username</Label>
                             <Input id="username" type="text" placeholder="john.doe" required />
@@ -109,10 +82,10 @@ const SignInPage = () => {
                             </div>
                             <Input id="password" type="password" required />
                         </div>
-                    </div>
+                    </form>
                 </CardContent>
                 <CardFooter className="flex-col gap-2">
-                    <Button type="submit" onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
+                    <Button type="button" onClick={() => void sendCredentialLogin()} className="w-full" disabled={isSubmitting}>
                         Login
                     </Button>
                 </CardFooter>
@@ -120,6 +93,4 @@ const SignInPage = () => {
         </main>
     );
 };
-
-export default SignInPage;
 

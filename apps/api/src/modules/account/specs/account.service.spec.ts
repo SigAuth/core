@@ -36,34 +36,29 @@ describe('AccountService', () => {
     it('should create, edit and delete an account', async () => {
         const account = await service.createAccount({
             email: 'test@example.com',
-            apiAccess: false,
             password: 'password123',
-            username: 'testuser',
+            name: 'testuser',
         });
 
         expect(account).toBeDefined();
         let fetchedAccount = await service.getAccount(account.uuid);
         expect(fetchedAccount).toEqual(account);
 
-        expect(account.api).toBeNull();
         expect(account.passwordHash).toBeDefined();
         expect(account.passwordHash).not.toBe('password123');
 
-        expect(account.username).toBe('testuser');
+        expect(account.name).toBe('testuser');
         expect(account.email).toBe('test@example.com');
 
         const updated = await service.editAccount({
             uuid: account.uuid,
-            username: 'updateduser',
-            apiAccess: true,
+            name: 'updateduser',
             deactivated: true,
         });
 
         expect(updated).toBeDefined();
         fetchedAccount = await service.getAccount(account.uuid);
         expect(updated).toEqual(fetchedAccount);
-        expect(updated.username).toBe('updateduser');
-        expect(updated.api).toBeDefined();
         expect(updated.deactivated).toBe(true);
 
         await service.logOutAll(account.uuid);
@@ -78,9 +73,8 @@ describe('AccountService', () => {
     it('should set permissions correctly', async () => {
         const account = await service.createAccount({
             email: 'test@example.com',
-            apiAccess: false,
             password: 'password123',
-            username: 'permissionsuser',
+            name: 'permissionsuser',
         });
 
         const typeUuid = await typeService.createAssetType({
@@ -104,7 +98,8 @@ describe('AccountService', () => {
             name: 'Test App',
             url: 'https://testapp.com',
             permissions: [{ typeUuid: typeUuid, permissions: ['read', 'write', 'execute'] }],
-            scopes: ['scope1'],
+            scopes: '{}',
+            claims: '{}',
         });
 
         const asset = await assetService.createOrUpdateAsset(undefined, typeUuid!, { field1: 'value1', field2: 'value2' });

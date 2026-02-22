@@ -8,7 +8,7 @@ export class CreateAccountDto {
         message: 'Only Letters, Digits, - and _ allowed, no spaces',
     })
     @ApiProperty({ example: 'admin', type: 'string', description: 'Only Letters, Digits, - and _ allowed, no spaces' })
-    username!: string;
+    name!: string;
     // TODO add pre name and surname later on
 
     @IsStrongPassword()

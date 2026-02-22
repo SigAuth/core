@@ -6,6 +6,7 @@ import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { App, Permission } from '@sigauth/sdk/fundamentals';
+import { OIDC_DEFAULT_CLAIMS } from '@sigauth/sdk/protected';
 import { firstValueFrom } from 'rxjs';
 
 const APP_FETCH_ROUTE = '/sigauth-config.json';
@@ -29,6 +30,7 @@ export class AppsService {
 
         // if (createAppDto.webFetchEnabled)
         //    createAppDto.permissions = (await this.fetchPermissionsFromURL(createAppDto.url)) ?? createAppDto.permissions;
+        this.validateScopesAndClaims(createAppDto.scopes, createAppDto.claims);
 
         // look for duplicate identifiers in permissions within a category
         this.checkForDuplicatePermissions(createAppDto.permissions);
@@ -39,6 +41,8 @@ export class AppsService {
                 url: createAppDto.url,
                 token: appToken,
                 oidcAuthCodeCb: createAppDto.oidcAuthCodeUrl,
+                claims: createAppDto.claims,
+                scopes: createAppDto.scopes,
             },
         });
 
@@ -52,31 +56,6 @@ export class AppsService {
             ),
         });
 
-        const exisitngScopes = await this.db.AppScope.findMany({
-            where: { name: { in: createAppDto.scopes } },
-        });
-        const uniqueScopes = [...new Set(createAppDto.scopes)];
-        for (const scopeName of uniqueScopes) {
-            if (!exisitngScopes.find(s => s.name === scopeName)) {
-                await this.db.AppScope.createOne({
-                    data: {
-                        name: scopeName,
-                        appUuids: [app.uuid],
-                        description: '',
-                        public: false,
-                    },
-                });
-            } else {
-                const scope = exisitngScopes.find(s => s.name === scopeName)!;
-                if (!scope.appUuids.includes(app.uuid)) {
-                    await this.db.AppScope.updateOne({
-                        where: { name: scope.name },
-                        data: { appUuids: [...scope.appUuids, app.uuid] },
-                    });
-                }
-            }
-        }
-
         return this.getApp(app.uuid) as Promise<App>;
     }
 
@@ -88,6 +67,7 @@ export class AppsService {
         if (!app) throw new NotFoundException("App doesn't exist");
 
         if (editAppDto.nudge) await this.sendAppNudge(app.url);
+        this.validateScopesAndClaims(editAppDto.scopes, editAppDto.claims);
 
         // look for duplicate identifiers in permissions
         this.checkForDuplicatePermissions(editAppDto.permissions);
@@ -101,6 +81,8 @@ export class AppsService {
                 name: editAppDto.name,
                 url: editAppDto.url,
                 oidcAuthCodeCb: (editAppDto.oidcAuthCodeUrl || '').length > 0 ? editAppDto.oidcAuthCodeUrl : undefined,
+                claims: editAppDto.claims,
+                scopes: editAppDto.scopes,
             },
         });
     }
@@ -149,7 +131,26 @@ export class AppsService {
         }
     }
 
-    checkForDuplicatePermissions(dto: PermissionsDto[]) {
+    private validateScopesAndClaims(scopes: string, claims: string) {
+        // scope / claim valdiation
+        try {
+            const scopesObj = JSON.parse(scopes || '{}');
+            if (typeof scopesObj !== 'object' || Array.isArray(scopesObj)) throw new Error();
+
+            const claimsObj = JSON.parse(claims || '{}');
+            if (typeof claimsObj !== 'object' || Array.isArray(claimsObj)) throw new Error();
+            if (!Object.values(claimsObj).every(c => typeof c === 'string')) throw new Error('Claims values must be strings');
+
+            const filteredScopes = Object.entries(scopesObj).filter(([k, v]) => k !== v);
+            const scopeClaims: string[] = filteredScopes.map(([k, v]) => v as string[]).flat();
+            if (!scopeClaims.every((c: string) => [...Object.keys(claimsObj), ...Object.keys(OIDC_DEFAULT_CLAIMS)].includes(c)))
+                throw new Error('Invalid scope claim');
+        } catch (e) {
+            throw new UnprocessableEntityException('Invalid scopes or claims provided: ' + (e as any).message);
+        }
+    }
+
+    private checkForDuplicatePermissions(dto: PermissionsDto[]) {
         const cats: Record<string, string[]> = {};
         for (const perm of dto) {
             const key = perm.typeUuid || 'root';
@@ -168,6 +169,7 @@ export class AppsService {
     }
 
     async getApp(uuid: string): Promise<App | null> {
-        return this.db.App.findOne({ where: { uuid }, includes: { permission_apps: true, appScope_apps: true } });
+        return this.db.App.findOne({ where: { uuid }, includes: { permission_apps: true } });
     }
 }
+

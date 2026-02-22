@@ -14,7 +14,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { WellKnownModule } from './modules/well-known/well-known.module';
 
-const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
+const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 150);
 
 @Module({
     imports: [
@@ -23,13 +23,13 @@ const API_RATE_LIMIT = +(process.env.API_RATE_LIMIT ?? 15);
         }),
         ScheduleModule.forRoot(),
         ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env'] }),
-        AccountModule,
         ThrottlerModule.forRoot([
             {
                 ttl: 60 * 1000, // 1 minute
                 limit: API_RATE_LIMIT,
             },
         ]),
+        AccountModule,
         AssetTypeModule,
         AssetModule,
         AppsModule,

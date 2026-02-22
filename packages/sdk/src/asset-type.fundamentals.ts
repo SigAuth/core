@@ -9,7 +9,7 @@ const accountFields = [
     { name: 'middleName', type: AssetFieldType.VARCHAR, required: false },
     { name: 'nickname', type: AssetFieldType.VARCHAR, required: false },
     { name: 'preferredUsername', type: AssetFieldType.VARCHAR, required: false },
-    { name: 'website', type: AssetFieldType.VARCHAR, required: false },    
+    { name: 'website', type: AssetFieldType.VARCHAR, required: false },
     { name: 'email', type: AssetFieldType.VARCHAR, required: true },
     { name: 'emailVerified', type: AssetFieldType.BOOLEAN, required: false },
     { name: 'gender', type: AssetFieldType.VARCHAR, required: false },
@@ -43,20 +43,8 @@ const appFields = [
     { name: 'url', type: AssetFieldType.VARCHAR, required: true },
     { name: 'oidcAuthCodeCb', type: AssetFieldType.VARCHAR, required: false },
     { name: 'token', type: AssetFieldType.VARCHAR, required: true },
-] as const satisfies readonly (AssetTypeField | AssetTypeRelationField)[];
-
-const appScopeFields = [
-    { name: 'name', type: AssetFieldType.VARCHAR, required: true },
-    { name: 'description', type: AssetFieldType.TEXT, required: true },
-    { name: 'public', type: AssetFieldType.BOOLEAN, required: true },
-    {
-        name: 'appUuids',
-        type: AssetFieldType.RELATION,
-        targetAssetType: 'App',
-        referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
-        allowMultiple: true,
-        required: true,
-    },
+    { name: 'scopes', type: AssetFieldType.VARCHAR, required: false }, // JSON stringified mapping of OIDC scopes to app claims, e.g. { "profile": ["sub", "name", "picture", "claimKey"] }
+    { name: 'claims', type: AssetFieldType.VARCHAR, required: false }, // JSON stringified object-array of additional claims to potentially request in the ID token, e.g. { "claimKey": "claimValue" }
 ] as const satisfies readonly (AssetTypeField | AssetTypeRelationField)[];
 
 const authorizationInstanceFields = [
@@ -94,9 +82,12 @@ const authorizationChallengeFields = [
         referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
     },
     { name: 'authCode', type: AssetFieldType.VARCHAR, required: true },
-    { name: 'challenge', type: AssetFieldType.VARCHAR, required: true },
-    { name: 'redirectUri', type: AssetFieldType.VARCHAR, required: true },
     { name: 'created', type: AssetFieldType.DATE, required: true },
+    { name: 'scope', type: AssetFieldType.VARCHAR, required: true },
+
+    { name: 'challenge', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'challengeMethod', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'nonce', type: AssetFieldType.VARCHAR, required: false },
 ] as const satisfies readonly (AssetTypeField | AssetTypeRelationField)[];
 
 const assetTypeFields = [
@@ -173,7 +164,6 @@ const permissionFields = [
 type AccountBase = FieldsToObject<typeof accountFields>;
 type SessionBase = FieldsToObject<typeof sessionFields>;
 type AppBase = FieldsToObject<typeof appFields>;
-type AppScopeBase = FieldsToObject<typeof appScopeFields>;
 type AuthorizationInstanceBase = FieldsToObject<typeof authorizationInstanceFields>;
 type AuthorizationChallengeBase = FieldsToObject<typeof authorizationChallengeFields>;
 type AssetTypeBase = FieldsToObject<typeof assetTypeFields>;
@@ -185,7 +175,6 @@ export const RegistryConfigs = {
     Account: accountFields,
     Session: sessionFields,
     App: appFields,
-    AppScope: appScopeFields,
     AuthorizationInstance: authorizationInstanceFields,
     AuthorizationChallenge: authorizationChallengeFields,
     AssetType: assetTypeFields,
@@ -198,7 +187,6 @@ type RegistryBases = {
     Account: AccountBase;
     Session: SessionBase;
     App: AppBase;
-    AppScope: AppScopeBase;
     AuthorizationInstance: AuthorizationInstanceBase;
     AuthorizationChallenge: AuthorizationChallengeBase;
     AssetType: AssetTypeBase;
@@ -210,7 +198,6 @@ type RegistryBases = {
 export type Account = Prettify<Entity<'Account'>>;
 export type Session = Prettify<Entity<'Session'>>;
 export type App = Prettify<Entity<'App'>>;
-export type AppScope = Prettify<Entity<'AppScope'>>;
 export type AuthorizationInstance = Prettify<Entity<'AuthorizationInstance'>>;
 export type AuthorizationChallenge = Prettify<Entity<'AuthorizationChallenge'>>;
 export type AssetType = Prettify<Entity<'AssetType'>>;

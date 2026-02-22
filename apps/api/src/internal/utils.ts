@@ -23,5 +23,15 @@ export const Utils = {
         const hex = bytes.toString('hex');
         return [hex.substring(0, 8), hex.substring(8, 12), hex.substring(12, 16), hex.substring(16, 20), hex.substring(20)].join('-');
     },
+
+    sha256: (plain: string) => {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(plain);
+        return crypto.subtle.digest('SHA-256', data).then(hash => new Uint8Array(hash));
+    },
+
+    base64URLEncode: (buffer: Uint8Array) => {
+        return Buffer.from(buffer).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
 };
 

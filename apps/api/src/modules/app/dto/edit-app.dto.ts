@@ -1,7 +1,7 @@
 import { PermissionsDto } from '@/modules/app/dto/create-app.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsOptional, IsString, IsUrl, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsJSON, IsOptional, IsString, IsUrl, IsUUID, ValidateNested } from 'class-validator';
 
 export class EditAppDto {
     @IsUUID('7')
@@ -44,13 +44,20 @@ export class EditAppDto {
     })
     nudge!: boolean;
 
-    @IsArray()
-    @IsString({ each: true })
+    @IsJSON()
+    @IsString()
     @ApiProperty({
-        example: ['profile', 'email', 'address', 'blogs:admin'],
-        description: 'List of OAuth2/OIDC scopes requested by the app',
-        type: 'array',
+        example: "{'claim1': 'value1', 'claim2': 'value2'}",
+        description: 'JSON string of claims and their values to be included in the app token',
     })
-    scopes!: string[];
+    claims!: string;
+
+    @IsString()
+    @IsJSON()
+    @ApiProperty({
+        example: "{'scope': ['claim1', 'claim2']}",
+        description: 'JSON string of scopes and claims mapping for the app',
+    })
+    scopes!: string;
 }
 

@@ -1,18 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNumber, IsOptional, IsPositive, IsString, IsUUID } from 'class-validator';
 
 export class OIDCAuthenticateDto {
     @IsUUID('7')
     @ApiProperty({ description: 'The client ID of the application.', example: '550e8400-e29b-41d4-a716-446655440000' })
-    clientId!: string;
+    client_id!: string;
 
     @IsString()
     @ApiProperty({ description: 'The redirect URI to send the authorization code to.', example: 'https://myapp.com/redirect' })
-    redirectUri!: string;
+    redirect_uri!: string;
 
     @IsString()
     @ApiProperty({ description: 'The response type, currently only "code" is supported.', enum: ['code'], example: 'code' })
-    responseType!: string;
+    response_type!: string;
 
     @IsString()
     @ApiProperty({ description: 'The scope of the access request.', example: 'openid profile email' })
@@ -39,7 +39,7 @@ export class OIDCAuthenticateDto {
         description: 'Code challenge derived from the code verifier sent by the client.',
         example: 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
     })
-    codeChallenge?: string;
+    code_challenge?: string;
 
     @IsOptional()
     @IsString()
@@ -47,14 +47,12 @@ export class OIDCAuthenticateDto {
         description: 'The method used to derive the code challenge. Currently, only "S256" is supported.',
         example: 'S256',
     })
-    codeChallengeMethod?: string;
+    code_challenge_method?: string;
 
     @IsOptional()
-    @IsString()
-    @ApiProperty({
-        description: 'Specifies whether the Authorization Server prompts the End-User for reauthentication and consent.',
-        example: 'login',
-    })
-    prompt?: string;
+    @IsPositive()
+    @IsNumber()
+    @ApiProperty({ description: 'The index of the account to use for authentication if multiple accounts are available' })
+    account_index?: number;
 }
 

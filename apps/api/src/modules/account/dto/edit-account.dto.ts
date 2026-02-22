@@ -12,7 +12,7 @@ export class EditAccountDto {
         message: 'Only Letters, Digits, - and _ allowed, no spaces',
     })
     @ApiProperty({ example: 'admin', type: 'string', description: 'Only Letters, Digits, - and _ allowed, no spaces' })
-    username?: string;
+    name?: string;
     // TODO add pre name and surname later on
 
     @IsStrongPassword()
@@ -37,3 +37,4 @@ export class EditAccountDto {
     @ApiProperty({ example: true, type: 'boolean', description: 'Whether the account is activated or not' })
     deactivated?: boolean;
 }
+

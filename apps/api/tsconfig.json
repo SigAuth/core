@@ -1,11 +1,12 @@
 {
     "extends": "../../tsconfig.json",
-    "include": ["src/**/*.ts", "prisma/**/*.ts"],
+    "include": ["src/**/*.ts"],
     "compilerOptions": {
+        "types": ["jest"],
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
         "esModuleInterop": true,
-        "resolveJsonModule": true, 
+        "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "strict": true,
         "paths": {
@@ -24,3 +25,4 @@
         "noFallthroughCasesInSwitch": false
     }
 }
+
