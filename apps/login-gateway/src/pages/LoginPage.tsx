@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { request } from '@/lib/utils';
+import { buildRedirectUrl, request } from '@/lib/utils';
 import type { AuthenticationParams } from '@/RootComponent';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
@@ -11,12 +11,10 @@ import { Toaster, toast } from 'sonner';
 type LoginPageProps = {
     authParams: AuthenticationParams;
     obtainAuthorizationCode: () => Promise<string | undefined>;
-    buildRedirectUrl: (params: Record<string, string>) => string;
 };
 
-export const LoginPage = ({ authParams, obtainAuthorizationCode, buildRedirectUrl }: LoginPageProps) => {
+export const LoginPage = ({ authParams, obtainAuthorizationCode }: LoginPageProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { state } = authParams;
 
     const sendCredentialLogin = async () => {
         if (isSubmitting) return;
@@ -35,9 +33,12 @@ export const LoginPage = ({ authParams, obtainAuthorizationCode, buildRedirectUr
             if (res.ok) {
                 const authCode = await obtainAuthorizationCode();
                 if (authCode) {
-                    window.location.href = buildRedirectUrl({ code: authCode, state });
+                    window.location.href = buildRedirectUrl({ code: authCode, state: authParams.state }, authParams.redirect_uri);
                 } else {
-                    window.location.href = buildRedirectUrl({ error: 'authorization_code_failed', state });
+                    window.location.href = buildRedirectUrl(
+                        { error: 'authorization_code_failed', state: authParams.state },
+                        authParams.redirect_uri,
+                    );
                 }
             } else if (res.status === 429) {
                 toast.error('Too many requests. Please wait a moment and try again.');

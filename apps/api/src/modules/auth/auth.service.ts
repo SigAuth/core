@@ -9,7 +9,7 @@ import { Account, App, Session } from '@sigauth/sdk/fundamentals';
 import { OIDC_DEFAULT_CLAIMS, OIDC_DEFAULT_SCOPES, ProtectedData, SigAuthPermissions } from '@sigauth/sdk/protected';
 import bcrypt from 'bcryptjs';
 import dayjs from 'dayjs';
-import { SignJWT } from 'jose';
+import { JWTPayload, jwtVerify, JWTVerifyResult, SignJWT } from 'jose';
 import speakeasy from 'speakeasy';
 
 @Injectable()
@@ -59,10 +59,43 @@ export class AuthService {
         return session.uuid;
     }
 
-    async logout(account: Account, sessionId: string) {
+    async logout(sessionRawArray: string, idToken: string) {
+        if (!sessionRawArray) throw new BadRequestException('No session cookie found');
+        const sessions = sessionRawArray.split(';');
+        if (!Array.isArray(sessions)) throw new BadRequestException('Invalid session format');
+
+        let decoded: JWTVerifyResult<JWTPayload> | null = null;
+        try {
+            const publicKey = await this.storage.AuthPublicKey!;
+            decoded = await jwtVerify(idToken, publicKey, {
+                issuer: process.env.FRONTEND_URL || 'No issuer provided in env',
+            });
+        } catch (e) {
+            this.logger.error('Failed to verify id token during logout:', e);
+            throw new UnauthorizedException('Invalid id token');
+        }
+
+        if (!decoded) throw new UnauthorizedException('Invalid id token');
+
+        const sessionId = decoded.payload.sid;
+        if (!sessionId || typeof sessionId !== 'string') {
+            throw new UnauthorizedException('Invalid id token payload');
+        }
+
         const session = await this.db.Session.deleteOne({ where: { uuid: sessionId } });
         if (!session) throw new UnauthorizedException('Invalid session');
         // TODO handle automatically remove expired session from db after a certain time
+
+        return sessions.filter((id: string) => id !== sessionId).join(';');
+    }
+
+    async getSessions(sessionRawArray: string): Promise<{ sessions: Session[]; accounts: Account[] }> {
+        const sessionsIds = sessionRawArray.split(';');
+        if (!Array.isArray(sessionsIds)) throw new BadRequestException('Invalid session format');
+        const sessions = await this.db.Session.findMany({ where: { uuid: { in: sessionsIds } } });
+        const accounts = await this.db.Account.findMany({ where: { uuid: { in: sessions.map(s => s.subjectUuid) } } });
+
+        return { sessions, accounts };
     }
 
     async getInitData(
@@ -130,7 +163,12 @@ export class AuthService {
         }
     }
 
-    async authenticateOIDC(data: OIDCAuthenticateDto, sessionId: string) {
+    async authenticateOIDC(data: OIDCAuthenticateDto, rawSessions: string, sIndex: number) {
+        if (!rawSessions) throw new BadRequestException('No session cookie found');
+
+        const sessionId = rawSessions.includes(';') ? rawSessions.split(';')[sIndex] : rawSessions;
+        if (!sessionId) throw new BadRequestException('No session ID found in cookie');
+
         const session = await this.db.Session.findOne({ where: { uuid: sessionId }, includes: { subject_ref: true } });
         if (!session) throw new NotFoundException("Couldn't resolve session");
         const app = await this.db.App.findOne({ where: { uuid: data.client_id } });
@@ -193,8 +231,8 @@ export class AuthService {
         }
 
         let generateRefreshToken = false;
-        const accessTokenPayload: Record<string, any> = {};
-        const idTokenPayload: Record<string, any> = {};
+        const accessTokenPayload: Record<string, any> = { sid: authChallenge.sessionUuid };
+        const idTokenPayload: Record<string, any> = { sid: authChallenge.sessionUuid };
 
         const scopes = authChallenge.scope.split(' ');
         if (scopes.includes('offline_access')) generateRefreshToken = true;
@@ -220,6 +258,7 @@ export class AuthService {
         });
         accessTokenPayload['scope'] = authChallenge.scope;
 
+        // move this to a new method to reduce code duplication between exchange and refresh token
         const idToken = await new SignJWT(idTokenPayload)
             .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
             .setIssuedAt()

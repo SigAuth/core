@@ -161,7 +161,7 @@ export function AppSidebar() {
                                 <AlertDialogAction asChild>
                                     <Button
                                         className="bg-destructive dark:bg-destructive/60 hover:bg-destructive focus-visible:ring-destructive text-white"
-                                        onClick={() => toast.error('Sign out functionality not implemented yet')}
+                                        onClick={() => window.location.href = '/api/oidc/logout'}
                                     >
                                         Sign Out
                                     </Button>

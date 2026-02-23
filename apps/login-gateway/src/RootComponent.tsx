@@ -1,8 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { request } from '@/lib/utils';
+import { buildRedirectUrl, getSessions, request } from '@/lib/utils';
+import { AccountSelectorPage } from '@/pages/AccountSelectorPage';
+import { ConsentPage } from '@/pages/ConsentPage';
 import { LoginPage } from '@/pages/LoginPage';
-import { useEffect } from 'react';
-import { Toaster, toast } from 'sonner';
+import { SilentAuthPage } from '@/pages/SilentAuthPage';
+import type { Account, Session } from '@sigauth/sdk/fundamentals';
+import { useEffect, useState } from 'react';
 
 export type AuthenticationParams = {
     client_id: string;
@@ -20,6 +22,8 @@ export type AuthenticationParams = {
 
 const SignInPage = () => {
     const queryParams = new URLSearchParams(window.location.search);
+    const [loggedAccounts, setLoggedAccounts] = useState<{ sessions: Session[]; accounts: Account[] } | undefined>(undefined);
+    const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
 
     const authParams: AuthenticationParams = {
         client_id: queryParams.get('client_id') ?? '',
@@ -33,104 +37,102 @@ const SignInPage = () => {
         prompt: queryParams.get('prompt') ?? undefined,
         display: queryParams.get('display') ?? undefined,
     };
+    const prompts = (authParams.prompt ?? '').trim().split(' ').filter(Boolean);
 
-    const { state, client_id, response_type, scope, redirect_uri, nonce, code_challenge, code_challenge_method, prompt } = authParams;
-    const prompts = (prompt ?? '').trim().split(/\s+/).filter(Boolean);
-
-    if (!state || !client_id || !response_type || !scope || !redirect_uri) {
+    // validation
+    if (!authParams.state || !authParams.client_id || !authParams.response_type || !authParams.scope || !authParams.redirect_uri)
         return <main>Request parameters are missing or invalid.</main>;
-    }
-
-    if (response_type !== 'code') return <main>Unsupported response type. Only 'code' is supported.</main>;
-    if (prompts.includes('none') && prompts.length > 1) {
+    if (prompts.includes('none') && prompts.length > 1)
         return <main>Invalid prompt parameter. 'none' cannot be used with other prompts.</main>;
-    }
+
+    useEffect(() => {
+        getSessions().then(data => {
+            if (!data) {
+                setLoggedAccounts({ sessions: [], accounts: [] });
+                return;
+            }
+
+            setLoggedAccounts({
+                sessions: Array.isArray(data.sessions) ? data.sessions : [],
+                accounts: Array.isArray(data.accounts) ? data.accounts : [],
+            });
+        });
+    }, []);
 
     const obtainAuthorizationCode = async () => {
         const apiSearchParams = new URLSearchParams({
-            client_id,
-            response_type,
-            scope,
-            redirect_uri,
-            state,
+            client_id: authParams.client_id,
+            response_type: authParams.response_type,
+            scope: authParams.scope,
+            redirect_uri: authParams.redirect_uri,
+            state: authParams.state,
         });
 
-        if (nonce) apiSearchParams.set('nonce', nonce);
-        if (code_challenge) apiSearchParams.set('code_challenge', code_challenge);
-        if (code_challenge_method) apiSearchParams.set('code_challenge_method', code_challenge_method);
+        if (authParams.nonce) apiSearchParams.set('nonce', authParams.nonce);
+        if (authParams.code_challenge) apiSearchParams.set('code_challenge', authParams.code_challenge);
+        if (authParams.code_challenge_method) apiSearchParams.set('code_challenge_method', authParams.code_challenge_method);
 
         const res = await request('GET', `/api/auth/oidc/authenticate?${apiSearchParams.toString()}`);
 
         const data = await res.json();
+        if (!res.ok) {
+            console.error('Failed to obtain authorization code:', data);
+            return undefined;
+        }
         return data.authorizationCode;
     };
 
-    const buildRedirectUrl = (params: Record<string, string>) => {
-        const target = new URL(redirect_uri);
+    const requiresSelectAccount = prompts.includes('select_account');
+    const requiresConsent = prompts.includes('consent');
 
-        Object.entries(params).forEach(([key, value]) => {
-            target.searchParams.set(key, value);
-        });
+    const approveConsent = async () => {
+        try {
+            const authCode = await obtainAuthorizationCode();
+            if (!authCode) {
+                window.location.href = buildRedirectUrl(
+                    { error: 'authorization_code_failed', state: authParams.state },
+                    authParams.redirect_uri,
+                );
+                return;
+            }
 
-        return target.toString();
+            window.location.href = buildRedirectUrl({ code: authCode, state: authParams.state }, authParams.redirect_uri);
+        } catch {
+            window.location.href = buildRedirectUrl({ error: 'server_error', state: authParams.state }, authParams.redirect_uri);
+        }
     };
 
-    useEffect(() => {
-        if (!prompts.includes('none')) return;
+    const denyConsent = () => {
+        window.location.href = buildRedirectUrl({ error: 'access_denied', state: authParams.state }, authParams.redirect_uri);
+    };
 
-        const runSilentAuth = async () => {
-            try {
-                const authCode = await obtainAuthorizationCode();
-
-                if (authCode) {
-                    toast.info('Welcome back! Redirecting...');
-                    window.location.href = buildRedirectUrl({ code: authCode, state });
-                    return;
-                }
-
-                window.location.href = buildRedirectUrl({ error: 'login_required', state });
-            } catch {
-                window.location.href = buildRedirectUrl({ error: 'server_error', state });
-            }
-        };
-
-        void runSilentAuth();
-    }, [prompts, state]);
-
-    if (prompts.includes('none')) {
+    if (!loggedAccounts) return <main></main>;
+    if (prompts.includes('none')) return <SilentAuthPage obtainAuthorizationCode={obtainAuthorizationCode} params={authParams} />;
+    if (prompts.includes('login') || loggedAccounts?.accounts.length == 0)
+        return <LoginPage authParams={authParams} obtainAuthorizationCode={obtainAuthorizationCode} />;
+    else if (requiresSelectAccount && !selectedAccount) {
         return (
-            <main>
-                <Toaster position="bottom-right" />
-                <div className="flex items-center justify-center min-h-screen bg-muted">
-                    <Card className="w-full max-w-sm">
-                        <CardHeader>
-                            <CardTitle>Checking authentication...</CardTitle>
-                            <CardDescription>Please wait while we check your authentication status.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-center">
-                                <svg
-                                    className="animate-spin h-8 w-8 text-primary"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path
-                                        className="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                    ></path>
-                                </svg>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </main>
+            <AccountSelectorPage
+                params={authParams}
+                accounts={loggedAccounts?.accounts ?? []}
+                onSelectAccount={account => {
+                    setSelectedAccount(account.uuid);
+                }}
+            />
+        );
+    } else if (requiresConsent) {
+        return (
+            <ConsentPage
+                clientId={authParams.client_id}
+                scope={authParams.scope}
+                selectedAccountName={loggedAccounts?.accounts.find(account => account.uuid === selectedAccount)?.name ?? 'Unknown Account'}
+                onApprove={() => void approveConsent()}
+                onDeny={denyConsent}
+            />
         );
     }
 
-    return <LoginPage authParams={authParams} obtainAuthorizationCode={obtainAuthorizationCode} buildRedirectUrl={buildRedirectUrl} />;
+    return <main></main>;
 };
 
 export default SignInPage;

@@ -12,8 +12,9 @@ export class WellKnownController {
 
         return {
             issuer: issuer,
-            authorization_endpoint: issuer + '/api/auth/oidc/authenticate',
+            authorization_endpoint: issuer + '/',
             token_endpoint: issuer + '/api/auth/oidc/exchange',
+            end_session_endpoint: issuer + '/api/auth/oidc/logout',
             jwks_uri: issuer + '/.well-known/jwks.json',
             id_token_signing_alg_values_supported: ['RS256'],
             response_types_supported: ['code'],

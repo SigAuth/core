@@ -1,13 +1,22 @@
 import dotenv from 'dotenv';
 
 export type SigAuthConfig = {
+    /** URL to SigAuth Instance */
     issuer: string;
-    out: string;
+    /** Path were SigAuth code will be generated to */
+    out?: string;
+    /** Client */
     audience: string;
-    refreshThresholdSeconds: number;
-    secureCookies: boolean;
+    /** Threshold how much time should be left before refresh is attempted */
+    refreshThresholdSeconds?: number;
+    /** Wether to use Secure cookies or not */
+    secureCookies?: boolean;
+    /** Client ID provided by SigAuth Instance  */
     appId: string;
+    /** Client Token provided by SigAuth Instance  */
     appToken: string;
+    /** Redirect URI to expect OIDC Callack from */
+    redirectUri: string;
 };
 
 export const loadEnviroment = (path: string = '.env') => {

@@ -13,7 +13,11 @@ export async function sigauthRequest(
     { body, config, internalAuthorization = true }: SigAuthRequestOptions,
 ): Promise<Response> {
     try {
-        const res = await fetch(`${config.issuer}${url}`, {
+        const normalizedIssuer = config.issuer.endsWith('/') ? config.issuer.slice(0, -1) : config.issuer;
+        const normalizedPath = url.startsWith('/') ? url : `/${url}`;
+        const requestUrl = `${normalizedIssuer}${normalizedPath}`;
+
+        const res = await fetch(requestUrl, {
             method,
             headers: {
                 'Content-Type': 'application/json',

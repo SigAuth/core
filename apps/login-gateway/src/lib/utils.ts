@@ -26,3 +26,20 @@ export async function logout() {
     }
 }
 
+export async function getSessions() {
+    const res = await request('GET', '/api/auth/sessions');
+    if (res.ok) {
+        return await res.json();
+    }
+}
+
+export const buildRedirectUrl = (params: Record<string, string>, url: string) => {
+    const target = new URL(url);
+
+    Object.entries(params).forEach(([key, value]) => {
+        target.searchParams.set(key, value);
+    });
+
+    return target.toString();
+};
+

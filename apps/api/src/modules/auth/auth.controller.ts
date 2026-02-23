@@ -25,8 +25,8 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ description: 'Redirect to the app with the authorization code.' })
     @ApiNotFoundResponse({ description: 'App or no session found.' })
-    async authenticateOIDC(@Query() oidcAuthDto: OIDCAuthenticateDto, @Req() req: Request) {
-        return await this.authService.authenticateOIDC(oidcAuthDto, req.cookies['sid'] as string);
+    async authenticateOIDC(@Query() oidcAuthDto: OIDCAuthenticateDto, @Query('index') index: number, @Req() req: Request) {
+        return await this.authService.authenticateOIDC(oidcAuthDto, req.cookies['sid'] as string, index);
     }
 
     @Get('oidc/exchange')
@@ -59,6 +59,36 @@ export class AuthController {
         return await this.authService.refreshOIDCToken(refreshToken, req.sigauthApp!);
     }
 
+    @Get('oidc/logout')
+    @HttpCode(HttpStatus.OK)
+    async logoutOIDC(
+        @Query('id_token_hint') idToken: string,
+        @Query('post_logout_redirect_uri') postLogoutRedirectUri: string,
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const newSessions = await this.authService.logout(req.cookies['sid'] as string, idToken);
+        if (!newSessions) {
+            res.clearCookie('sid', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+            });
+        } else {
+            res.cookie('sid', newSessions, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 1000 * 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5), // needs to be in millis
+                path: '/',
+            });
+        }
+
+        if (postLogoutRedirectUri) return res.redirect(postLogoutRedirectUri);
+        return res.sendStatus(200);
+    }
+
     /**
      * this route should only be called from the SigAuth frontend.
      *
@@ -68,13 +98,19 @@ export class AuthController {
     @Post('login')
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'Session created and cookie set. No content.' })
-    async login(@Body() loginRequestDto: LoginRequestDto, @Res() res: Response) {
-        // TODO allow authentcation via other methods as well (e.g. OAuth, SAML, Mail)
+    async login(@Body() loginRequestDto: LoginRequestDto, @Req() req: Request, @Res() res: Response) {
         const sessionId = await this.authService.login(loginRequestDto);
-        res.cookie('sid', sessionId, {
+        const existingSessionsRaw = req.cookies['sid'] as string | undefined;
+        let existingSessions: string[] = [sessionId];
+        if (existingSessionsRaw) {
+            if (existingSessionsRaw.includes(';')) existingSessions.push(...existingSessionsRaw.split(';'));
+            else existingSessions.push(existingSessionsRaw);
+        }
+
+        res.cookie('sid', existingSessions.join(';'), {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 1000 * 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5), // needs to be in millis
             path: '/',
         });
@@ -82,15 +118,15 @@ export class AuthController {
         res.sendStatus(202);
     }
 
-    @Get('logout')
-    @UseGuards(SDKGuard, HasAccount)
+    @Get('sessions')
     @HttpCode(HttpStatus.OK)
-    @ApiOkResponse({ description: 'Session deleted and cookie cleared. No content.' })
-    async logout(@Req() req: Request, @Res() res: Response) {
+    @ApiOkResponse({ description: 'List of active sessions logged in with the browser.' })
+    async getSessions(@Req() req: Request) {
         const sid = (req.cookies as Record<string, string>)?.['sid'];
-        await this.authService.logout(req.account as Account, sid);
-        res.clearCookie('sid');
-        res.sendStatus(200);
+        if (!sid) return { sessions: [], accounts: [] };
+
+        const result = await this.authService.getSessions(sid);
+        return result;
     }
 
     @Get('/oidc/has-permission')

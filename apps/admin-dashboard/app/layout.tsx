@@ -2,18 +2,18 @@ import { AppSidebar, sidebarItems } from '@/components/navigation/AppSidebar';
 import { DynamicBreadcrumbs } from '@/components/navigation/DynamicBreadcrumbs';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SigAuthNextWrapper } from '@/lib/pre-sigauth/generated/next/sigauth.nextjs';
 import { ReactNode } from 'react';
 import './globals.css';
 
-// Hilfsfunktion bleibt auf dem Server verfügbar
+export const dynamic = 'force-dynamic';
 async function setupLookUp() {
-    // const sdk = new SigAuthSDK(config);
+    await SigAuthNextWrapper.checkAuthentication('/');
     // const res = await sdk.Account.find({ where: { username: 'admin' }, internalAuthorization: false });
     // return res;
 }
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-    // Daten holen direkt auf dem Server
     await setupLookUp();
 
     return (

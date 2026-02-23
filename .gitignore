@@ -54,6 +54,5 @@ pnpm-debug.log*
 # Misc
 coverage/
 .tmp/
-**/generated/
-/packages/prisma-wrapper/src/prisma-generated
+**/sigauth/generated/
 *.pem
