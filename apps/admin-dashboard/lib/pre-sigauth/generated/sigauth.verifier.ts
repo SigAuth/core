@@ -12,7 +12,7 @@ export class SigAuthVerifier {
 
     private decodedIdToken: JWTPayload | null = null;
     private idToken: string | null = null;
-    private refreshToken: string | null = null;
+    public refreshToken: string | null = null;
     private accessToken: string | null = null;
     private accessExpires: number | null = null;
 
@@ -32,7 +32,7 @@ export class SigAuthVerifier {
         return out;
     }
 
-    private async initTokens(req: MinimalRequest): Promise<{ ok: boolean; status?: number; error?: string }> {
+    private async initTokens(req: MinimalRequest, ignoreExpiration?: boolean): Promise<{ ok: boolean; status?: number; error?: string }> {
         if (!this.decodedIdToken) {
             const raw = req.headers.cookie;
             const cookieString = Array.isArray(raw) ? raw.join('; ') : raw;
@@ -43,8 +43,8 @@ export class SigAuthVerifier {
 
             if (!accessToken) {
                 this.accessToken = null;
-                this.refreshToken = refreshToken;
-                this.idToken = idToken;
+                this.refreshToken = null;
+                this.idToken = null;
                 this.accessExpires = null;
                 this.decodedIdToken = null;
                 return { ok: false, status: 401, error: 'Missing access token' };
@@ -53,15 +53,53 @@ export class SigAuthVerifier {
             try {
                 const publicKey = await this.getPublicKey();
                 const { payload } = await jwtVerify(idToken, publicKey, {
-                    audience: this.config.audience,
+                    audience: this.config.appId,
                     issuer: this.config.issuer,
                 });
+
+                if (!ignoreExpiration && payload.exp) {
+                    const timeLeft = (payload.exp as number) - Date.now() / 1000;
+                    if (timeLeft < (this.config.refreshThresholdSeconds ?? 60))
+                        return { ok: false, status: 409, error: 'refresh_required' };
+                }
                 this.refreshToken = refreshToken;
                 this.accessExpires = payload.exp as number;
                 this.accessToken = accessToken;
+                this.idToken = idToken;
                 this.decodedIdToken = payload;
             } catch (e) {
-                const decoded = decodeJwt(idToken);
+                let decoded: JWTPayload = {};
+                if (typeof idToken === 'string') {
+                    decoded = decodeJwt(idToken);
+                    if (decoded) {
+                        // verify without exp
+                        if (!ignoreExpiration && decoded.exp && Date.now() / 1000 > (decoded.exp as number)) {
+                            console.log('Access token expired, refresh required', +decoded.exp - Date.now() / 1000);
+                            return { ok: false, status: 409, error: 'refresh_required' };
+                        }
+
+                        if (ignoreExpiration) {
+                            try {
+                                const publicKey = await this.getPublicKey();
+                                const { payload } = await jwtVerify(idToken, publicKey, {
+                                    audience: this.config.appId,
+                                    issuer: this.config.issuer,
+                                    currentDate: new Date(((decoded.exp as number) - 1) * 1000),
+                                });
+
+                                this.refreshToken = refreshToken;
+                                this.accessExpires = payload.exp as number;
+                                this.accessToken = accessToken;
+                                this.idToken = idToken;
+                                this.decodedIdToken = payload;
+
+                                return { ok: true };
+                            } catch (fallbackError) {
+                                console.error('Failed to verify id token while ignoring exp:', fallbackError, decoded);
+                            }
+                        }
+                    }
+                }
                 console.error('Failed to verify id token:', e, decoded);
                 return { ok: false, status: 401, error: 'Invalid id token' };
             }
@@ -71,14 +109,15 @@ export class SigAuthVerifier {
 
     public async refreshOnDemand(
         req: MinimalRequest,
-    ): Promise<{ refreshed: boolean; failed?: boolean; accessToken?: string; refreshToken?: string }> {
-        if (!(await this.initTokens(req)).ok) return { refreshed: false, failed: true };
-        if (!this.accessToken || !this.refreshToken) return { refreshed: false, failed: false };
+    ): Promise<{ refreshed: boolean; failed?: boolean; accessToken?: string; refreshToken?: string; idToken?: string }> {
+        if (!(await this.initTokens(req, true)).ok) return { refreshed: false, failed: true };
+        if (!this.idToken || !this.refreshToken) return { refreshed: false, failed: false };
         if (this.accessExpires! - Date.now() / 1000 > (this.config.refreshThresholdSeconds ?? 60))
             return { refreshed: false, failed: false }; // skip if not close to expiring
 
         // refresh
-        const res = await sigauthRequest('GET', '/api/auth/oidc/refresh?refreshToken=' + encodeURIComponent(this.refreshToken), {
+        const res = await sigauthRequest('GET', '/api/auth/oidc/refresh?refresh_token=' + encodeURIComponent(this.refreshToken), {
+            internalAuthorization: false,
             config: this.config,
         });
         const data = await res.json();
@@ -106,18 +145,22 @@ export class SigAuthVerifier {
         return await importJWK(jwk, 'RS256');
     }
 
+    private loginURL(prompt: string): string {
+        return `${this.config.issuer}/?response_type=code&client_id=${this.config.appId}&scope=openid offline_access&redirect_uri=${encodeURIComponent(this.config.redirectUri)}&state=/&prompt=${prompt}`;
+    }
+
     async resolveAuthError(error: string, state: string): Promise<{ error: string; status: number; redirect?: string }> {
         if (error === 'login_required') {
             return {
                 error,
                 status: 307,
-                redirect: `${this.config.issuer}/?response_type=code&client_id=${this.config.appId}&scope=openidPIEMMEL&redirect_uri=${encodeURIComponent(this.config.redirectUri)}&state=${state}&prompt=login`,
+                redirect: this.loginURL('login'),
             };
         } else if (error === 'login_required') {
             return {
                 error,
                 status: 307,
-                redirect: `${this.config.issuer}/?response_type=code&client_id=${this.config.appId}&scope=openidPIEMMEL&redirect_uri=${encodeURIComponent(this.config.redirectUri)}&state=${state}&prompt=login select_account consent`,
+                redirect: this.loginURL('login select_account consent'),
             };
         } else {
             console.error('Authentication error:', error);
@@ -157,9 +200,20 @@ export class SigAuthVerifier {
     async validateRequest(
         req: MinimalRequest,
         state: string,
-    ): Promise<{ ok: boolean; status?: number; error?: string; user?: AccountPayload }> {
+    ): Promise<{ ok: boolean; status?: number; error?: string; user?: AccountPayload; loginRedirect?: string }> {
         this.decodedIdToken = null; // reset cached token to ensure we always validate on each request (we could optimize this by caching the result of validation until the token is close to expiring, but for simplicity we will validate on each request for now)
-        await this.initTokens(req);
+        const initTokensResult = await this.initTokens(req);
+        if (!initTokensResult.ok && initTokensResult.status === 307) {
+            return initTokensResult;
+        }
+        if (!initTokensResult.ok && initTokensResult.status === 409 && initTokensResult.error === 'refresh_required') {
+            return {
+                ok: false,
+                status: 409,
+                error: 'refresh_required',
+                loginRedirect: this.loginURL('none'),
+            };
+        }
 
         /**
          * TODO:
@@ -173,7 +227,7 @@ export class SigAuthVerifier {
             return {
                 ok: false,
                 status: 307,
-                error: `${this.config.issuer}/?response_type=code&client_id=${this.config.appId}&scope=openidPIEMMEL&redirect_uri=${encodeURIComponent(this.config.redirectUri)}&state=${state}&prompt=none`,
+                error: this.loginURL('none'),
             };
         }
 

@@ -24,21 +24,32 @@ export class SigAuthNextWrapper {
         return headerRecord;
     }
 
-    public static async checkAuthentication(state: string): Promise<{ user: AccountPayload | null }> {
+    public static async checkAuthentication(
+        state: string,
+        options?: { refreshSessionCookies?: boolean },
+    ): Promise<{ user: AccountPayload | null; refreshRequired?: boolean; loginRedirect?: string }> {
         const headerRecord = await this.getHeaderRecord();
-
         const outcome = await SigAuthSDK.getInstance().verifier.validateRequest({ headers: headerRecord }, state);
         if (!outcome.ok && outcome.status === 307) {
             redirect(outcome.error!);
+        } else if (!outcome.ok && outcome.status === 409 && outcome.error === 'refresh_required') {
+            return {
+                user: null,
+                refreshRequired: true,
+                loginRedirect: outcome.loginRedirect,
+            };
         } else if (!outcome.ok) {
             console.error('Authentication failed:', outcome.error);
             return { user: null };
         }
 
+        if (options?.refreshSessionCookies) {
+            await this.refreshSessionCookies();
+        }
         return { user: outcome.user! };
     }
 
-    public static async refreshSessionCookies(): Promise<void> {
+    public static async refreshSessionCookies(): Promise<{ refreshed: boolean; failed?: boolean }> {
         const headerRecord = await this.getHeaderRecord();
 
         const setCookie = async (name: string, value: string, options?: any) => {
@@ -55,16 +66,21 @@ export class SigAuthNextWrapper {
 
         const refresh = await SigAuthSDK.getInstance().verifier.refreshOnDemand({ headers: headerRecord });
         if (refresh.refreshed) {
-            console.log('Refreshed tokens in cookies');
             await setCookie('accessToken', refresh.accessToken!, defaultOptions);
+            await setCookie('idToken', refresh.idToken!, defaultOptions);
             await setCookie('refreshToken', refresh.refreshToken!, defaultOptions);
+            return { refreshed: true };
         }
 
         if (refresh.failed) {
             console.log('Failed to refresh tokens, clear cookies ');
             await setCookie('accessToken', '', { ...defaultOptions, maxAge: 0 });
+            await setCookie('idToken', '', { ...defaultOptions, maxAge: 0 });
             await setCookie('refreshToken', '', { ...defaultOptions, maxAge: 0 });
+            return { refreshed: false, failed: true };
         }
+
+        return { refreshed: false };
     }
 
     public static async codeExchange(url: string): Promise<Response> {

@@ -1,20 +1,26 @@
+'use server';
+
 import { AppSidebar, sidebarItems } from '@/components/navigation/AppSidebar';
 import { DynamicBreadcrumbs } from '@/components/navigation/DynamicBreadcrumbs';
+import { SessionRefreshOnMount } from '@/components/SessionRefreshOnMount';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { SigAuthNextWrapper } from '@/lib/pre-sigauth/generated/next/sigauth.nextjs';
+import ensureAuthentication from '@/lib/pre-sigauth/generated/next/sigauth.action';
 import { ReactNode } from 'react';
 import './globals.css';
 
-export const dynamic = 'force-dynamic';
-async function setupLookUp() {
-    await SigAuthNextWrapper.checkAuthentication('/');
-    // const res = await sdk.Account.find({ where: { username: 'admin' }, internalAuthorization: false });
-    // return res;
-}
-
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-    await setupLookUp();
+    const authResult = await ensureAuthentication('/');
+
+    if (authResult.refreshRequired) {
+        return (
+            <SessionRefreshOnMount
+                reloadOnSuccess
+                onFailureRedirect={authResult.loginRedirect ?? '/'}
+                loadingElement={<div className="w-full h-full bg-gray-800" />}
+            />
+        );
+    }
 
     return (
         <html lang="en" suppressHydrationWarning>

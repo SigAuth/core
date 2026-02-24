@@ -37,7 +37,7 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap,
             const app = await this.App.createOne({
                 data: {
                     name: 'SigAuth Internal App',
-                    url: 'http://localhost',
+                    url: 'http://localhost:5174',
                     token: Utils.generateToken(64),
                 },
             });
@@ -144,3 +144,4 @@ export class ORMService extends SigauthClient implements OnApplicationBootstrap,
         return this.db;
     }
 }
+

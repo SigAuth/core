@@ -62,8 +62,9 @@ const authorizationInstanceFields = [
         targetAssetType: 'App',
         referentialIntegrityStrategy: RelationalIntegrityStrategy.CASCADE,
     },
-    { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: true },
-    { name: 'refreshTokenExpire', type: AssetFieldType.INTEGER, required: true },
+    { name: 'scope', type: AssetFieldType.VARCHAR, required: true },
+    { name: 'refreshToken', type: AssetFieldType.VARCHAR, required: false },
+    { name: 'expire', type: AssetFieldType.INTEGER, required: true },
 ] as const satisfies readonly (AssetTypeField | AssetTypeRelationField)[];
 
 const authorizationChallengeFields = [

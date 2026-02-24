@@ -5,8 +5,7 @@ export type SigAuthConfig = {
     issuer: string;
     /** Path were SigAuth code will be generated to */
     out?: string;
-    /** Client */
-    audience: string;
+    refreshEndpoint: string; // endpoint to call to refresh tokens
     /** Threshold how much time should be left before refresh is attempted */
     refreshThresholdSeconds?: number;
     /** Wether to use Secure cookies or not */

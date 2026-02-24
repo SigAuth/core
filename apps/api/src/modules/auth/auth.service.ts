@@ -86,16 +86,18 @@ export class AuthService {
         if (!session) throw new UnauthorizedException('Invalid session');
         // TODO handle automatically remove expired session from db after a certain time
 
-        return sessions.filter((id: string) => id !== sessionId).join(';');
+        return sessions.filter((id: string) => id !== sessionId);
     }
 
-    async getSessions(sessionRawArray: string): Promise<{ sessions: Session[]; accounts: Account[] }> {
+    async getSessions(sessionRawArray: string): Promise<{ sessions: Session[]; accounts: Account[]; invalidSessions: string[] }> {
         const sessionsIds = sessionRawArray.split(';');
         if (!Array.isArray(sessionsIds)) throw new BadRequestException('Invalid session format');
         const sessions = await this.db.Session.findMany({ where: { uuid: { in: sessionsIds } } });
+        const invalidSessions = sessionsIds.filter(id => !sessions.find(s => s.uuid === id));
+
         const accounts = await this.db.Account.findMany({ where: { uuid: { in: sessions.map(s => s.subjectUuid) } } });
 
-        return { sessions, accounts };
+        return { sessions, accounts, invalidSessions };
     }
 
     async getInitData(
@@ -163,10 +165,10 @@ export class AuthService {
         }
     }
 
-    async authenticateOIDC(data: OIDCAuthenticateDto, rawSessions: string, sIndex: number) {
+    async authenticateOIDC(data: OIDCAuthenticateDto, rawSessions: string) {
         if (!rawSessions) throw new BadRequestException('No session cookie found');
 
-        const sessionId = rawSessions.includes(';') ? rawSessions.split(';')[sIndex] : rawSessions;
+        const sessionId = rawSessions.includes(';') ? rawSessions.split(';')[data.account_index ?? 0] : rawSessions;
         if (!sessionId) throw new BadRequestException('No session ID found in cookie');
 
         const session = await this.db.Session.findOne({ where: { uuid: sessionId }, includes: { subject_ref: true } });
@@ -230,11 +232,72 @@ export class AuthService {
             throw new UnauthorizedException('Session expired');
         }
 
-        let generateRefreshToken = false;
-        const accessTokenPayload: Record<string, any> = { sid: authChallenge.sessionUuid };
-        const idTokenPayload: Record<string, any> = { sid: authChallenge.sessionUuid };
+        const tokens = await this.generateTokens(
+            authChallenge.sessionUuid,
+            authChallenge.scope,
+            app,
+            authChallenge.session_ref.subject_ref,
+        );
 
-        const scopes = authChallenge.scope.split(' ');
+        const instance = await this.db.AuthorizationInstance.createOne({
+            data: {
+                scope: authChallenge.scope,
+                sessionUuid: authChallenge.sessionUuid,
+                appUuid: authChallenge.appUuid,
+                refreshToken: tokens.refreshToken,
+                expire: dayjs().unix() + 60 * 60 * 24 * +(process.env.OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET ?? 30),
+            },
+        });
+
+        await this.db.AuthorizationChallenge.deleteOne({ where: { uuid: authChallenge.uuid } });
+        return {
+            accessToken: tokens.accessToken,
+            idToken: tokens.idToken,
+            refreshToken: instance.refreshToken,
+        };
+    }
+
+    async refreshOIDCToken(refreshToken: string, app: App) {
+        const instance = await this.db.AuthorizationInstance.findOne({
+            where: { refreshToken },
+            includes: { session_ref: { subject_ref: true }, app_ref: true },
+        });
+        if (!instance) throw new NotFoundException("Couldn't resolve authorization instance");
+
+        if (dayjs.unix(instance.expire).isBefore(dayjs())) {
+            await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: instance.sessionUuid } });
+            throw new UnauthorizedException('Refresh token expired');
+        }
+
+        if (dayjs.unix(instance.session_ref.expire).isBefore(dayjs())) {
+            await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: instance.sessionUuid } });
+            await this.db.Session.deleteOne({ where: { uuid: instance.sessionUuid } });
+            throw new UnauthorizedException('Session expired');
+        }
+
+        const tokens = await this.generateTokens(instance.sessionUuid, instance.scope, app, instance.session_ref.subject_ref);
+
+        await this.db.AuthorizationInstance.updateOne({
+            where: { uuid: instance.uuid },
+            data: {
+                refreshToken: tokens.refreshToken!,
+                expire: dayjs().unix() + 60 * 60 * 24 * +(process.env.OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET ?? 30),
+            },
+        });
+
+        return {
+            accessToken: tokens.accessToken,
+            idToken: tokens.idToken,
+            refreshToken: tokens.refreshToken,
+        };
+    }
+
+    private async generateTokens(sessionUuid: string, scope: string, app: App, account: Account) {
+        let generateRefreshToken = false;
+        const accessTokenPayload: Record<string, any> = { sid: sessionUuid };
+        const idTokenPayload: Record<string, any> = { sid: sessionUuid };
+
+        const scopes = scope.split(' ');
         if (scopes.includes('offline_access')) generateRefreshToken = true;
 
         const scopeMapping = { ...JSON.parse(app.scopes || '{}'), ...OIDC_DEFAULT_SCOPES };
@@ -243,7 +306,7 @@ export class AuthService {
         const resolveClaimValue = (claimValue: string) => {
             if (claimValue.startsWith('account.')) {
                 const accountField = claimValue.split('.')[1];
-                return (authChallenge.session_ref.subject_ref as any)[accountField];
+                return (account as any)[accountField];
             }
             return claimValue;
         };
@@ -256,13 +319,13 @@ export class AuthService {
                 }
             });
         });
-        accessTokenPayload['scope'] = authChallenge.scope;
+        accessTokenPayload['scope'] = scope;
 
         // move this to a new method to reduce code duplication between exchange and refresh token
         const idToken = await new SignJWT(idTokenPayload)
             .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
             .setIssuedAt()
-            .setSubject(String(authChallenge.session_ref.subject_ref.uuid))
+            .setSubject(account.uuid)
             .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
             .setAudience(app.uuid)
             .setExpirationTime(
@@ -275,7 +338,7 @@ export class AuthService {
         const accessToken = await new SignJWT(accessTokenPayload)
             .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
             .setIssuedAt()
-            .setSubject(String(authChallenge.session_ref.subject_ref.uuid))
+            .setSubject(sessionUuid)
             .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
             .setAudience(app.uuid)
             .setExpirationTime(
@@ -285,64 +348,7 @@ export class AuthService {
             )
             .sign(this.storage.AuthPrivateKey!);
 
-        const instance = await this.db.AuthorizationInstance.createOne({
-            data: {
-                sessionUuid: authChallenge.sessionUuid,
-                appUuid: authChallenge.appUuid,
-                refreshToken: Utils.generateToken(64),
-                refreshTokenExpire: dayjs().unix() + 60 * 60 * 24 * +(process.env.OIDC_REFRESH_TOKEN_EXPIRATION_OFFSET ?? 30),
-            },
-        });
-
-        await this.db.AuthorizationChallenge.deleteOne({ where: { uuid: authChallenge.uuid } });
-        return {
-            accessToken,
-            idToken,
-            refreshToken: instance.refreshToken,
-        };
-    }
-
-    async refreshOIDCToken(refreshToken: string, app: App) {
-        const instance = await this.db.AuthorizationInstance.findOne({
-            where: { refreshToken },
-            includes: { session_ref: { subject_ref: true } },
-        });
-        if (!instance) throw new NotFoundException("Couldn't resolve authorization instance");
-
-        if (dayjs.unix(instance.refreshTokenExpire).isBefore(dayjs())) {
-            await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: instance.sessionUuid } });
-            throw new UnauthorizedException('Refresh token expired');
-        }
-
-        if (dayjs.unix(instance.session_ref.expire).isBefore(dayjs())) {
-            await this.db.AuthorizationInstance.deleteMany({ where: { sessionUuid: instance.sessionUuid } });
-            await this.db.Session.deleteOne({ where: { uuid: instance.sessionUuid } });
-            throw new UnauthorizedException('Session expired');
-        }
-
-        const payload = {
-            name: instance.session_ref.subject_ref.name,
-            email: instance.session_ref.subject_ref.email,
-            // more claims to come
-        };
-
-        const accessToken = await new SignJWT(payload)
-            .setProtectedHeader({ alg: 'RS256', kid: 'sigauth' })
-            .setIssuedAt()
-            .setSubject(String(instance.session_ref.subject_ref.uuid))
-            .setIssuer(process.env.FRONTEND_URL || 'No issuer provided in env')
-            .setAudience(app.name)
-            .setExpirationTime(
-                dayjs()
-                    .add(+(process.env.OIDC_ACCESS_TOKEN_EXPIRATION_OFFSET ?? 10), 'minute')
-                    .toDate(),
-            )
-            .sign(this.storage.AuthPrivateKey!);
-
-        return {
-            accessToken,
-            refreshToken: instance.refreshToken,
-        };
+        return { idToken, accessToken, refreshToken: generateRefreshToken ? Utils.generateToken(64) : undefined };
     }
 
     // async hasPermission(dto: HasPermissionDto) {

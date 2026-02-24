@@ -35,10 +35,10 @@ export const LoginPage = ({ authParams, obtainAuthorizationCode }: LoginPageProp
                 if (authCode) {
                     window.location.href = buildRedirectUrl({ code: authCode, state: authParams.state }, authParams.redirect_uri);
                 } else {
-                    window.location.href = buildRedirectUrl(
-                        { error: 'authorization_code_failed', state: authParams.state },
-                        authParams.redirect_uri,
-                    );
+                    // window.location.href = buildRedirectUrl(
+                    //     { error: 'authorization_code_failed', state: authParams.state },
+                    //     authParams.redirect_uri,
+                    // );
                 }
             } else if (res.status === 429) {
                 toast.error('Too many requests. Please wait a moment and try again.');

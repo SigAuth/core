@@ -25,8 +25,8 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ description: 'Redirect to the app with the authorization code.' })
     @ApiNotFoundResponse({ description: 'App or no session found.' })
-    async authenticateOIDC(@Query() oidcAuthDto: OIDCAuthenticateDto, @Query('index') index: number, @Req() req: Request) {
-        return await this.authService.authenticateOIDC(oidcAuthDto, req.cookies['sid'] as string, index);
+    async authenticateOIDC(@Query() oidcAuthDto: OIDCAuthenticateDto, @Req() req: Request) {
+        return await this.authService.authenticateOIDC(oidcAuthDto, req.cookies['sid'] as string);
     }
 
     @Get('oidc/exchange')
@@ -38,8 +38,8 @@ export class AuthController {
         description: 'Access and refresh tokens issued successfully.',
         example: {
             accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi',
+            idToken: 'dfaisghfiuzsgfiusdlife',
             refreshToken: 't5468gfd486wef486fsd846v864',
-            redirectUri: 'https://myapp.com/redirect',
         },
     })
     async exchangeOIDC(@Query('code') code: string, @Query('code_verifier') codeVerifier: string, @Req() req: Request) {
@@ -53,7 +53,11 @@ export class AuthController {
     @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
     @ApiOkResponse({
         description: 'Access and refresh tokens refreshed successfully.',
-        example: { accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi', refreshToken: 't5468gfd486wef486fsd846v864' },
+        example: {
+            accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi',
+            idToken: 'dfaisghfiuzsgfiusdlife',
+            refreshToken: 't5468gfd486wef486fsd846v864',
+        },
     })
     async refreshOIDC(@Query('refreshToken') refreshToken: string, @Req() req: Request) {
         return await this.authService.refreshOIDCToken(refreshToken, req.sigauthApp!);
@@ -68,22 +72,7 @@ export class AuthController {
         @Res() res: Response,
     ) {
         const newSessions = await this.authService.logout(req.cookies['sid'] as string, idToken);
-        if (!newSessions) {
-            res.clearCookie('sid', {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                path: '/',
-            });
-        } else {
-            res.cookie('sid', newSessions, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                maxAge: 1000 * 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5), // needs to be in millis
-                path: '/',
-            });
-        }
+        this.setSIDCookie(res, newSessions);
 
         if (postLogoutRedirectUri) return res.redirect(postLogoutRedirectUri);
         return res.sendStatus(200);
@@ -107,26 +96,28 @@ export class AuthController {
             else existingSessions.push(existingSessionsRaw);
         }
 
-        res.cookie('sid', existingSessions.join(';'), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 1000 * 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5), // needs to be in millis
-            path: '/',
-        });
-
+        this.setSIDCookie(res, existingSessions);
         res.sendStatus(202);
     }
 
     @Get('sessions')
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ description: 'List of active sessions logged in with the browser.' })
-    async getSessions(@Req() req: Request) {
+    async getSessions(@Req() req: Request, @Res() res: Response) {
         const sid = (req.cookies as Record<string, string>)?.['sid'];
-        if (!sid) return { sessions: [], accounts: [] };
-
+        if (!sid) return res.json({ sessions: [], accounts: [] });
         const result = await this.authService.getSessions(sid);
-        return result;
+
+        let existingSessions: string[] = [];
+        if (sid.includes(';')) existingSessions.push(...sid.split(';'));
+        else existingSessions.push(sid);
+
+        if (result.invalidSessions.length > 0) {
+            existingSessions = existingSessions.filter(s => !result.invalidSessions.includes(s));
+            this.setSIDCookie(res, existingSessions);
+        }
+
+        res.json({ sessions: result.sessions, accounts: result.accounts });
     }
 
     @Get('/oidc/has-permission')
@@ -175,6 +166,25 @@ export class AuthController {
     })
     async init(@Req() req: Request) {
         return await this.authService.getInitData(req.cookies['sid'] as string, req.account as Account);
+    }
+
+    private setSIDCookie(res: Response, sessions: string[]) {
+        if (sessions.length === 0) {
+            res.clearCookie('sid', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+            });
+        } else {
+            res.cookie('sid', sessions.join(';'), {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 1000 * 60 * 60 * 24 * +(process.env.SESSION_EXPIRATION_OFFSET ?? 5), // needs to be in millis
+                path: '/',
+            });
+        }
     }
 }
 

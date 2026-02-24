@@ -503,6 +503,10 @@ updated AS (UPDATE "${this.tableName}" SET ${updateSet} WHERE "uuid" IN (SELECT 
                 if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
                     if ('in' in value) {
                         const val = value as { in: any[] };
+                        if (!Array.isArray(val.in) || val.in.length === 0) {
+                            conditions.push('1 = 0');
+                            continue;
+                        }
                         const opts = val.in.map((v: any) => this.formatValue(v)).join(',');
                         conditions.push(`${col} IN (${opts})`);
                     } else {
@@ -635,6 +639,8 @@ updated AS (UPDATE "${this.tableName}" SET ${updateSet} WHERE "uuid" IN (SELECT 
                             parts.push(
                                 `EXISTS (SELECT 1 FROM "${joinTableName}" WHERE "${joinTableName}"."${parentCol}" = "${table}"."uuid" AND "${joinTableName}"."field" = '${key}' AND "${joinTableName}"."${valCol}" IN (${valList}))`,
                             );
+                        } else {
+                            parts.push('1 = 0');
                         }
                         continue;
                     }
@@ -644,6 +650,10 @@ updated AS (UPDATE "${this.tableName}" SET ${updateSet} WHERE "uuid" IN (SELECT 
                     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                         if ('in' in value) {
                             const val = value as { in: any[] };
+                            if (!Array.isArray(val.in) || val.in.length === 0) {
+                                parts.push('1 = 0');
+                                continue;
+                            }
                             parts.push(`${col} IN (${val.in.map((v: any) => `'${v}'`).join(',')})`);
                         } else if ('lt' in value || 'gt' in value) {
                             const val = value as { lt?: any; gt?: any };
