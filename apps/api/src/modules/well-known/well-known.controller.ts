@@ -9,13 +9,14 @@ export class WellKnownController {
     @Get('openid-configuration')
     async getOpenIDConfiguration() {
         const issuer = process.env.FRONTEND_URL!;
+        const normalizedIssuer = issuer.endsWith('/') ? issuer.slice(0, -1) : issuer;
 
         return {
-            issuer: issuer,
-            authorization_endpoint: issuer + '/',
-            token_endpoint: issuer + '/api/auth/oidc/exchange',
-            end_session_endpoint: issuer + '/api/auth/oidc/logout',
-            jwks_uri: issuer + '/.well-known/jwks.json',
+            issuer: normalizedIssuer,
+            authorization_endpoint: `${normalizedIssuer}/`,
+            token_endpoint: `${normalizedIssuer}/api/auth/oidc/exchange`,
+            end_session_endpoint: `${normalizedIssuer}/api/auth/oidc/logout`,
+            jwks_uri: `${normalizedIssuer}/.well-known/jwks.json`,
             id_token_signing_alg_values_supported: ['RS256'],
             response_types_supported: ['code'],
             subject_types_supported: ['public'],

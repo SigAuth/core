@@ -205,7 +205,6 @@ export class AuthService {
 
         if (authChallenge.challengeMethod === 'S256') {
             const expectedChallenge = Utils.base64URLEncode(await Utils.sha256(codeVerfier));
-            this.logger.debug(`Verifying PKCE challenge. Expected: ${expectedChallenge}, Received: ${authChallenge.challenge}`);
             if (expectedChallenge !== authChallenge.challenge) {
                 throw new UnauthorizedException('Invalid code verifier');
             }

@@ -4,7 +4,7 @@ import { LoginRequestDto } from '@/modules/auth/dto/login-request.dto';
 import { OIDCAuthenticateDto } from '@/modules/auth/dto/oidc-authenticate.dto';
 import { HasAccount } from '@/modules/auth/guards/authentication.force-account.guard';
 import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
     ApiBadRequestResponse,
@@ -42,25 +42,24 @@ export class AuthController {
             refreshToken: 't5468gfd486wef486fsd846v864',
         },
     })
-    async exchangeOIDC(@Query('code') code: string, @Query('code_verifier') codeVerifier: string, @Req() req: Request) {
-        return await this.authService.exchangeOIDCToken(code, req.sigauthApp!, codeVerifier);
-    }
+    async exchangeOIDC(
+        @Query('grant_type') grantType: string,
+        @Query('code') code: string,
+        @Query('code_verifier') codeVerifier: string,
+        @Query('refresh_token') refreshToken: string,
+        @Req() req: Request,
+    ) {
+        if (grantType === 'authorization_code') {
+            if (!code) throw new BadRequestException('code is required for grant_type=authorization_code');
+            return await this.authService.exchangeOIDCToken(code, req.sigauthApp!, codeVerifier);
+        }
 
-    @Get('oidc/refresh')
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(SDKGuard)
-    @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
-    @ApiUnauthorizedResponse({ description: 'Invalid code or app token.' })
-    @ApiOkResponse({
-        description: 'Access and refresh tokens refreshed successfully.',
-        example: {
-            accessToken: 'eyDSawjdgaszdgwagdsukgduigvsagdaisghdwagdsiuzdhi',
-            idToken: 'dfaisghfiuzsgfiusdlife',
-            refreshToken: 't5468gfd486wef486fsd846v864',
-        },
-    })
-    async refreshOIDC(@Query('refreshToken') refreshToken: string, @Req() req: Request) {
-        return await this.authService.refreshOIDCToken(refreshToken, req.sigauthApp!);
+        if (grantType === 'refresh_token') {
+            if (!refreshToken) throw new BadRequestException('refresh_token is required for grant_type=refresh_token');
+            return await this.authService.refreshOIDCToken(refreshToken, req.sigauthApp!);
+        }
+
+        throw new BadRequestException('grant_type must be either authorization_code or refresh_token');
     }
 
     @Get('oidc/logout')

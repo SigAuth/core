@@ -7,6 +7,21 @@ export interface MinimalRequest {
     headers: Record<string, string | string[] | undefined>;
 }
 
+interface OpenIdConfiguration {
+    issuer: string;
+    authorization_endpoint: string;
+    token_endpoint: string;
+    end_session_endpoint: string;
+    jwks_uri: string;
+}
+
+interface OpenIdConfigurationPaths {
+    authorization_endpoint: string;
+    token_endpoint: string;
+    end_session_endpoint: string;
+    jwks_uri: string;
+}
+
 export class SigAuthVerifier {
     private user: AccountPayload | null = null;
 
@@ -15,8 +30,68 @@ export class SigAuthVerifier {
     public refreshToken: string | null = null;
     private accessToken: string | null = null;
     private accessExpires: number | null = null;
+    private openIdConfigurationPaths: OpenIdConfigurationPaths | null = null;
 
     constructor(private readonly config: SigAuthConfig) {}
+
+    private normalizePath(path: string): string {
+        return path.replace(/^\/{2,}/, '/');
+    }
+
+    private appendQuery(path: string, params: Record<string, string>): string {
+        const url = new URL(path, this.config.issuer);
+        for (const [key, value] of Object.entries(params)) {
+            url.searchParams.set(key, value);
+        }
+        return `${this.normalizePath(url.pathname)}${url.search}`;
+    }
+
+    private endpointToPath(endpoint: string, endpointName: string): string {
+        if (!endpoint) throw new Error(`Missing discovery endpoint: ${endpointName}`);
+
+        const configUrl = new URL(this.config.issuer);
+        const endpointUrl = new URL(endpoint, this.config.issuer);
+        if (endpointUrl.host !== configUrl.host) {
+            throw new Error(`Invalid discovery endpoint host for ${endpointName}: expected ${configUrl.host} but got ${endpointUrl.host}`);
+        }
+
+        return `${this.normalizePath(endpointUrl.pathname)}${endpointUrl.search}`;
+    }
+
+    private async requestEndpoint(method: 'POST' | 'GET', path: string, options?: { internalAuthorization?: boolean }): Promise<Response> {
+        return await sigauthRequest(method, path, {
+            config: this.config,
+            internalAuthorization: options?.internalAuthorization ?? true,
+        });
+    }
+
+    private async getOpenIdConfigurationPaths(): Promise<OpenIdConfigurationPaths> {
+        if (this.openIdConfigurationPaths) return this.openIdConfigurationPaths;
+
+        const res = await sigauthRequest('GET', '/.well-known/openid-configuration', {
+            config: this.config,
+            internalAuthorization: false,
+        });
+        const discovery = (await res.json()) as OpenIdConfiguration;
+
+        if (!res.ok) {
+            throw new Error(`Failed to load OpenID configuration: ${JSON.stringify(discovery)}`);
+        }
+
+        const configUrl = new URL(this.config.issuer);
+        const discoveryIssuer = new URL(discovery.issuer, this.config.issuer);
+        if (discoveryIssuer.host !== configUrl.host) {
+            throw new Error(`Invalid discovery issuer host: expected ${configUrl.host} but got ${discoveryIssuer.host}`);
+        }
+
+        this.openIdConfigurationPaths = {
+            authorization_endpoint: this.endpointToPath(discovery.authorization_endpoint, 'authorization_endpoint'),
+            token_endpoint: this.endpointToPath(discovery.token_endpoint, 'token_endpoint'),
+            end_session_endpoint: this.endpointToPath(discovery.end_session_endpoint, 'end_session_endpoint'),
+            jwks_uri: this.endpointToPath(discovery.jwks_uri, 'jwks_uri'),
+        };
+        return this.openIdConfigurationPaths;
+    }
 
     private parseCookies(cookieHeader?: string | null): Record<string, string> {
         const out: Record<string, string> = {};
@@ -115,11 +190,14 @@ export class SigAuthVerifier {
         if (this.accessExpires! - Date.now() / 1000 > (this.config.refreshThresholdSeconds ?? 60))
             return { refreshed: false, failed: false }; // skip if not close to expiring
 
-        // refresh
-        const res = await sigauthRequest('GET', '/api/auth/oidc/refresh?refresh_token=' + encodeURIComponent(this.refreshToken), {
-            internalAuthorization: false,
-            config: this.config,
+        const discovery = await this.getOpenIdConfigurationPaths();
+        const refreshEndpoint = this.appendQuery(discovery.token_endpoint, {
+            grant_type: 'refresh_token',
+            refresh_token: this.refreshToken,
         });
+
+        // refresh
+        const res = await this.requestEndpoint('GET', refreshEndpoint, { internalAuthorization: false });
         const data = await res.json();
         this.decodedIdToken = null;
 
@@ -136,7 +214,8 @@ export class SigAuthVerifier {
     }
 
     private async getPublicKey(): Promise<CryptoKey | Uint8Array<ArrayBufferLike>> {
-        const jwksFetch = await sigauthRequest('GET', '/.well-known/jwks.json', { config: this.config });
+        const discovery = await this.getOpenIdConfigurationPaths();
+        const jwksFetch = await this.requestEndpoint('GET', discovery.jwks_uri, { internalAuthorization: false });
         const jwksObj = await jwksFetch.json();
         const jwk = jwksObj.keys.find((k: any) => k.kid === 'sigauth');
         if (!jwk) {
@@ -145,8 +224,17 @@ export class SigAuthVerifier {
         return await importJWK(jwk, 'RS256');
     }
 
-    private loginURL(prompt: string): string {
-        const loginGatewayUrl = `${this.config.issuer}/?response_type=code&client_id=${this.config.appId}&scope=openid offline_access&redirect_uri=${encodeURIComponent(this.config.redirectUri)}&state=/&prompt=${prompt}`;
+    private async loginURL(prompt: string): Promise<string> {
+        const discovery = await this.getOpenIdConfigurationPaths();
+        const authorizationUrl = new URL(discovery.authorization_endpoint, this.config.issuer);
+        authorizationUrl.searchParams.set('response_type', 'code');
+        authorizationUrl.searchParams.set('client_id', this.config.appId);
+        authorizationUrl.searchParams.set('scope', 'openid offline_access');
+        authorizationUrl.searchParams.set('redirect_uri', this.config.redirectUri);
+        authorizationUrl.searchParams.set('state', '/');
+        authorizationUrl.searchParams.set('prompt', prompt);
+
+        const loginGatewayUrl = authorizationUrl.toString();
         return `/api/oidc/login?login_url=${encodeURIComponent(loginGatewayUrl)}`;
     }
 
@@ -155,13 +243,13 @@ export class SigAuthVerifier {
             return {
                 error,
                 status: 307,
-                redirect: this.loginURL('login'),
+                redirect: await this.loginURL('login'),
             };
         } else if (error === 'login_required') {
             return {
                 error,
                 status: 307,
-                redirect: this.loginURL('login select_account consent'),
+                redirect: await this.loginURL('login select_account consent'),
             };
         } else {
             console.error('Authentication error:', error);
@@ -174,17 +262,19 @@ export class SigAuthVerifier {
         state: string,
         codeVerifier: string,
     ): Promise<{ ok: boolean; refreshToken: string; accessToken: string; idToken: string }> {
-        const res = await sigauthRequest(
-            'GET',
-            `/api/auth/oidc/exchange?code=${encodeURIComponent(code)}&code_verifier=${encodeURIComponent(codeVerifier)}`,
-            {
-                config: this.config,
-                internalAuthorization: false,
-            },
-        );
+        const discovery = await this.getOpenIdConfigurationPaths();
+        const tokenEndpoint = this.appendQuery(discovery.token_endpoint, {
+            grant_type: 'authorization_code',
+            code,
+            code_verifier: codeVerifier,
+        });
+        const res = await this.requestEndpoint('GET', tokenEndpoint, { internalAuthorization: false });
 
         const contentType = res.headers.get('content-type') ?? '';
         if (!contentType.includes('application/json')) {
+            const text = await res.text();
+            console.log(tokenEndpoint);
+            console.log(text);
             console.error('Expected JSON from code exchange endpoint but got:', contentType);
             return { ok: false, refreshToken: '', accessToken: '', idToken: '' };
         }
@@ -217,7 +307,7 @@ export class SigAuthVerifier {
                 ok: false,
                 status: 409,
                 error: 'refresh_required',
-                loginRedirect: this.loginURL('none'),
+                loginRedirect: await this.loginURL('none'),
             };
         }
 
@@ -233,7 +323,7 @@ export class SigAuthVerifier {
             return {
                 ok: false,
                 status: 307,
-                error: this.loginURL('none'),
+                error: await this.loginURL('none'),
             };
         }
 
