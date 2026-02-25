@@ -146,7 +146,8 @@ export class SigAuthVerifier {
     }
 
     private loginURL(prompt: string): string {
-        return `${this.config.issuer}/?response_type=code&client_id=${this.config.appId}&scope=openid offline_access&redirect_uri=${encodeURIComponent(this.config.redirectUri)}&state=/&prompt=${prompt}`;
+        const loginGatewayUrl = `${this.config.issuer}/?response_type=code&client_id=${this.config.appId}&scope=openid offline_access&redirect_uri=${encodeURIComponent(this.config.redirectUri)}&state=/&prompt=${prompt}`;
+        return `/api/oidc/login?login_url=${encodeURIComponent(loginGatewayUrl)}`;
     }
 
     async resolveAuthError(error: string, state: string): Promise<{ error: string; status: number; redirect?: string }> {
@@ -171,11 +172,16 @@ export class SigAuthVerifier {
     async resolveAuthCode(
         code: string,
         state: string,
+        codeVerifier: string,
     ): Promise<{ ok: boolean; refreshToken: string; accessToken: string; idToken: string }> {
-        const res = await sigauthRequest('GET', `/api/auth/oidc/exchange?code=${encodeURIComponent(code)}`, {
-            config: this.config,
-            internalAuthorization: false,
-        });
+        const res = await sigauthRequest(
+            'GET',
+            `/api/auth/oidc/exchange?code=${encodeURIComponent(code)}&code_verifier=${encodeURIComponent(codeVerifier)}`,
+            {
+                config: this.config,
+                internalAuthorization: false,
+            },
+        );
 
         const contentType = res.headers.get('content-type') ?? '';
         if (!contentType.includes('application/json')) {

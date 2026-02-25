@@ -205,6 +205,7 @@ export class AuthService {
 
         if (authChallenge.challengeMethod === 'S256') {
             const expectedChallenge = Utils.base64URLEncode(await Utils.sha256(codeVerfier));
+            this.logger.debug(`Verifying PKCE challenge. Expected: ${expectedChallenge}, Received: ${authChallenge.challenge}`);
             if (expectedChallenge !== authChallenge.challenge) {
                 throw new UnauthorizedException('Invalid code verifier');
             }
@@ -237,6 +238,7 @@ export class AuthService {
             authChallenge.scope,
             app,
             authChallenge.session_ref.subject_ref,
+            authChallenge.nonce,
         );
 
         const instance = await this.db.AuthorizationInstance.createOne({
@@ -292,10 +294,12 @@ export class AuthService {
         };
     }
 
-    private async generateTokens(sessionUuid: string, scope: string, app: App, account: Account) {
+    private async generateTokens(sessionUuid: string, scope: string, app: App, account: Account, nonce?: string) {
         let generateRefreshToken = false;
         const accessTokenPayload: Record<string, any> = { sid: sessionUuid };
         const idTokenPayload: Record<string, any> = { sid: sessionUuid };
+
+        if (nonce) idTokenPayload['nonce'] = nonce;
 
         const scopes = scope.split(' ');
         if (scopes.includes('offline_access')) generateRefreshToken = true;
