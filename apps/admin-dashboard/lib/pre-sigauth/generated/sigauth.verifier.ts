@@ -311,14 +311,6 @@ export class SigAuthVerifier {
             };
         }
 
-        /**
-         * TODO:
-         *
-         * - Add PKCE
-         * - Add Nonce
-         * - Add option to configure login flow (e.g. force login, force consent, etc.)
-         * - Test all combination of prompts e.g consent without account select
-         */
         if (!this.decodedIdToken) {
             return {
                 ok: false,
@@ -329,6 +321,14 @@ export class SigAuthVerifier {
 
         this.user = this.decodedIdToken as AccountPayload;
         return { ok: true, user: this.user };
+    }
+
+    get tokens() {
+        return {
+            idToken: this.idToken,
+            accessToken: this.accessToken,
+            refreshToken: this.refreshToken,
+        };
     }
 }
 

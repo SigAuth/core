@@ -5,17 +5,24 @@ export type SigAuthRequestOptions = {
     body?: JSONSerializable;
     config: SigAuthConfig;
     internalAuthorization?: boolean; // whether to include internal auth header for CLI requests
+    accessToken?: string; // optional access token for internal authorization, if not provided it will use a placeholder value
 };
 
 export async function sigauthRequest(
     method: 'POST' | 'GET',
     url: string,
-    { body, config, internalAuthorization = true }: SigAuthRequestOptions,
+    { body, config, internalAuthorization = true, accessToken }: SigAuthRequestOptions,
 ): Promise<Response> {
+    if (internalAuthorization && !accessToken) {
+        throw new Error('Access token is required for internal authorization');
+    }
+
     try {
         const normalizedIssuer = config.issuer.endsWith('/') ? config.issuer.slice(0, -1) : config.issuer;
         const normalizedPath = url.startsWith('/') ? url : `/${url}`;
         const requestUrl = `${normalizedIssuer}${normalizedPath}`;
+
+        console.log('BODY: ', body);
 
         const res = await fetch(requestUrl, {
             method,
@@ -23,7 +30,9 @@ export async function sigauthRequest(
                 'Content-Type': 'application/json',
                 'x-sigauth-app-id': config.appId!,
                 'x-sigauth-app-token': config.appToken!,
-                ...(internalAuthorization ? { 'x-sigauth-internal-account-authorization': 'true' } : {}),
+                ...(internalAuthorization
+                    ? { 'x-sigauth-internal-account-authorization': 'true', 'x-sigauth-account-access-token': accessToken! }
+                    : {}),
             },
             credentials: 'include', // ensure cookies are sent with request
             body: JSON.stringify(body),

@@ -131,3 +131,4 @@ export class AssetService {
         return (await this.db.getModel(type.name).deleteMany(query)) as Asset[];
     }
 }
+

@@ -11,13 +11,11 @@ export class SigAuthSDK {
     private static instance: SigAuthSDK | null = null;
 
     private models: Partial<Record<string, Model<any>>> = {};
-    private authVerifier?: SigAuthVerifier;
 
     readonly config: SigAuthConfig;
 
     private constructor(config: SigAuthConfig) {
         this.config = config;
-        this.authVerifier = new SigAuthVerifier(config);
     }
 
     static getInstance(): SigAuthSDK {
@@ -85,8 +83,8 @@ export class SigAuthSDK {
 
     private getAssetTypeByName(name: string): string | null {
         const assetTypes: { uuid: string; name: string }[] = [
-            { uuid: '019c4d17-df86-71d2-9c99-bd9fdc1c461c', name: 'Account' },
-            { uuid: '019c4d17-e048-7fdc-bd9d-113a1a49eaa0', name: 'App' },
+            { uuid: '019c8b8b-82b9-785a-a47a-91eb384aad82', name: 'Account' },
+            { uuid: '019c8b8b-8379-701a-85ab-60db6efa7efa', name: 'App' },
         ];
         return assetTypes.find(t => t.name === name)?.uuid || null;
     }
@@ -100,7 +98,7 @@ export class SigAuthSDK {
     }
 
     get verifier(): SigAuthVerifier {
-        return this.authVerifier!;
+        return new SigAuthVerifier(this.config);
     }
 }
 
@@ -124,6 +122,7 @@ export class Model<T extends Record<string, any>> {
                 }),
                 config: this.config,
                 internalAuthorization: query.internalAuthorization,
+                accessToken: query.accessToken,
             },
         );
 
@@ -286,6 +285,7 @@ export type FindQuery<T> = {
     where?: FindWhere<T>;
     limit?: number;
     internalAuthorization?: boolean;
+    accessToken?: string;
     orderBy?: Partial<Record<keyof T, 'asc' | 'desc'>>;
     includes?: FindIncludesQuery<T>;
 };

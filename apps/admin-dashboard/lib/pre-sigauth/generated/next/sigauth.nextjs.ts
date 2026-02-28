@@ -2,17 +2,29 @@ import { SigAuthSDK } from '@/lib/pre-sigauth/generated/sigauth.sdk';
 import { config } from '@/sigauth.config';
 import { AccountPayload } from '@sigauth/sdk/authentication';
 import { decodeJwt } from '@sigauth/sdk/jose';
+import { refresh } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createHash, randomBytes } from 'node:crypto';
+
+export type SigAuthAuthenticationResult = {
+    user: AccountPayload | null;
+    tokens?: {
+        idToken: string | null;
+        accessToken: string | null;
+        refreshToken: string | null;
+    };
+    refreshRequired?: boolean;
+    loginRedirect?: string;
+};
 
 export class SigAuthNextWrapper {
     private static toBase64Url(value: Buffer): string {
         return value.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
     }
 
-    private static async getHeaderRecord(): Promise<Record<string, string | string[] | undefined>> {
+    public static async getHeaderRecord(): Promise<Record<string, string | string[] | undefined>> {
         const headerList = await headers();
         const headerRecord: Record<string, string | string[] | undefined> = {};
 
@@ -34,11 +46,16 @@ export class SigAuthNextWrapper {
     public static async checkAuthentication(
         state: string,
         options?: { refreshSessionCookies?: boolean },
-    ): Promise<{ user: AccountPayload | null; refreshRequired?: boolean; loginRedirect?: string }> {
+    ): Promise<SigAuthAuthenticationResult> {
         const headerRecord = await this.getHeaderRecord();
-        const outcome = await SigAuthSDK.getInstance().verifier.validateRequest({ headers: headerRecord }, state);
+        const sdk = SigAuthSDK.getInstance();
+        const verifier = sdk.verifier;
+        const outcome = await verifier.validateRequest({ headers: headerRecord }, state);
         if (!outcome.ok && outcome.status === 307) {
-            redirect(outcome.error!);
+            return {
+                user: null,
+                loginRedirect: outcome.error,
+            };
         } else if (!outcome.ok && outcome.status === 409 && outcome.error === 'refresh_required') {
             return {
                 user: null,
@@ -53,11 +70,13 @@ export class SigAuthNextWrapper {
         if (options?.refreshSessionCookies) {
             await this.refreshSessionCookies();
         }
-        return { user: outcome.user! };
+        return { user: outcome.user!, tokens: verifier.tokens };
     }
 
     public static async refreshSessionCookies(): Promise<{ refreshed: boolean; failed?: boolean }> {
         const headerRecord = await this.getHeaderRecord();
+        const sdk = SigAuthSDK.getInstance();
+        const verifier = sdk.verifier;
 
         const setCookie = async (name: string, value: string, options?: any) => {
             const cookieStore = await cookies();
@@ -66,12 +85,12 @@ export class SigAuthNextWrapper {
 
         const defaultOptions = {
             httpOnly: true,
-            secure: SigAuthSDK.getInstance().config.secureCookies,
+            secure: sdk.config.secureCookies,
             sameSite: 'lax',
             path: '/',
         };
 
-        const refresh = await SigAuthSDK.getInstance().verifier.refreshOnDemand({ headers: headerRecord });
+        const refresh = await verifier.refreshOnDemand({ headers: headerRecord });
         if (refresh.refreshed) {
             await setCookie('accessToken', refresh.accessToken!, defaultOptions);
             await setCookie('idToken', refresh.idToken!, defaultOptions);
@@ -95,9 +114,11 @@ export class SigAuthNextWrapper {
         const code = searchParams.get('code') ?? '';
         const error = searchParams.get('error');
         const state = searchParams.get('state') ?? '';
+        const sdk = SigAuthSDK.getInstance();
+        const verifier = sdk.verifier;
 
         if (code == '') {
-            const resolvedError = await SigAuthSDK.getInstance().verifier.resolveAuthError(error ?? 'unknown_error', state);
+            const resolvedError = await verifier.resolveAuthError(error ?? 'unknown_error', state);
             if (resolvedError.status === 307) {
                 redirect(resolvedError.redirect!);
             } else {
@@ -115,7 +136,7 @@ export class SigAuthNextWrapper {
         }
 
         console.log('Resolving auth code via Wrapper', url);
-        const result = await SigAuthSDK.getInstance().verifier.resolveAuthCode(code, state, codeVerifier);
+        const result = await verifier.resolveAuthCode(code, state, codeVerifier);
         if (!result.ok) return Response.json({ error: 'Failed to resolve auth code' }, { status: 401 });
 
         const decodedIdToken = decodeJwt(result.idToken);
@@ -125,8 +146,8 @@ export class SigAuthNextWrapper {
                 status: 401,
                 headers: {
                     'Set-Cookie': [
-                        `oidc_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${SigAuthSDK.getInstance().config.secureCookies ? 'Secure;' : ''}`,
-                        `oidc_nonce=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${SigAuthSDK.getInstance().config.secureCookies ? 'Secure;' : ''}`,
+                        `oidc_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${sdk.config.secureCookies ? 'Secure;' : ''}`,
+                        `oidc_nonce=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${sdk.config.secureCookies ? 'Secure;' : ''}`,
                     ].join(', '),
                 },
             });
@@ -136,11 +157,11 @@ export class SigAuthNextWrapper {
             status: 302,
             headers: {
                 'Set-Cookie': [
-                    `accessToken=${result.accessToken}; Path=/; HttpOnly; SameSite=Lax; ${SigAuthSDK.getInstance().config.secureCookies ? 'Secure;' : ''}`,
-                    `refreshToken=${result.refreshToken}; Path=/; HttpOnly; SameSite=Lax; ${SigAuthSDK.getInstance().config.secureCookies ? 'Secure;' : ''}`,
-                    `idToken=${result.idToken}; Path=/; HttpOnly; SameSite=Lax; ${SigAuthSDK.getInstance().config.secureCookies ? 'Secure;' : ''}`,
-                    `oidc_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${SigAuthSDK.getInstance().config.secureCookies ? 'Secure;' : ''}`,
-                    `oidc_nonce=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${SigAuthSDK.getInstance().config.secureCookies ? 'Secure;' : ''}`,
+                    `accessToken=${result.accessToken}; Path=/; HttpOnly; SameSite=Lax; ${sdk.config.secureCookies ? 'Secure;' : ''}`,
+                    `refreshToken=${result.refreshToken}; Path=/; HttpOnly; SameSite=Lax; ${sdk.config.secureCookies ? 'Secure;' : ''}`,
+                    `idToken=${result.idToken}; Path=/; HttpOnly; SameSite=Lax; ${sdk.config.secureCookies ? 'Secure;' : ''}`,
+                    `oidc_code_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${sdk.config.secureCookies ? 'Secure;' : ''}`,
+                    `oidc_nonce=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; ${sdk.config.secureCookies ? 'Secure;' : ''}`,
                 ].join(', '),
                 Location: state,
             },
@@ -150,6 +171,7 @@ export class SigAuthNextWrapper {
     public static async login(url: string): Promise<Response> {
         const { searchParams } = new URL(url);
         const loginUrl = searchParams.get('login_url');
+        const sdk = SigAuthSDK.getInstance();
         if (!loginUrl) return NextResponse.json({ error: 'Missing login_url query parameter' }, { status: 400 });
 
         let redirectTarget: URL;
@@ -172,7 +194,7 @@ export class SigAuthNextWrapper {
         redirectTarget.searchParams.set('nonce', nonce);
 
         const response = NextResponse.redirect(redirectTarget.toString(), 302);
-        const secure = SigAuthSDK.getInstance().config.secureCookies;
+        const secure = sdk.config.secureCookies;
 
         response.cookies.set('oidc_code_verifier', codeVerifier, {
             httpOnly: true,
@@ -212,6 +234,45 @@ export class SigAuthNextWrapper {
                 `/api/auth/oidc/logout?id_token_hint=${encodeURIComponent(idToken)}&post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirectUri)}`
             ).replaceAll('//', '/'),
         );
+    }
+
+    public static async sigauthMiddeware(request: NextRequest) {
+        // TODO check if we can instantly refresh here because you can set cookies in middleware
+        if (request.method === 'GET') {
+            if (request.nextUrl.pathname === '/api/oidc/login') {
+                return await this.login(request.url);
+            } else if (request.nextUrl.pathname === '/api/oidc/callback') {
+                return await this.codeExchange(request.url);
+            } else if (request.nextUrl.pathname === '/api/oidc/logout') {
+                await this.refreshSessionCookies();
+                return await this.logout(request.nextUrl.origin);
+            }
+        }
+
+        let result = await SigAuthNextWrapper.checkAuthentication(request.url, { refreshSessionCookies: false });
+        if (result.refreshRequired) {
+            const refreshResult = await SigAuthNextWrapper.refreshSessionCookies();
+            if (refreshResult.failed) {
+                return NextResponse.redirect(result.loginRedirect ?? '/');
+            }
+            return NextResponse.redirect(request.url); // reload page after refreshing cookies to ensure new tokens are used
+        }
+
+        if (!result.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const requestHeaders = new Headers(request.headers);
+        if (result.tokens?.accessToken) {
+            requestHeaders.set('x-sigauth-access-token', result.tokens?.accessToken ?? '');
+            requestHeaders.set('x-sigauth-id-token', result.tokens?.idToken ?? '');
+        }
+
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
     }
 }
 

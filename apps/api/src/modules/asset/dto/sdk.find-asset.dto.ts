@@ -25,6 +25,10 @@ export class FindQueryClass {
 
     @IsBoolean()
     internalAuthorization!: boolean;
+
+    @IsString()
+    @IsOptional()
+    accessToken?: string;
 }
 
 export class AuthorzationClass {

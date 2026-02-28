@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ConsentManager } from '@/lib/consent.management';
 import { buildRedirectUrl, request } from '@/lib/utils';
 import type { AuthenticationParams } from '@/RootComponent';
 import type { Account } from '@sigauth/sdk/fundamentals';
@@ -8,7 +7,7 @@ import { toast, Toaster } from 'sonner';
 
 const executedSilentAuthRequestsInDev = new Set<string>();
 
-export const SilentAuthPage = ({ params, account }: { params: AuthenticationParams; account: Account }) => {
+export const SilentAuthPage = ({ params }: { params: AuthenticationParams; account: Account }) => {
     const obtainAuthorizationCode = async (scopesOverride?: string[]) => {
         const apiSearchParams = new URLSearchParams({
             client_id: params.client_id,
@@ -21,7 +20,7 @@ export const SilentAuthPage = ({ params, account }: { params: AuthenticationPara
         if (params.nonce) apiSearchParams.set('nonce', params.nonce);
         if (params.code_challenge) apiSearchParams.set('code_challenge', params.code_challenge);
         if (params.code_challenge_method) apiSearchParams.set('code_challenge_method', params.code_challenge_method);
-        const res = await request('GET', `/api/auth/oidc/authenticate?${apiSearchParams.toString()}`);
+        const res = await request('GET', `/api/auth/oidc/authenticate?${apiSearchParams.toString()}`); // TODO I think there the sid index is missing here
 
         const data = await res.json();
         if (!res.ok) {
@@ -42,7 +41,6 @@ export const SilentAuthPage = ({ params, account }: { params: AuthenticationPara
 
         const runSilentAuth = async () => {
             try {
-                const consented = ConsentManager.obtainPersistentConsent(params.client_id, account.uuid);
                 const authCode = await obtainAuthorizationCode();
 
                 if (authCode) {

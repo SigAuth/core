@@ -50,16 +50,16 @@ export class SDKGuard implements CanActivate {
 
             if (!process.env.FRONTEND_URL) throw new Error('FRONTEND_URL environment variable is not set');
             const decoded = await jwtVerify(accessToken, this.storage.AuthPublicKey!, {
-                audience: app.name,
+                audience: app.uuid,
                 issuer: process.env.FRONTEND_URL,
             });
 
             if (!decoded || decoded.payload.exp! < Date.now() / 1000)
                 throw new UnauthorizedException('Invalid or expired account access token');
-            const accountId = decoded.payload.sub;
-            const account = await this.db.Account.findOne({ where: { uuid: accountId } });
-            if (!account) throw new UnauthorizedException('Account not found for access token');
-            request.account = account;
+            const sessionId = decoded.payload.sid;
+            const session = await this.db.Session.findOne({ where: { uuid: sessionId as string }, includes: { subject_ref: true } });
+            if (!session) throw new UnauthorizedException('Session not found for access token');
+            request.account = session.subject_ref;
         }
         return true;
     }
