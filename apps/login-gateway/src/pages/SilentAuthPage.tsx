@@ -1,18 +1,36 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { buildRedirectUrl } from '@/lib/utils';
+import { ConsentManager } from '@/lib/consent.management';
+import { buildRedirectUrl, request } from '@/lib/utils';
 import type { AuthenticationParams } from '@/RootComponent';
+import type { Account } from '@sigauth/sdk/fundamentals';
 import { useEffect } from 'react';
 import { toast, Toaster } from 'sonner';
 
 const executedSilentAuthRequestsInDev = new Set<string>();
 
-export const SilentAuthPage = ({
-    params,
-    obtainAuthorizationCode,
-}: {
-    params: AuthenticationParams;
-    obtainAuthorizationCode: () => Promise<string>;
-}) => {
+export const SilentAuthPage = ({ params, account }: { params: AuthenticationParams; account: Account }) => {
+    const obtainAuthorizationCode = async (scopesOverride?: string[]) => {
+        const apiSearchParams = new URLSearchParams({
+            client_id: params.client_id,
+            response_type: params.response_type,
+            scope: scopesOverride ? scopesOverride.join(' ') : params.scope,
+            redirect_uri: params.redirect_uri,
+            state: params.state,
+        });
+
+        if (params.nonce) apiSearchParams.set('nonce', params.nonce);
+        if (params.code_challenge) apiSearchParams.set('code_challenge', params.code_challenge);
+        if (params.code_challenge_method) apiSearchParams.set('code_challenge_method', params.code_challenge_method);
+        const res = await request('GET', `/api/auth/oidc/authenticate?${apiSearchParams.toString()}`);
+
+        const data = await res.json();
+        if (!res.ok) {
+            console.error('Failed to obtain authorization code:', data);
+            return undefined;
+        }
+        return data.authorizationCode;
+    };
+
     useEffect(() => {
         const requestKey = `${params.redirect_uri}|${params.state}`;
         if (import.meta.env.DEV) {
@@ -24,6 +42,7 @@ export const SilentAuthPage = ({
 
         const runSilentAuth = async () => {
             try {
+                const consented = ConsentManager.obtainPersistentConsent(params.client_id, account.uuid);
                 const authCode = await obtainAuthorizationCode();
 
                 if (authCode) {

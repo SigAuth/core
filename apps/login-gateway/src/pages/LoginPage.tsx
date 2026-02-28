@@ -2,18 +2,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { buildRedirectUrl, request } from '@/lib/utils';
-import type { AuthenticationParams } from '@/RootComponent';
+import { request } from '@/lib/utils';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { Toaster, toast } from 'sonner';
 
 type LoginPageProps = {
-    authParams: AuthenticationParams;
-    obtainAuthorizationCode: () => Promise<string | undefined>;
+    updateState: () => Promise<void>;
 };
 
-export const LoginPage = ({ authParams, obtainAuthorizationCode }: LoginPageProps) => {
+export const LoginPage = ({ updateState }: LoginPageProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const sendCredentialLogin = async () => {
@@ -31,15 +29,7 @@ export const LoginPage = ({ authParams, obtainAuthorizationCode }: LoginPageProp
             const res = await request('POST', `/api/auth/login`, { username, password });
 
             if (res.ok) {
-                const authCode = await obtainAuthorizationCode();
-                if (authCode) {
-                    window.location.href = buildRedirectUrl({ code: authCode, state: authParams.state }, authParams.redirect_uri);
-                } else {
-                    // window.location.href = buildRedirectUrl(
-                    //     { error: 'authorization_code_failed', state: authParams.state },
-                    //     authParams.redirect_uri,
-                    // );
-                }
+                updateState();
             } else if (res.status === 429) {
                 toast.error('Too many requests. Please wait a moment and try again.');
             } else {
@@ -55,6 +45,7 @@ export const LoginPage = ({ authParams, obtainAuthorizationCode }: LoginPageProp
         void sendCredentialLogin();
     };
 
+    console.log('Rendering LoginPage');
     return (
         <main className="flex items-center justify-center min-h-screen bg-muted">
             <Toaster position="bottom-right" />

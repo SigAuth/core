@@ -1,4 +1,5 @@
-import { buildRedirectUrl, getSessions, request } from '@/lib/utils';
+import { ConsentManager } from '@/lib/consent.management';
+import { getGernericAppData, getSessions } from '@/lib/utils';
 import { AccountSelectorPage } from '@/pages/AccountSelectorPage';
 import { ConsentPage } from '@/pages/ConsentPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -20,10 +21,22 @@ export type AuthenticationParams = {
     display?: string; // page, popup, touch, wap (not implemented, just for future use)
 };
 
-const SignInPage = () => {
+const RootComponent = () => {
     const queryParams = new URLSearchParams(window.location.search);
     const [loggedAccounts, setLoggedAccounts] = useState<{ sessions: Session[]; accounts: Account[] } | undefined>(undefined);
-    const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
+    const [appData, setAppData] = useState<{ name: string; logo: string; url: string } | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<Account | undefined>(undefined);
+    const [flowState, setFlowState] = useState<'login' | 'account_selected' | 'obtain_consent' | 'consent_obtained'>('login');
+
+    /**
+     * None Workflow:
+     * Get Account (either logged in or in by a selection)
+     * check and evaluate consent of that account
+     * obtain authCode
+     *
+     * each of these steps is optional but if the prompt includes an attribute it can also be enforced by the client
+     * e.g login select_account will aloways show login screen and selection but consent only if its optional
+     */
 
     const authParams: AuthenticationParams = {
         client_id: queryParams.get('client_id') ?? '',
@@ -38,6 +51,7 @@ const SignInPage = () => {
         display: queryParams.get('display') ?? undefined,
     };
     const prompts = (authParams.prompt ?? '').trim().split(' ').filter(Boolean);
+    const requestedScopes = authParams.scope.split(' ').filter(Boolean);
 
     // validation
     if (!authParams.state || !authParams.client_id || !authParams.response_type || !authParams.scope || !authParams.redirect_uri)
@@ -45,95 +59,100 @@ const SignInPage = () => {
     if (prompts.includes('none') && prompts.length > 1)
         return <main>Invalid prompt parameter. 'none' cannot be used with other prompts.</main>;
 
-    useEffect(() => {
-        getSessions().then(data => {
-            if (!data) {
-                setLoggedAccounts({ sessions: [], accounts: [] });
-                return;
-            }
+    const evaluateSessions = async () => {
+        const data = await getSessions();
+        const appData = await getGernericAppData(authParams.client_id);
+        setAppData(appData);
 
-            setLoggedAccounts({
-                sessions: Array.isArray(data.sessions) ? data.sessions : [],
-                accounts: Array.isArray(data.accounts) ? data.accounts : [],
-            });
+        if (!data) {
+            setLoggedAccounts({ sessions: [], accounts: [] });
+            return;
+        }
+
+        setLoggedAccounts({
+            sessions: Array.isArray(data.sessions) ? data.sessions : [],
+            accounts: Array.isArray(data.accounts) ? data.accounts : [],
         });
+
+        if (prompts.includes('login') || data.accounts.length === 0) {
+            setFlowState('login');
+        } else if (prompts.includes('select_account') || !selectedAccount) {
+            setFlowState('account_selected');
+        } else if (
+            prompts.includes('consent') ||
+            ConsentManager.requiresConsentForScopes(authParams.client_id, selectedAccount?.uuid ?? '', requestedScopes)
+        ) {
+            setFlowState('obtain_consent');
+        } else {
+            setFlowState('consent_obtained');
+        }
+    };
+    useEffect(() => {
+        evaluateSessions();
     }, []);
 
-    const obtainAuthorizationCode = async () => {
-        const apiSearchParams = new URLSearchParams({
-            client_id: authParams.client_id,
-            response_type: authParams.response_type,
-            scope: authParams.scope,
-            redirect_uri: authParams.redirect_uri,
-            state: authParams.state,
-        });
-
-        if (authParams.nonce) apiSearchParams.set('nonce', authParams.nonce);
-        if (authParams.code_challenge) apiSearchParams.set('code_challenge', authParams.code_challenge);
-        if (authParams.code_challenge_method) apiSearchParams.set('code_challenge_method', authParams.code_challenge_method);
-
-        const res = await request('GET', `/api/auth/oidc/authenticate?${apiSearchParams.toString()}`);
-
-        const data = await res.json();
-        if (!res.ok) {
-            console.error('Failed to obtain authorization code:', data);
-            return undefined;
-        }
-        return data.authorizationCode;
-    };
-
-    const requiresSelectAccount = prompts.includes('select_account');
-    const requiresConsent = prompts.includes('consent');
-
-    const approveConsent = async () => {
-        try {
-            const authCode = await obtainAuthorizationCode();
-            if (!authCode) {
-                window.location.href = buildRedirectUrl(
-                    { error: 'authorization_code_failed', state: authParams.state },
-                    authParams.redirect_uri,
-                );
-                return;
-            }
-
-            window.location.href = buildRedirectUrl({ code: authCode, state: authParams.state }, authParams.redirect_uri);
-        } catch {
-            window.location.href = buildRedirectUrl({ error: 'server_error', state: authParams.state }, authParams.redirect_uri);
-        }
-    };
-
-    const denyConsent = () => {
-        window.location.href = buildRedirectUrl({ error: 'access_denied', state: authParams.state }, authParams.redirect_uri);
-    };
-
+    if (!loggedAccounts) return <main>Loading...</main>;
+    console.log('Flow State:', flowState);
+    // wait for sessions to load
     if (!loggedAccounts) return <main></main>;
-    if (prompts.includes('none')) return <SilentAuthPage obtainAuthorizationCode={obtainAuthorizationCode} params={authParams} />;
-    if (prompts.includes('login') || loggedAccounts?.accounts.length == 0)
-        return <LoginPage authParams={authParams} obtainAuthorizationCode={obtainAuthorizationCode} />;
-    else if (requiresSelectAccount && !selectedAccount) {
+
+    console.log('Logged Accounts:', loggedAccounts);
+    if (flowState === 'login') {
         return (
-            <AccountSelectorPage
-                params={authParams}
-                accounts={loggedAccounts?.accounts ?? []}
-                onSelectAccount={account => {
-                    setSelectedAccount(account.uuid);
+            <LoginPage
+                updateState={async () => {
+                    console.log('Updating state after login...');
+                    await evaluateSessions();
+
+                    if (prompts.includes('select_account') || !selectedAccount) {
+                        setFlowState('account_selected');
+                    } else if (
+                        prompts.includes('consent') ||
+                        ConsentManager.requiresConsentForScopes(authParams.client_id, selectedAccount.uuid ?? '', requestedScopes)
+                    ) {
+                        setFlowState('obtain_consent');
+                    } else {
+                        setFlowState('consent_obtained');
+                    }
                 }}
             />
         );
-    } else if (requiresConsent) {
+    } else if (flowState === 'account_selected') {
         return (
-            <ConsentPage
-                clientId={authParams.client_id}
-                scope={authParams.scope}
-                selectedAccountName={loggedAccounts?.accounts.find(account => account.uuid === selectedAccount)?.name ?? 'Unknown Account'}
-                onApprove={() => void approveConsent()}
-                onDeny={denyConsent}
+            <AccountSelectorPage
+                params={authParams}
+                accounts={loggedAccounts.accounts}
+                onSelectAccount={acc => {
+                    setSelectedAccount(acc);
+                    if (
+                        prompts.includes('consent') ||
+                        ConsentManager.requiresConsentForScopes(authParams.client_id, acc.uuid, requestedScopes)
+                    ) {
+                        setFlowState('obtain_consent');
+                    } else {
+                        setFlowState('consent_obtained');
+                    }
+                }}
             />
         );
+    } else if (flowState === 'obtain_consent') {
+        if (!selectedAccount) throw new Error('Illegal State: Selected account is required for consent page');
+        return (
+            <ConsentPage
+                selectedAccount={selectedAccount}
+                clientId={authParams.client_id}
+                requestedScopes={requestedScopes}
+                updateState={async () => {
+                    await evaluateSessions();
+                    setFlowState('consent_obtained');
+                }}
+                appData={appData}
+            />
+        );
+    } else {
+        return <SilentAuthPage params={authParams} account={selectedAccount!} />;
     }
-
-    return <main></main>;
 };
 
-export default SignInPage;
+export default RootComponent;
 

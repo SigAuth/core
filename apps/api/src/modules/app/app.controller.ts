@@ -4,25 +4,25 @@ import { DeleteAppDto } from '@/modules/app/dto/delete-app.dto';
 import { EditAppDto } from '@/modules/app/dto/edit-app.dto';
 import { IsRoot } from '@/modules/auth/guards/authentication.is-root.guard';
 import { SDKGuard } from '@/modules/auth/guards/sdk.guard';
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
+    ApiProperty,
     ApiRequestTimeoutResponse,
     ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { App } from '@sigauth/sdk/fundamentals';
 
 @Controller('app')
-@UseGuards(SDKGuard)
 export class AppsController {
     constructor(private readonly appsService: AppsService) {}
 
     @Post('create')
-    @UseGuards(IsRoot)
+    @UseGuards(SDKGuard, IsRoot)
     @ApiCreatedResponse({
         description: 'App created successfully',
         example: {
@@ -48,7 +48,7 @@ export class AppsController {
     }
 
     @Post('edit')
-    @UseGuards(IsRoot)
+    @UseGuards(SDKGuard, IsRoot)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'App updated successfully',
@@ -76,131 +76,20 @@ export class AppsController {
     }
 
     @Post('delete')
-    @UseGuards(IsRoot)
+    @UseGuards(SDKGuard, IsRoot)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNoContentResponse({ description: 'Apps deleted successfully' })
     @ApiNotFoundResponse({ description: 'Not all apps found or invalid ids provided' })
     @ApiForbiddenResponse({ description: 'Forbidden' })
     async deleteApps(@Body() deleteAppsDto: DeleteAppDto) {
-        await this.appsService.deleteApps(deleteAppsDto.appUuids);
+        return await this.appsService.deleteApps(deleteAppsDto.appUuids);
     }
 
-    // @Get('info')
-    // @HttpCode(HttpStatus.OK)
-    // @UseGuards(ApiAppGuard)
-    // @ApiHeader({ name: 'Authorization', description: 'Token <app-token>', required: true })
-    // @ApiNotFoundResponse({ description: 'Invalid App Token' })
-    // @ApiOkResponse({
-    //     description: 'App related assets, containers and accounts fetched successfully',
-    //     example: {
-    //         ok: true,
-    //         appInfo: {
-    //             assets: [
-    //                 {
-    //                     id: 1,
-    //                     name: 'test',
-    //                     typeId: 2,
-    //                     fields: [
-    //                         {
-    //                             id: 1,
-    //                             name: 'test',
-    //                         },
-    //                     ],
-    //                 },
-    //                 {
-    //                     id: 2,
-    //                     name: 'Blog Post 2',
-    //                     typeId: 2,
-    //                     fields: [
-    //                         {
-    //                             id: 1,
-    //                             name: 'How I started my 1 million dollar company',
-    //                         },
-    //                     ],
-    //                 },
-    //             ],
-    //             assetTypes: [
-    //                 {
-    //                     id: 2,
-    //                     name: 'Blog Post',
-    //                     fields: [
-    //                         {
-    //                             type: 2,
-    //                             name: 'Text',
-    //                             required: true,
-    //                         },
-    //                     ],
-    //                 },
-    //                 {
-    //                     id: 4,
-    //                     name: 'test',
-    //                     fields: [
-    //                         {
-    //                             type: 1,
-    //                             name: 'ID',
-    //                             required: true,
-    //                         },
-    //                         {
-    //                             type: 2,
-    //                             name: 'Name',
-    //                             required: true,
-    //                         },
-    //                     ],
-    //                 },
-    //             ],
-    //             containers: [
-    //                 {
-    //                     id: 178,
-    //                     name: 'example-container',
-    //                     assets: [2],
-    //                     apps: [3],
-    //                 },
-    //                 {
-    //                     id: 179,
-    //                     name: 'example-container-2',
-    //                     assets: [1],
-    //                     apps: [3],
-    //                 },
-    //             ],
-    //             containerAssets: [
-    //                 {
-    //                     id: 4,
-    //                     name: 'example-asset',
-    //                     typeId: 1,
-    //                     fields: {
-    //                         0: 178,
-    //                         1: 'example-container',
-    //                     },
-    //                 },
-    //                 {
-    //                     id: 5,
-    //                     name: 'example-asset-2',
-    //                     typeId: 1,
-    //                     fields: {
-    //                         0: 179,
-    //                         1: 'example-container-2',
-    //                     },
-    //                 },
-    //             ],
-    //             accounts: [
-    //                 { id: 574, name: 'John Doe', email: 'doe@example.com' },
-    //                 { id: 532, name: 'Ben Hacker', email: 'john@example.com' },
-    //             ],
-    //             permissions: {
-    //                 asset: ['chart-insights', 'reports', 'maintainer'],
-    //                 container: ['brand-manager', 'editor', 'viewer'],
-    //                 root: ['app1-administrator', 'app1-developer'],
-    //             },
-    //             webFetch: {
-    //                 enabled: true,
-    //                 lastFetch: 0,
-    //                 success: false,
-    //             },
-    //         },
-    //     },
-    // })
-    // async getAppInfo(@Req() req: Request) {
-    //     return await this.appsService.getAppInfo(req.sigauthApp!);
-    // }
+    @Get('generic-info')
+    @HttpCode(HttpStatus.OK)
+    @ApiProperty({ description: 'Generic info about the app, used for the login gateway' })
+    async genericInfo(@Query('client_id') clientId: string) {
+        return await this.appsService.getAppGenericInfo(clientId);
+    }
 }
 

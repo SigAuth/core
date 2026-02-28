@@ -7,16 +7,14 @@ import type { Account } from '@sigauth/sdk/fundamentals';
 type AccountSelectorPageProps = {
     params: AuthenticationParams;
     accounts: Account[];
-    onSelectAccount: (account: { uuid: string; name: string }) => void;
+    onSelectAccount: (account: Account) => void;
 };
 
 export const AccountSelectorPage = ({ params, accounts, onSelectAccount }: AccountSelectorPageProps) => {
-    const displayedAccounts = accounts.map(account => ({ uuid: account.uuid, name: account.name }));
-
-    if (displayedAccounts.length === 0) {
+    if (accounts.length === 0) {
         window.location.href = buildRedirectUrl({ error: 'login_required', state: params.state }, params.redirect_uri);
-    } else if (displayedAccounts.length === 1) {
-        onSelectAccount(displayedAccounts[0]);
+    } else if (accounts.length === 1) {
+        onSelectAccount(accounts[0]);
     }
 
     return (
@@ -27,7 +25,7 @@ export const AccountSelectorPage = ({ params, accounts, onSelectAccount }: Accou
                     <CardDescription>Choose one of the available accounts to continue.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                    {displayedAccounts.map(account => (
+                    {accounts.map(account => (
                         <Button
                             key={account.uuid}
                             type="button"

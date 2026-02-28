@@ -131,6 +131,17 @@ export class AppsService {
         }
     }
 
+    async getAppGenericInfo(clientId: string) {
+        const app = await this.db.App.findOne({ where: { uuid: clientId } });
+        if (!app) throw new NotFoundException('App not found');
+
+        return {
+            name: app.name,
+            url: app.url,
+            logo: 'url comming soon',
+        };
+    }
+
     private validateScopesAndClaims(scopes: string, claims: string) {
         // scope / claim valdiation
         try {

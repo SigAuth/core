@@ -21,10 +21,17 @@ export class AuthService {
         private readonly storage: StorageService,
     ) {}
 
-    async login(loginRequestDto: LoginRequestDto) {
+    async login(loginRequestDto: LoginRequestDto, existingSessionsRaw: string | undefined) {
         const account = await this.db.Account.findOne({ where: { name: loginRequestDto.username } });
         if (!account || !bcrypt.compareSync(loginRequestDto.password, account.passwordHash)) {
             throw new UnauthorizedException('Invalid credentials');
+        }
+
+        if (existingSessionsRaw) {
+            const result = await this.getSessions(existingSessionsRaw);
+            if (result.accounts.find(a => a.uuid === account.uuid)) {
+                return result.sessions.find(s => s.subjectUuid === account.uuid)!.uuid;
+            }
         }
 
         if (account.deactivated) {

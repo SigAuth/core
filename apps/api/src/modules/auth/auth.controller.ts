@@ -87,8 +87,8 @@ export class AuthController {
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'Session created and cookie set. No content.' })
     async login(@Body() loginRequestDto: LoginRequestDto, @Req() req: Request, @Res() res: Response) {
-        const sessionId = await this.authService.login(loginRequestDto);
         const existingSessionsRaw = req.cookies['sid'] as string | undefined;
+        const sessionId = await this.authService.login(loginRequestDto, existingSessionsRaw);
         let existingSessions: string[] = [sessionId];
         if (existingSessionsRaw) {
             if (existingSessionsRaw.includes(';')) existingSessions.push(...existingSessionsRaw.split(';'));

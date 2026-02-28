@@ -33,6 +33,15 @@ export async function getSessions() {
     }
 }
 
+export async function getGernericAppData(clientId: string): Promise<{ name: string; logo: string; url: string } | null> {
+    const res = await request('GET', `/api/app/generic-info?client?id=${clientId}`);
+    if (res.ok) {
+        const data = await res.json();
+        return data;
+    }
+    return null;
+}
+
 export const buildRedirectUrl = (params: Record<string, string>, url: string) => {
     const target = new URL(url);
 
